@@ -17,6 +17,8 @@ esac
 build() {
         TARGET_CC="clang" \
     cargo_build_nolock \
+        -Zunstable-options \
+        -Zjson-target-spec \
         --target="toolchain/${ZINNIA_ARCH}-kernel.json"
 }
 

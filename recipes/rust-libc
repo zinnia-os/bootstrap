@@ -2,9 +2,9 @@
 
 name=rust-libc
 skip_pkg_check=yes
-version=0.2.177
+version=0.2.178
 revision=1
 tarball_url="https://github.com/rust-lang/libc/archive/refs/tags/${version}.tar.gz"
-tarball_blake2b="7157522134301d024f0a48a0c4f903dd2ff14eb6c3609dcdf830a609a75fb1e31fc736c5458aacd3e8a075f43cceafa96144820d149de44b61a49575ffadbbf0"
+tarball_blake2b="d4206264559fae429e8088ff52addbff950898b31e9b2742bf58ea77d1b76f704a2fea9f9c19b6ce8129e902e34d4097ee558ba2ac31596ec7a643a106f09693"
 
 package_rust_crate
