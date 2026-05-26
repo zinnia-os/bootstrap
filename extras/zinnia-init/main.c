@@ -1,14 +1,36 @@
 #define _GNU_SOURCE
 
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/module.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
 #include <sys/uio.h>
+#include <time.h>
 #include <unistd.h>
+
+static int wait_for_path(const char *path, int timeout_ms) {
+  const int interval_ms = 50;
+  int waited = 0;
+  struct stat st;
+  while (stat(path, &st) != 0) {
+    if (errno != ENOENT)
+      return -1;
+    if (waited >= timeout_ms)
+      return -1;
+    struct timespec ts = {
+        .tv_sec = interval_ms / 1000,
+        .tv_nsec = (long)(interval_ms % 1000) * 1000000L,
+    };
+    nanosleep(&ts, NULL);
+    waited += interval_ms;
+  }
+  return 0;
+}
 
 int main(int argc, char **argv, char **envp) {
   int e;
@@ -29,8 +51,13 @@ int main(int argc, char **argv, char **envp) {
 
   // Mount the root partition
   // TODO: Don't use a fixed uuid for this.
-  e = mount("ext2", "/realfs", 0,
-            "/dev/block/parttype-0fc63daf-8483-4772-8e79-3d69d8477de4");
+  const char *root_dev =
+      "/dev/block/parttype-0fc63daf-8483-4772-8e79-3d69d8477de4";
+  if (wait_for_path(root_dev, 10000) != 0) {
+    fprintf(stderr, "init: timed out waiting for root device %s\n", root_dev);
+    return 1;
+  }
+  e = mount("ext2", "/realfs", 0, root_dev);
   if (e)
     return e;
 
