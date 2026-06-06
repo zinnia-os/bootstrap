@@ -1,0 +1,33 @@
+diff --git vte-clean/src/missing.cc vte-workdir/src/missing.cc
+index c769fb4..b8a7702 100644
+--- vte-clean/src/missing.cc
++++ vte-workdir/src/missing.cc
+@@ -107,21 +107,25 @@ getrlimit_NOFILE_max(void)
+ }
+ #endif /* __linux__ */
+ 
+-#ifdef __GLIBC__
++#if defined(__GLIBC__) || defined(__zinnia__)
+ {
+         struct rlimit rlim;
+ 
+         /* Use getrlimit() function provided by the system if it is known to be
+          * async-signal safe.
+          *
+-         * According to the glibc manual, getrlimit is AS-safe.
++         * According to the glibc manual, getrlimit is AS-safe; on Zinnia it is
++         * a single syscall, which is likewise AS-safe. Without this, neither the
++         * __linux__ (prlimit / /proc) nor the BSD (sysconf) paths apply on
++         * Zinnia, so getrlimit_NOFILE_max() would return RLIM_INFINITY and
++         * fdwalk() below would bail out with ENFILE.
+          */
+         if (getrlimit(RLIMIT_NOFILE, &rlim) == 0)
+                 return rlim.rlim_max;
+ }
+ 
+         /* fallback */
+-#endif /* __GLIBC__ */
++#endif /* __GLIBC__ || __zinnia__ */
+ 
+ #endif /* HAVE_SYS_RESOURCE_H */
+ 

@@ -1,0 +1,34 @@
+#! /bin/sh
+
+name=openpam
+version=20250531
+revision=3
+tarball_url="https://downloads.sourceforge.net/project/openpam/openpam/Zingiber/openpam-${version}.tar.gz"
+tarball_blake2b="8bb57f6c004525862b7eca04316c696b2009df28d0032e4f090b5b260ae065a83c3f27450b5b3c6aa9cdd93b251c02c69ec91bdc292b18e52d80ad2a2521aa58"
+hostdeps="gcc pkg-config"
+deps="core-libs libxcrypt"
+
+prepare() {
+    autotools_recursive_regen
+
+    sed -i 's/OPENPAM_MODULES_DIRECTORY/OPENPAM_MODULES_DIR/g' \
+        "${source_dir}/lib/libpam/openpam_constants.c"
+}
+
+configure() {
+    autotools_configure \
+        --with-pam-unix \
+        --without-doc \
+        --enable-unversioned-modules \
+        --with-modules-dir=/usr/lib/security
+}
+
+build() {
+    make -j${parallelism} CRYPT_LIBS="-lcrypt"
+}
+
+package() {
+    DESTDIR="${dest_dir}" make install
+
+    post_package_strip
+}

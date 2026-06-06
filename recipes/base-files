@@ -2,7 +2,7 @@
 
 name=base-files
 version=0.0
-revision=1
+revision=12
 source_dir="extras/base-files"
 skip_pkg_check=yes
 
@@ -19,6 +19,11 @@ package() {
     mkdir -pv "${dest_dir}/usr/sbin"
     mkdir -pv "${dest_dir}/usr/share"
     mkdir -pv "${dest_dir}/var"
+
+    # LightDM runtime/state directories.
+    mkdir -pv "${dest_dir}/var/lib/lightdm"
+    mkdir -pv "${dest_dir}/var/cache/lightdm"
+    mkdir -pv "${dest_dir}/var/log/lightdm"
 
     ln -svf usr/bin "${dest_dir}/bin"
     ln -svf usr/lib "${dest_dir}/lib"

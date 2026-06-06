@@ -1,0 +1,31 @@
+#! /bin/sh
+
+name=gst-plugins-bad
+version=1.26.11
+revision=1
+tarball_url="https://gstreamer.freedesktop.org/src/gst-plugins-bad/gst-plugins-bad-${version}.tar.xz"
+tarball_blake2b="b8ac607339cfb081fb2b13135365f234951311c21974a2c9eb4cc86a270d1405efbccddeec7249d19cb2c3c85b26a897a6d043a92bc424a043d69134b51df1bb"
+imagedeps="libglib2.0-dev bison flex liborc-0.4-dev"
+hostdeps="gcc pkg-config"
+deps="core-libs glib2 gstreamer gst-plugins-base orc mesa libdrm graphene libx11 zlib"
+
+configure() {
+    meson_configure \
+        -Dintrospection=disabled \
+        -Dtests=disabled \
+        -Dexamples=disabled \
+        -Ddoc=disabled \
+        -Dnls=disabled \
+        -Dorc=enabled \
+        -Dgpl=enabled
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

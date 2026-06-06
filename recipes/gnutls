@@ -1,0 +1,46 @@
+#! /bin/sh
+
+name=gnutls
+version=3.8.13
+revision=1
+tarball_url="https://www.gnupg.org/ftp/gcrypt/gnutls/v3.8/gnutls-${version}.tar.xz"
+tarball_blake2b="80677a45a7c6f892287020e3e6b0add2432f2c64a4c9a649ce889921ac65b44931504ad0682ccc12e4b6d8f94c1a72e35c50673c9d04bd4e327063b812339380"
+imagedeps="build-essential pkg-config"
+hostdeps="gcc pkg-config"
+deps="core-libs nettle gmp libtasn1 p11-kit libunistring libidn2 zlib zstd brotli"
+
+prepare() {
+    autotools_recursive_regen
+
+    # gnulib bundles its own self-tests under src/gl/tests, and one of them
+    # (getlocalename_l-unsafe.c) has no port for zinnia/mlibc and #errors out.
+    # They are gnulib's tests, not GnuTLS's, so --disable-tests does not cover
+    # them; drop the tests subdir from the src gnulib Makefile.  Patching
+    # Makefile.in (not Makefile.am) avoids needing automake at build time.
+    sed -i 's/^SUBDIRS = \. tests$/SUBDIRS = ./' "${source_dir}/src/gl/Makefile.in"
+}
+
+configure() {
+    # Just the library is needed (VTE uses it to encrypt on-disk scrollback).
+    # Drop the bits that pull extra toolchains/deps: the command-line tools, C++
+    # wrapper, DANE/unbound, TPM, docs, tests and NLS.
+    autotools_configure \
+        --disable-doc \
+        --disable-tests \
+        --disable-tools \
+        --disable-cxx \
+        --disable-nls \
+        --disable-libdane \
+        --without-tpm \
+        --without-tpm2
+}
+
+build() {
+    make -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" make install
+
+    post_package_strip
+}

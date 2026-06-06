@@ -1,0 +1,29 @@
+#! /bin/sh
+
+name=xfce4-terminal
+version=1.2.0
+revision=1
+tarball_url="https://archive.xfce.org/src/apps/xfce4-terminal/1.2/xfce4-terminal-${version}.tar.xz"
+tarball_blake2b="9768b44ef9667b78162f6221ddbdc0526f6d02b5bc7ef406b0228640fd93f5ccac44c541fe1cc01c19bd0bced5104b20a1e073fc0771d881f4eca9140e9dde6b"
+imagedeps="build-essential patchelf pkg-config python3 python3-distutils-extra xfce4-dev-tools"
+hostdeps="gcc pkg-config glib2"
+deps="core-libs vte libxfce4ui exo gtk3 xfconf"
+
+configure() {
+    meson_configure \
+        -Dx11=enabled \
+        -Dwayland=disabled \
+        -Dgtk-layer-shell=disabled \
+        -Dlibutempter=disabled \
+        -Ddoc=false
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

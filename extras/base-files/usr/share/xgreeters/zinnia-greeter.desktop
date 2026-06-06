@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=Zinnia Greeter
+Comment=LightDM GTK greeter (Zinnia wrapper that sets the greeter environment)
+Exec=/etc/lightdm/greeter-wrapper
+Type=Application

@@ -1,0 +1,29 @@
+#! /bin/sh
+
+name=gst-plugins-good
+version=1.26.11
+revision=1
+tarball_url="https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-${version}.tar.xz"
+tarball_blake2b="ca880aeb1c323e790b82f0cc67613ebec88ee7615ce3ac227bb048901687675022c5575c47078c8add597cfe0a7a1bd1a38e7471cf21c54cc995dc823febef24"
+imagedeps="libglib2.0-dev bison flex liborc-0.4-dev"
+hostdeps="gcc pkg-config"
+deps="core-libs glib2 gstreamer gst-plugins-base orc zlib"
+
+configure() {
+    meson_configure \
+        -Dtests=disabled \
+        -Dexamples=disabled \
+        -Ddoc=disabled \
+        -Dnls=disabled \
+        -Dorc=enabled
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

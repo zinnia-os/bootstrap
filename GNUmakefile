@@ -6,7 +6,7 @@ ARCH ?= x86_64
 
 # Prepares an ISO with all packages
 .PHONY: all
-all: minimal-install iso
+all: desktop-install iso
 
 # Cleans up the entire build directory
 .PHONY: clean
@@ -30,7 +30,7 @@ full-install: build-$(ARCH)/.jinx-parameters
 	@cd build-$(ARCH) && ../jinx/jinx update '*'
 	@cd build-$(ARCH) && sudo ../jinx/jinx install sysroot '*'
 
-MINIMAL_PKGS = base-files zinnia zinnia-utils limine mlibc dinit seatd weston bash coreutils fastfetch
+MINIMAL_PKGS = base-files zinnia zinnia-utils limine mlibc dinit zinnia-devd seatd weston bash coreutils fastfetch
 
 # Build only a minimal selection of packages
 .PHONY: minimal-install
@@ -132,8 +132,10 @@ endif
 qemu: ovmf/ovmf-code-$(ARCH).fd build-$(ARCH)/zinnia.img
 	qemu-system-$(ARCH) $(QEMUFLAGS) \
 		-drive format=raw,file=build-$(ARCH)/zinnia.img,if=none,id=disk \
-		-device nvme,serial=FAKE_SERIAL_ID,drive=disk
+		-device nvme,serial=FAKE_SERIAL_ID,drive=disk,bootindex=1
 
 .PHONY: qemu-iso
 qemu-iso: ovmf/ovmf-code-$(ARCH).fd build-$(ARCH)/zinnia.iso
-	qemu-system-$(ARCH) $(QEMUFLAGS) -cdrom build-$(ARCH)/zinnia.iso
+	qemu-system-$(ARCH) $(QEMUFLAGS) -cdrom build-$(ARCH)/zinnia.iso \
+		-drive format=raw,file=build-$(ARCH)/zinnia.img,if=none,id=disk \
+		-device nvme,serial=FAKE_SERIAL_ID,drive=disk,bootindex=1

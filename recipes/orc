@@ -1,0 +1,27 @@
+#! /bin/sh
+
+name=orc
+version=0.4.41
+revision=1
+tarball_url="https://gstreamer.freedesktop.org/src/orc/orc-${version}.tar.xz"
+tarball_blake2b="8c14462bc2420a96176592c8362d302667041c70086cbad8785bfde182a6131b86c5293d607d0c87bfdc400c1e22dc83dda5bd3a4c799e8f398ed7b72ad0fae5"
+hostdeps="gcc pkg-config"
+deps="core-libs"
+
+configure() {
+    meson_configure \
+        -Dtests=disabled \
+        -Dbenchmarks=disabled \
+        -Dexamples=disabled \
+        -Dgtk_doc=disabled
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

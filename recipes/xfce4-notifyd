@@ -1,0 +1,28 @@
+#! /bin/sh
+
+name=xfce4-notifyd
+version=0.9.7
+revision=1
+tarball_url="https://archive.xfce.org/src/apps/xfce4-notifyd/0.9/xfce4-notifyd-${version}.tar.bz2"
+tarball_blake2b="1d76daa342f4011ca0b4bb3c71e721ffd9a140538b181410508332bddd5d2c3fcfc1ec3ee51b80c50cdd37d01b266c4bc412927a5820fbd2fe251131ca7b12e7"
+imagedeps="build-essential patchelf pkg-config python3 python3-distutils-extra xfce4-dev-tools"
+hostdeps="gcc pkg-config glib2"
+deps="core-libs libxfce4ui libxfce4util xfconf gtk3 libnotify dbus xfce4-panel sqlite"
+
+configure() {
+    meson_configure \
+        -Dx11=enabled \
+        -Dwayland=disabled \
+        -Dsound=disabled \
+        -Dsystemd=disabled
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

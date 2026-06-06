@@ -1,5 +1,0 @@
-type = process
-command = /bin/sh -c "XDG_RUNTIME_DIR=/tmp exec /usr/bin/weston"
-depends-on = seatd
-restart = yes
-working-dir = /root

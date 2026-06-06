@@ -1,0 +1,33 @@
+#! /bin/sh
+
+name=gstreamer
+version=1.26.11
+revision=1
+tarball_url="https://gstreamer.freedesktop.org/src/gstreamer/gstreamer-${version}.tar.xz"
+tarball_blake2b="11b3d21c06e899165af141c9a96fa756ad80018836b3f4dcdea07a51793a427929c3caaf59c2c924c35ae1b58c857611a2e496cbafa65f654bed871c490cd662"
+imagedeps="libglib2.0-dev bison flex"
+hostdeps="gcc pkg-config"
+deps="core-libs glib2"
+
+configure() {
+    meson_configure \
+        -Dintrospection=disabled \
+        -Dtests=disabled \
+        -Dexamples=disabled \
+        -Dbenchmarks=disabled \
+        -Ddoc=disabled \
+        -Dbash-completion=disabled \
+        -Dptp-helper-permissions=none \
+        -Dlibunwind=disabled \
+        -Ddbghelp=disabled
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

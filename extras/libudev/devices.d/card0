@@ -1,4 +1,0 @@
-NAME=card0
-SUBSYSTEM=drm
-DEVNAME=/dev/drm/card0
-DEVTYPE=drm_minor

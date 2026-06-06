@@ -1,0 +1,20 @@
+#! /bin/sh
+
+name=rw
+version=1.0
+revision=1
+tarball_url="https://sortix.org/rw/release/rw-portable-${version}.tar.gz"
+tarball_blake2b="a24bc3e79fc74235f211a187d660472cc567967b473763ffc47fda14dfe18d41b07db7ab6d5cf5c795b0e718c44c2b82de04c0f5d883c0c1343f31b433266b2d"
+hostdeps="gcc"
+deps="core-libs"
+
+build() {
+    cp -rp "${source_dir}"/. ./
+    CC="${TARGET_CC}" CFLAGS="${TARGET_CFLAGS}" make -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" PREFIX=/usr make install
+
+    post_package_strip
+}

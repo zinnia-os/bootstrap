@@ -1,0 +1,40 @@
+diff --git librsvg-clean/rsvg-path.c librsvg-workdir/rsvg-path.c
+index ee32ee6..679e95f 100644
+--- librsvg-clean/rsvg-path.c
++++ librsvg-workdir/rsvg-path.c
+@@ -710,8 +710,20 @@ rsvg_parse_path_data (RSVGParsePathCtx * ctx, const char *data)
+     for (i = 0; data[i] != '\0'; i++) {
+         c = data[i];
+         if ((c >= '0' && c <= '9') || c == '+' || c == '-' || c == '.') {
+-            /* digit */
+-            i += rsvg_parse_number(ctx, data + i) - 1;
++            /* The large-arc-flag and sweep-flag of an elliptical arc command
++             * ('a'/'A', parameters 3 and 4) are single-character flags ('0' or
++             * '1') which the SVG path grammar allows to be written with no
++             * separator, e.g. "...0 01-.5-.5".  Consume them one character at a
++             * time, otherwise rsvg_parse_number() reads "01" as the number 1
++             * and every following arc parameter is shifted, corrupting the arc. */
++            if (ctx->cmd == 'a' && (ctx->param == 3 || ctx->param == 4)
++                && (c == '0' || c == '1')) {
++                ctx->params[ctx->param++] = c - '0';
++                rsvg_parse_path_do_cmd (ctx, FALSE);
++            } else {
++                /* digit */
++                i += rsvg_parse_number(ctx, data + i) - 1;
++            }
+         } else if (c == 'z' || c == 'Z') {
+             if (ctx->param)
+                 rsvg_parse_path_do_cmd (ctx, TRUE);
+diff --git librsvg-clean/rsvg-private.h librsvg-workdir/rsvg-private.h
+index 82157bc..ebf54d7 100644
+--- librsvg-clean/rsvg-private.h
++++ librsvg-workdir/rsvg-private.h
+@@ -31,6 +31,8 @@
+ 
+ #include "rsvg.h"
+ 
++/* libxml2 >= 2.12 no longer pulls <libxml/parser.h> in transitively via SAX.h */
++#include <libxml/parser.h>
+ #include <libxml/SAX.h>
+ #include <libxml/xmlmemory.h>
+ #include <pango/pango.h>

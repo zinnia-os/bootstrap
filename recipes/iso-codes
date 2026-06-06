@@ -1,0 +1,26 @@
+#! /bin/sh
+
+name=iso-codes
+version=4.15.0
+revision=1
+tarball_url="http://deb.debian.org/debian/pool/main/i/iso-codes/iso-codes_${version}.orig.tar.xz"
+tarball_blake2b="d82f5967cf14ee569220d3f32c2f879dc1b71138798ea5c0719a45ab1860bf961fd3936d10025c07fd89c6fb2cb54481cdbcc9f23bac5eb8720edf5a5a7144b3"
+imagedeps="build-essential gettext python3"
+hostdeps="gcc pkg-config"
+deps="core-libs"
+
+prepare() {
+    autotools_recursive_regen
+}
+
+configure() {
+    autotools_configure
+}
+
+build() {
+    make -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" make install
+}

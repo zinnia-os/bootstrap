@@ -1,0 +1,35 @@
+#! /bin/sh
+
+name=vte
+version=0.78.7
+revision=2
+tarball_url="https://download.gnome.org/sources/vte/0.78/vte-${version}.tar.xz"
+tarball_blake2b="e4b3c947abdb2c7200c3921fdaba0fe6d06d077735dbcac2cd2358c8a0b61d6a21fec6add8adf487088d38fdbf17f22d39d9cea1fc2077e887f8f9a6f3b49762"
+imagedeps="build-essential patchelf pkg-config python3 gperf"
+hostdeps="gcc pkg-config glib2"
+deps="core-libs gtk3 glib2 pango cairo gdk-pixbuf pcre2 fribidi lz4 gnutls"
+
+configure() {
+    meson_configure \
+        -Dgtk3=true \
+        -Dgtk4=false \
+        -Dgnutls=true \
+        -D_systemd=false \
+        -Dvapi=false \
+        -Dgir=false \
+        -Da11y=false \
+        -Dicu=false \
+        -Dfribidi=true \
+        -Dglade=false \
+        -Ddocs=false
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

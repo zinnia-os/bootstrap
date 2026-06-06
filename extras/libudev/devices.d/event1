@@ -1,7 +1,0 @@
-NAME=event1
-SUBSYSTEM=input
-DEVNAME=/dev/input/event1
-PARENT=platform/i8042
-ID_INPUT=1
-ID_INPUT_MOUSE=1
-ATTR{name}=ImExPS/2 Generic Explorer Mouse

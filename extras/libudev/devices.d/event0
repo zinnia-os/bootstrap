@@ -1,7 +1,0 @@
-NAME=event0
-SUBSYSTEM=input
-DEVNAME=/dev/input/event0
-PARENT=platform/i8042
-ID_INPUT=1
-ID_INPUT_KEYBOARD=1
-ATTR{name}=AT Translated Set 2 keyboard

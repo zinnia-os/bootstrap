@@ -2,7 +2,7 @@
 
 name=mesa
 version=25.3.0
-revision=1
+revision=2
 tarball_url="https://archive.mesa3d.org/mesa-${version}.tar.xz"
 tarball_blake2b="54cd99f9a4f14bf070f5525a91a776f0b7042ce7c056bf8db388baa5c98e0065799cdc376c0c42205b08eff18f252b6e7be5987e44fb628b97a360a7e89c300f"
 imagedeps="python3-mako python3-yaml glslang-tools pkg-config"
@@ -13,6 +13,7 @@ configure() {
     meson_configure \
         -Db_ndebug=true \
         -Dbuild-tests=false \
+        -Ddri-drivers-path=/usr/lib/dri \
         -Dshared-glapi=enabled \
         -Dexpat=enabled \
         -Dgbm=enabled \

@@ -1,0 +1,33 @@
+#! /bin/sh
+
+name=tumbler
+version=4.21.1
+revision=1
+tarball_url="https://archive.xfce.org/src/xfce/tumbler/4.21/tumbler-${version}.tar.xz"
+tarball_blake2b="a2090f5dfcdb278b5171ec766d06b81d87bab6242b9850354b0ea6a91e40e34b62089be3271f1001ead50a9e5449332cc5fec0daadc6613b392d4e946d10cec7"
+imagedeps="build-essential patchelf pkg-config python3 xfce4-dev-tools"
+hostdeps="gcc pkg-config glib2"
+deps="core-libs gdk-pixbuf glib2 dbus freetype2 libxfce4util"
+
+configure() {
+    meson_configure \
+        -Dgtk-doc=false \
+        -Dcover-thumbnailer=disabled \
+        -Dffmpeg-thumbnailer=disabled \
+        -Dgepub-thumbnailer=disabled \
+        -Dgst-thumbnailer=disabled \
+        -Djpeg-thumbnailer=disabled \
+        -Dodf-thumbnailer=disabled \
+        -Dpoppler-thumbnailer=disabled \
+        -Draw-thumbnailer=disabled
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

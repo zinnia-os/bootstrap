@@ -1,0 +1,33 @@
+#! /bin/sh
+
+name=adwaita-icon-theme
+version=41.0
+revision=1
+tarball_url="https://download.gnome.org/sources/adwaita-icon-theme/41/adwaita-icon-theme-${version}.tar.xz"
+tarball_blake2b="6899bf734a3f708e6596a4aeb2df426041dd46232a3cbd55f530fab2cc92277db74322a31a443e251a06c74bf7fad7d5f9394b63edb33fced5ce8987e5c87d3e"
+imagedeps="build-essential"
+hostdeps="gcc pkg-config"
+deps="core-libs hicolor-icon-theme librsvg"
+
+prepare() {
+    autotools_recursive_regen
+}
+
+configure() {
+    # The tarball ships pre-rendered fullcolor PNGs and symbolic SVGs, so no
+    # host rendering tools are needed. gtk-update-icon-cache is a target binary
+    # we cannot run while cross-building; stub it out (the cache is rebuilt on
+    # the target at session start by .xinitrc). gtk-encode-symbolic-svg is also
+    # absent, so the symbolic icons are installed as SVGs and rendered at
+    # runtime by librsvg.
+    GTK_UPDATE_ICON_CACHE=/bin/true \
+    autotools_configure
+}
+
+build() {
+    make -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" make install
+}

@@ -1,0 +1,7 @@
+#! /bin/sh
+
+name=xfce4-desktop
+version=0.0
+revision=1
+deps="exo garcon libxfce4util libxfce4ui libxfce4windowing xfconf xfwm4 xfdesktop xfce4-panel xfce4-session xfce4-settings xfce4-power-manager thunar tumbler xfce4-appfinder xfce4-terminal xfce4-notifyd dbus xorg-server xorg-xinit xf86-input-evdev xkeyboard-config xorg-xkbcomp ttf-dejavu ttf-liberation hicolor-icon-theme librsvg adwaita-icon-theme"
+skip_pkg_check=yes

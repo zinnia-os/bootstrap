@@ -1,0 +1,8 @@
+type = process
+# System D-Bus bus.  LightDM owns org.freedesktop.DisplayManager on it and
+# exits if it cannot connect, so this must be up first.  --print-address=3
+# lets dinit wait until the bus socket is actually listening.
+command = /bin/sh -c "mkdir -p /run/dbus && exec /usr/bin/dbus-daemon --system --nofork --nopidfile --print-address=3"
+ready-notification = pipefd:3
+depends-on = devd
+restart = yes

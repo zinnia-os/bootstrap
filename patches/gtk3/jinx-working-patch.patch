@@ -1,4 +1,5 @@
-diff -urN --no-dereference gtk3-clean/gdk/wayland/gdkdisplay-wayland.c gtk3-workdir/gdk/wayland/gdkdisplay-wayland.c
+diff --git gtk3-clean/gdk/wayland/gdkdisplay-wayland.c gtk3-workdir/gdk/wayland/gdkdisplay-wayland.c
+index 7da4ed0..83397da 100644
 --- gtk3-clean/gdk/wayland/gdkdisplay-wayland.c
 +++ gtk3-workdir/gdk/wayland/gdkdisplay-wayland.c
 @@ -28,7 +28,9 @@
@@ -11,15 +12,14 @@ diff -urN --no-dereference gtk3-clean/gdk/wayland/gdkdisplay-wayland.c gtk3-work
  
  #include <glib.h>
  #include "gdkwayland.h"
-@@ -1306,13 +1308,16 @@
+@@ -1306,13 +1308,15 @@ open_shared_memory (void)
    static gboolean force_shm_open = FALSE;
    int ret = -1;
  
 -#if !defined (__NR_memfd_create)
-+#ifdef __mlibc__
-+  ret = memfd_create("gdk-wayland", MFD_CLOEXEC);
-+#endif
-+#if !defined (__NR_memfd_create) && !defined(__mlibc__)
++#if defined(__mlibc__) || !defined (__NR_memfd_create)
++  /* mlibc gates memfd_create() behind its disabled linux option, so use the
++   * shm_open() fallback below (backed by the /dev/shm tmpfs) instead. */
    force_shm_open = TRUE;
  #endif
  

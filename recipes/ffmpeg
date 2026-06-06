@@ -1,0 +1,46 @@
+#! /bin/sh
+
+name=ffmpeg
+version=7.1.1
+revision=1
+tarball_url="https://ffmpeg.org/releases/ffmpeg-${version}.tar.xz"
+tarball_blake2b="85d1850bfa39ec28d358b5454daa7c1cf8580af73a6f83e7c070ea94db40ad485adbaeb89e886e0b3908e0f1765bd9f2b40ddd838e33e0a76e5b286917535310"
+imagedeps="nasm build-essential"
+hostdeps="gcc pkg-config"
+deps="core-libs zlib"
+
+configure() {
+    ${source_dir}/configure \
+        --prefix=${prefix} \
+        --libdir=${prefix}/lib \
+        --enable-cross-compile \
+        --cross-prefix=${OS_TRIPLET}- \
+        --arch=x86_64 \
+        --target-os=linux \
+        --cc=${OS_TRIPLET}-gcc \
+        --cxx=${OS_TRIPLET}-g++ \
+        --host-cc=gcc \
+        --pkg-config=${OS_TRIPLET}-pkg-config \
+        --pkg-config-flags=--static \
+        --extra-cflags="$TARGET_CFLAGS -D_GNU_SOURCE" \
+        --extra-ldflags="$TARGET_LDFLAGS" \
+        --enable-shared \
+        --disable-static \
+        --enable-gpl \
+        --enable-version3 \
+        --enable-zlib \
+        --disable-programs \
+        --disable-doc \
+        --disable-debug \
+        --disable-stripping
+}
+
+build() {
+    make -j${parallelism}
+}
+
+package() {
+    make install DESTDIR="${dest_dir}"
+
+    post_package_strip
+}

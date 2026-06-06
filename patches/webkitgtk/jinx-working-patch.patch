@@ -1,0 +1,442 @@
+diff --git webkitgtk-clean/Source/JavaScriptCore/assembler/PerfLog.cpp webkitgtk-workdir/Source/JavaScriptCore/assembler/PerfLog.cpp
+index cc86b3a..f9d274f 100644
+--- webkitgtk-clean/Source/JavaScriptCore/assembler/PerfLog.cpp
++++ webkitgtk-workdir/Source/JavaScriptCore/assembler/PerfLog.cpp
+@@ -35,7 +35,9 @@
+ #include <mutex>
+ #include <sys/mman.h>
+ #include <sys/stat.h>
++#if !defined(__zinnia__)
+ #include <sys/syscall.h>
++#endif
+ #include <sys/types.h>
+ #include <unistd.h>
+ #include <wtf/DataLog.h>
+@@ -143,7 +145,9 @@ static inline uint64_t generateTimestamp()
+ 
+ static inline uint32_t getCurrentThreadID()
+ {
+-#if OS(LINUX)
++#if defined(__zinnia__)
++    return static_cast<uint32_t>(gettid());
++#elif OS(LINUX)
+     return static_cast<uint32_t>(syscall(__NR_gettid));
+ #elif OS(DARWIN)
+     // Ideally we would like to use pthread_threadid_np. But this is 64bit, while required one is 32bit.
+diff --git webkitgtk-clean/Source/JavaScriptCore/heap/BlockDirectory.cpp webkitgtk-workdir/Source/JavaScriptCore/heap/BlockDirectory.cpp
+index 67f36d7..da2e80b 100644
+--- webkitgtk-clean/Source/JavaScriptCore/heap/BlockDirectory.cpp
++++ webkitgtk-workdir/Source/JavaScriptCore/heap/BlockDirectory.cpp
+@@ -68,7 +68,7 @@ void BlockDirectory::updatePercentageOfPagedOutPages(SimpleStats& stats)
+     // FIXME: We should figure out a solution for Windows and PlayStation.
+     // QNX doesn't have mincore(), though the information can be had. But since all mapped
+     // pages are resident, does it matter?
+-#if OS(UNIX) && !PLATFORM(PLAYSTATION) && !OS(QNX)
++#if OS(UNIX) && !PLATFORM(PLAYSTATION) && !OS(QNX) && !defined(__zinnia__)
+     size_t pageSize = WTF::pageSize();
+     ASSERT(!(MarkedBlock::blockSize % pageSize));
+     auto numberOfPagesInMarkedBlock = MarkedBlock::blockSize / pageSize;
+diff --git webkitgtk-clean/Source/WTF/wtf/Platform.h webkitgtk-workdir/Source/WTF/wtf/Platform.h
+index 51a8dce..a1c3bb2 100644
+--- webkitgtk-clean/Source/WTF/wtf/Platform.h
++++ webkitgtk-workdir/Source/WTF/wtf/Platform.h
+@@ -162,3 +162,67 @@
+ #if PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)
+ #define USE_ACCESSIBILITY_CONTEXT_MENUS 1
+ #endif
++
++/* mlibc (zinnia) only provides posix_madvise(); the madvise()/MADV_* Linux
++ * wrappers are gated behind the mlibc "linux" option, which zinnia does not
++ * enable. Map them onto the POSIX advise API (advisory; unsupported hints are
++ * treated as MADV_NORMAL). */
++#if defined(__zinnia__)
++#include <sys/mman.h>
++#define madvise(addr, length, advice) posix_madvise((addr), (length), (advice))
++#ifndef MADV_NORMAL
++#define MADV_NORMAL POSIX_MADV_NORMAL
++#endif
++#ifndef MADV_RANDOM
++#define MADV_RANDOM POSIX_MADV_RANDOM
++#endif
++#ifndef MADV_SEQUENTIAL
++#define MADV_SEQUENTIAL POSIX_MADV_SEQUENTIAL
++#endif
++#ifndef MADV_WILLNEED
++#define MADV_WILLNEED POSIX_MADV_WILLNEED
++#endif
++#ifndef MADV_DONTNEED
++#define MADV_DONTNEED POSIX_MADV_DONTNEED
++#endif
++#ifndef MADV_FREE
++#define MADV_FREE POSIX_MADV_DONTNEED
++#endif
++#ifndef MADV_DONTDUMP
++#define MADV_DONTDUMP POSIX_MADV_NORMAL
++#endif
++#ifndef MADV_DODUMP
++#define MADV_DODUMP POSIX_MADV_NORMAL
++#endif
++/* mmap() flags also gated behind the mlibc linux option; these are advisory
++ * (swap-reservation / legacy executable hint), so treat them as no-ops. */
++#ifndef MAP_NORESERVE
++#define MAP_NORESERVE 0
++#endif
++#ifndef MAP_EXECUTABLE
++#define MAP_EXECUTABLE 0
++#endif
++/* x86_64 signal-context (mcontext_t.gregs[]) register indices. mlibc's zinnia
++ * mcontext_t exposes gregs[16] without the glibc REG_* indices. Define them in
++ * the glibc order: gregs[0..15] hold the GP registers and REG_RIP (16) lands on
++ * the adjacent instruction-pointer field. */
++#if defined(__x86_64__) && !defined(REG_RIP)
++#define REG_R8  0
++#define REG_R9  1
++#define REG_R10 2
++#define REG_R11 3
++#define REG_R12 4
++#define REG_R13 5
++#define REG_R14 6
++#define REG_R15 7
++#define REG_RDI 8
++#define REG_RSI 9
++#define REG_RBP 10
++#define REG_RBX 11
++#define REG_RDX 12
++#define REG_RAX 13
++#define REG_RCX 14
++#define REG_RSP 15
++#define REG_RIP 16
++#endif
++#endif /* __zinnia__ */
+diff --git webkitgtk-clean/Source/WTF/wtf/PlatformGTK.cmake webkitgtk-workdir/Source/WTF/wtf/PlatformGTK.cmake
+index 1f694a2..0845528 100644
+--- webkitgtk-clean/Source/WTF/wtf/PlatformGTK.cmake
++++ webkitgtk-workdir/Source/WTF/wtf/PlatformGTK.cmake
+@@ -53,7 +53,7 @@ list(APPEND WTF_PUBLIC_HEADERS
+     unix/UnixFileDescriptor.h
+ )
+ 
+-if (CMAKE_SYSTEM_NAME MATCHES "Linux")
++if (CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Zinnia")
+     list(APPEND WTF_SOURCES
+         linux/CurrentProcessMemoryStatus.cpp
+         linux/MemoryFootprintLinux.cpp
+diff --git webkitgtk-clean/Source/WTF/wtf/PlatformOS.h webkitgtk-workdir/Source/WTF/wtf/PlatformOS.h
+index 9da44bc..9a0c6a6 100644
+--- webkitgtk-clean/Source/WTF/wtf/PlatformOS.h
++++ webkitgtk-workdir/Source/WTF/wtf/PlatformOS.h
+@@ -108,7 +108,7 @@
+ #endif
+ 
+ /* OS(LINUX) - Linux */
+-#if defined(__linux__)
++#if defined(__linux__) || defined(__zinnia__)
+ #define WTF_OS_LINUX 1
+ #endif
+ 
+diff --git webkitgtk-clean/Source/WTF/wtf/StackBounds.cpp webkitgtk-workdir/Source/WTF/wtf/StackBounds.cpp
+index 2e104f9..7294826 100644
+--- webkitgtk-clean/Source/WTF/wtf/StackBounds.cpp
++++ webkitgtk-workdir/Source/WTF/wtf/StackBounds.cpp
+@@ -38,8 +38,10 @@
+ 
+ #if OS(LINUX)
+ #include <sys/resource.h>
+-#include <sys/syscall.h>
+ #include <unistd.h>
++#if !defined(__zinnia__)
++#include <sys/syscall.h>
++#endif
+ #endif
+ 
+ #if OS(QNX)
+@@ -112,6 +114,23 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+ 
+ StackBounds StackBounds::newThreadStackBounds(PlatformThreadHandle thread)
+ {
++#if defined(__zinnia__)
++    // mlibc does not export pthread_getattr_np (it is gated behind the disabled
++    // linux option), so approximate the current thread's stack bounds from the
++    // current frame (origin) and RLIMIT_STACK (size). This is always called for
++    // the current thread in practice; the resulting bound is conservative for
++    // JSC's stack-limit checks.
++    UNUSED_PARAM(thread);
++    void* origin = __builtin_frame_address(0);
++    size_t zinniaStackSize = 8 * 1024 * 1024;
++    struct rlimit zinniaLimit;
++    if (!getrlimit(RLIMIT_STACK, &zinniaLimit) && zinniaLimit.rlim_cur != RLIM_INFINITY && zinniaLimit.rlim_cur)
++        zinniaStackSize = static_cast<size_t>(zinniaLimit.rlim_cur);
++WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
++    void* zinniaBound = static_cast<char*>(origin) - zinniaStackSize;
++WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
++    return StackBounds { origin, zinniaBound };
++#else
+     void* bound = nullptr;
+     size_t stackSize = 0;
+ 
+@@ -133,6 +152,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+     // pthread_attr_getstack's bound is the lowest accessible pointer of the stack.
+     return StackBounds { origin, bound };
++#endif
+ }
+ 
+ #endif // OS(OPENBSD)
+@@ -140,7 +160,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+ StackBounds StackBounds::currentThreadStackBoundsInternal()
+ {
+     auto ret = newThreadStackBounds(pthread_self());
+-#if OS(LINUX)
++#if OS(LINUX) && !defined(__zinnia__)
+     // on glibc, pthread_attr_getstack will generally return the limit size (minus a guard page)
+     // for the main thread; this is however not necessarily always true on every libc - for example
+     // on musl, it will return the currently reserved size - since the stack bounds are expected to
+diff --git webkitgtk-clean/Source/WTF/wtf/posix/ThreadingPOSIX.cpp webkitgtk-workdir/Source/WTF/wtf/posix/ThreadingPOSIX.cpp
+index 0ccc38c..39fd3e9 100644
+--- webkitgtk-clean/Source/WTF/wtf/posix/ThreadingPOSIX.cpp
++++ webkitgtk-workdir/Source/WTF/wtf/posix/ThreadingPOSIX.cpp
+@@ -45,8 +45,12 @@
+ 
+ #if OS(LINUX)
+ #include <sched.h>
++#if defined(__zinnia__)
++#include <unistd.h>
++#else
+ #include <sys/prctl.h>
+ #include <sys/syscall.h>
++#endif
+ #include <wtf/linux/RealTimeThreads.h>
+ #ifndef SCHED_RESET_ON_FORK
+ #define SCHED_RESET_ON_FORK 0x40000000
+@@ -221,7 +225,11 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+ #if OS(LINUX)
+ ThreadIdentifier Thread::currentID()
+ {
++#if defined(__zinnia__)
++    return static_cast<ThreadIdentifier>(gettid());
++#else
+     return static_cast<ThreadIdentifier>(syscall(SYS_gettid));
++#endif
+ }
+ #endif
+ 
+@@ -344,7 +352,9 @@ bool Thread::establishHandle(NewThreadContext* context, std::optional<size_t> st
+ 
+ void Thread::initializeCurrentThreadInternal(const char* threadName)
+ {
+-#if HAVE(PTHREAD_SETNAME_NP)
++#if defined(__zinnia__)
++    pthread_setname_np(pthread_self(), normalizeThreadName(threadName));
++#elif HAVE(PTHREAD_SETNAME_NP)
+     pthread_setname_np(normalizeThreadName(threadName));
+ #elif OS(LINUX)
+     prctl(PR_SET_NAME, normalizeThreadName(threadName));
+diff --git webkitgtk-clean/Source/WTF/wtf/unix/MemoryPressureHandlerUnix.cpp webkitgtk-workdir/Source/WTF/wtf/unix/MemoryPressureHandlerUnix.cpp
+index 1c40593..a25d855 100644
+--- webkitgtk-clean/Source/WTF/wtf/unix/MemoryPressureHandlerUnix.cpp
++++ webkitgtk-workdir/Source/WTF/wtf/unix/MemoryPressureHandlerUnix.cpp
+@@ -28,7 +28,9 @@
+ #include "config.h"
+ #include <wtf/MemoryPressureHandler.h>
+ 
++#if !defined(__zinnia__)
+ #include <malloc.h>
++#endif
+ #include <unistd.h>
+ #include <wtf/Logging.h>
+ #include <wtf/MainThread.h>
+diff --git webkitgtk-clean/Source/bmalloc/bmalloc/AvailableMemory.cpp webkitgtk-workdir/Source/bmalloc/bmalloc/AvailableMemory.cpp
+index c89de56..77491e4 100644
+--- webkitgtk-clean/Source/bmalloc/bmalloc/AvailableMemory.cpp
++++ webkitgtk-workdir/Source/bmalloc/bmalloc/AvailableMemory.cpp
+@@ -44,7 +44,7 @@
+ #import <mach/mach_error.h>
+ #import <math.h>
+ #elif BOS(UNIX)
+-#if BOS(FREEBSD) || BOS(LINUX)
++#if (BOS(FREEBSD) || BOS(LINUX)) && !defined(__zinnia__)
+ #include <sys/sysinfo.h>
+ #endif
+ #if BOS(LINUX)
+@@ -161,7 +161,7 @@ static size_t computeAvailableMemory()
+     // Round up the memory size to a multiple of 128MB because max_mem may not be exactly 512MB
+     // (for example) and we have code that depends on those boundaries.
+     return ((sizeAccordingToKernel + multiple - 1) / multiple) * multiple;
+-#elif BOS(FREEBSD) || BOS(LINUX)
++#elif (BOS(FREEBSD) || BOS(LINUX)) && !defined(__zinnia__)
+     struct sysinfo info;
+     if (!sysinfo(&info))
+         return info.totalram * info.mem_unit;
+diff --git webkitgtk-clean/Source/bmalloc/bmalloc/BPlatform.h webkitgtk-workdir/Source/bmalloc/bmalloc/BPlatform.h
+index 4b8e1e9..37ce6e6 100644
+--- webkitgtk-clean/Source/bmalloc/bmalloc/BPlatform.h
++++ webkitgtk-workdir/Source/bmalloc/bmalloc/BPlatform.h
+@@ -44,10 +44,51 @@
+ #define BOS_UNIX 1
+ #endif
+ 
+-#ifdef __linux__
++#if defined(__linux__) || defined(__zinnia__)
+ #define BOS_LINUX 1
+ #endif
+ 
++/* mlibc (zinnia) only provides posix_madvise(); the madvise()/MADV_* Linux
++ * wrappers are gated behind the mlibc "linux" option, which zinnia does not
++ * enable. Map them onto the POSIX advise API (advisory; unsupported hints are
++ * treated as MADV_NORMAL). */
++#if defined(__zinnia__)
++#include <sys/mman.h>
++#define madvise(addr, length, advice) posix_madvise((addr), (length), (advice))
++#ifndef MADV_NORMAL
++#define MADV_NORMAL POSIX_MADV_NORMAL
++#endif
++#ifndef MADV_RANDOM
++#define MADV_RANDOM POSIX_MADV_RANDOM
++#endif
++#ifndef MADV_SEQUENTIAL
++#define MADV_SEQUENTIAL POSIX_MADV_SEQUENTIAL
++#endif
++#ifndef MADV_WILLNEED
++#define MADV_WILLNEED POSIX_MADV_WILLNEED
++#endif
++#ifndef MADV_DONTNEED
++#define MADV_DONTNEED POSIX_MADV_DONTNEED
++#endif
++#ifndef MADV_FREE
++#define MADV_FREE POSIX_MADV_DONTNEED
++#endif
++#ifndef MADV_DONTDUMP
++#define MADV_DONTDUMP POSIX_MADV_NORMAL
++#endif
++#ifndef MADV_DODUMP
++#define MADV_DODUMP POSIX_MADV_NORMAL
++#endif
++/* mmap() flags also gated behind the mlibc linux option; these are advisory
++ * (swap-reservation / legacy executable hint), so treat them as no-ops. */
++#ifndef MAP_NORESERVE
++#define MAP_NORESERVE 0
++#endif
++#ifndef MAP_EXECUTABLE
++#define MAP_EXECUTABLE 0
++#endif
++#endif /* __zinnia__ */
++
+ #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__FreeBSD_kernel__)
+ #define BOS_FREEBSD 1
+ #endif
+diff --git webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_committed_pages_vector.c webkitgtk-workdir/Source/bmalloc/libpas/src/libpas/pas_committed_pages_vector.c
+index a1d8c12..00b0833 100644
+--- webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_committed_pages_vector.c
++++ webkitgtk-workdir/Source/bmalloc/libpas/src/libpas/pas_committed_pages_vector.c
+@@ -55,7 +55,13 @@ void pas_committed_pages_vector_construct(pas_committed_pages_vector* vector,
+         num_pages, "pas_committed_pages_vector/raw_data", pas_object_allocation, allocation_config->arg);
+     vector->size = num_pages;
+ 
+-#if PAS_OS(LINUX)
++#if defined(__zinnia__)
++    /* mlibc gates mincore() behind the linux option (no syscall wrapper). This
++     * vector is only used for committed-page accounting, so conservatively
++     * report every page as resident. */
++    (void)object;
++    __builtin_memset(vector->raw_data, 1, num_pages);
++#elif PAS_OS(LINUX)
+     PAS_SYSCALL(mincore(object, size, (unsigned char*)vector->raw_data));
+ #else
+     PAS_SYSCALL(mincore(object, size, vector->raw_data));
+diff --git webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_committed_pages_vector.h webkitgtk-workdir/Source/bmalloc/libpas/src/libpas/pas_committed_pages_vector.h
+index b8691bf..988e8af 100644
+--- webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_committed_pages_vector.h
++++ webkitgtk-workdir/Source/bmalloc/libpas/src/libpas/pas_committed_pages_vector.h
+@@ -54,7 +54,7 @@ static inline bool pas_committed_pages_vector_is_committed(pas_committed_pages_v
+                                                            size_t page_index)
+ {
+     PAS_ASSERT(page_index < vector->size);
+-#if PAS_OS(LINUX)
++#if PAS_OS(LINUX) || defined(__zinnia__)
+     return vector->raw_data[page_index];
+ #else
+     return vector->raw_data[page_index] & (MINCORE_REFERENCED |
+diff --git webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_config.h webkitgtk-workdir/Source/bmalloc/libpas/src/libpas/pas_config.h
+index c71fc06..2430a0d 100644
+--- webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_config.h
++++ webkitgtk-workdir/Source/bmalloc/libpas/src/libpas/pas_config.h
+@@ -120,5 +120,46 @@
+ #define PAS_USE_SPINLOCKS                1
+ #endif
+ 
++/* mlibc (zinnia) only provides posix_madvise(); the madvise()/MADV_* Linux
++ * wrappers are gated behind the mlibc "linux" option, which zinnia does not
++ * enable. Map them onto the POSIX advise API (advisory; unsupported hints are
++ * treated as MADV_NORMAL). */
++#if defined(__zinnia__)
++#include <sys/mman.h>
++#define madvise(addr, length, advice) posix_madvise((addr), (length), (advice))
++#ifndef MADV_NORMAL
++#define MADV_NORMAL POSIX_MADV_NORMAL
++#endif
++#ifndef MADV_RANDOM
++#define MADV_RANDOM POSIX_MADV_RANDOM
++#endif
++#ifndef MADV_SEQUENTIAL
++#define MADV_SEQUENTIAL POSIX_MADV_SEQUENTIAL
++#endif
++#ifndef MADV_WILLNEED
++#define MADV_WILLNEED POSIX_MADV_WILLNEED
++#endif
++#ifndef MADV_DONTNEED
++#define MADV_DONTNEED POSIX_MADV_DONTNEED
++#endif
++#ifndef MADV_FREE
++#define MADV_FREE POSIX_MADV_DONTNEED
++#endif
++#ifndef MADV_DONTDUMP
++#define MADV_DONTDUMP POSIX_MADV_NORMAL
++#endif
++#ifndef MADV_DODUMP
++#define MADV_DODUMP POSIX_MADV_NORMAL
++#endif
++/* mmap() flags also gated behind the mlibc linux option; these are advisory
++ * (swap-reservation / legacy executable hint), so treat them as no-ops. */
++#ifndef MAP_NORESERVE
++#define MAP_NORESERVE 0
++#endif
++#ifndef MAP_EXECUTABLE
++#define MAP_EXECUTABLE 0
++#endif
++#endif /* __zinnia__ */
++
+ #endif /* PAS_CONFIG_H */
+ 
+diff --git webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_monotonic_time.c webkitgtk-workdir/Source/bmalloc/libpas/src/libpas/pas_monotonic_time.c
+index 2adc006..b48b26f 100644
+--- webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_monotonic_time.c
++++ webkitgtk-workdir/Source/bmalloc/libpas/src/libpas/pas_monotonic_time.c
+@@ -71,6 +71,15 @@ uint64_t pas_get_current_monotonic_time_nanoseconds(void)
+     return result;
+ }
+ 
++#elif defined(__zinnia__)
++
++uint64_t pas_get_current_monotonic_time_nanoseconds(void)
++{
++    struct timespec ts;
++    clock_gettime(CLOCK_MONOTONIC, &ts);
++    return ts.tv_sec * 1.0e9 + ts.tv_nsec;
++}
++
+ #elif PAS_OS(LINUX)
+ 
+ uint64_t pas_get_current_monotonic_time_nanoseconds(void)
+diff --git webkitgtk-clean/Source/cmake/WebKitCommon.cmake webkitgtk-workdir/Source/cmake/WebKitCommon.cmake
+index 38ac0c4..9751319 100644
+--- webkitgtk-clean/Source/cmake/WebKitCommon.cmake
++++ webkitgtk-workdir/Source/cmake/WebKitCommon.cmake
+@@ -139,7 +139,7 @@ if (NOT HAS_RUN_WEBKIT_COMMON)
+     if (UNIX)
+         if (APPLE)
+             set(WTF_OS_MACOS 1)
+-        elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
++        elseif (CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Zinnia")
+             set(WTF_OS_LINUX 1)
+         else ()
+             set(WTF_OS_UNIX 1)

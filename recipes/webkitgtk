@@ -1,0 +1,59 @@
+#! /bin/sh
+
+name=webkitgtk
+version=2.48.5
+revision=2
+tarball_url="https://webkitgtk.org/releases/webkitgtk-${version}.tar.xz"
+tarball_blake2b="aa8ea4b5296a95f8b18f2dec9597f70eba46e739e3cc21dccd97af4ba07c7fcfa50dffe963bcffcd178b99c111d38dc55fb194a87451fa8efa9944249f538aba"
+imagedeps="ruby gperf unifdef python3 build-essential libglib2.0-dev"
+hostdeps="gcc pkg-config cmake wayland"
+deps="core-libs glib2 gtk3 cairo pango harfbuzz icu libxml2 libxslt sqlite libjpeg-turbo libpng libwebp libtasn1 libgcrypt freetype2 fontconfig at-spi2-core libxkbcommon mesa libepoxy libdrm wayland wayland-protocols graphene libsoup glib-networking gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav"
+clean_workdirs=no
+
+configure() {
+    TARGET_CFLAGS="${TARGET_CFLAGS} -D_GNU_SOURCE -D_DEFAULT_SOURCE"
+    TARGET_CXXFLAGS="${TARGET_CXXFLAGS} -D_GNU_SOURCE -D_DEFAULT_SOURCE"
+
+    cmake_configure \
+        -DPORT=GTK \
+        -DUSE_GTK4=OFF \
+        -DUSE_SOUP2=OFF \
+        -DUSE_SKIA=OFF \
+        -DUSE_LIBBACKTRACE=OFF \
+        -DENABLE_MINIBROWSER=ON \
+        -DENABLE_WEBGL=OFF \
+        -DENABLE_VIDEO=ON \
+        -DENABLE_WEB_AUDIO=ON \
+        -DENABLE_MEDIA_SOURCE=ON \
+        -DUSE_GSTREAMER_GL=ON \
+        -DENABLE_MEDIA_STREAM=OFF \
+        -DENABLE_WEB_RTC=OFF \
+        -DENABLE_ENCRYPTED_MEDIA=OFF \
+        -DENABLE_BUBBLEWRAP_SANDBOX=OFF \
+        -DENABLE_GAMEPAD=OFF \
+        -DENABLE_WEBDRIVER=OFF \
+        -DENABLE_INTROSPECTION=OFF \
+        -DENABLE_DOCUMENTATION=OFF \
+        -DENABLE_SPELLCHECK=OFF \
+        -DENABLE_JOURNALD_LOG=OFF \
+        -DENABLE_SPEECH_SYNTHESIS=OFF \
+        -DUSE_SYSTEMD=OFF \
+        -DUSE_LIBHYPHEN=OFF \
+        -DUSE_WOFF2=OFF \
+        -DUSE_LCMS=OFF \
+        -DUSE_OPENJPEG=OFF \
+        -DUSE_AVIF=OFF \
+        -DUSE_JPEGXL=OFF \
+        -DUSE_LIBSECRET=OFF \
+        -DUSE_SYSPROF_CAPTURE=OFF
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

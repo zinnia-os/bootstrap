@@ -1,0 +1,24 @@
+#! /bin/sh
+
+name=xfce4-appfinder
+version=4.21.1
+revision=1
+tarball_url="https://archive.xfce.org/src/xfce/xfce4-appfinder/4.21/xfce4-appfinder-${version}.tar.xz"
+tarball_blake2b="957cdb3071a479f4a3bd3a3b830ad8c6f88daf77fe50f364faec8f2a3595b7c30f79e1c9138878f57372411e0636dd3867638dc1bdfd6500e90945fe026ff371"
+imagedeps="build-essential patchelf pkg-config python3 python3-distutils-extra xfce4-dev-tools"
+hostdeps="gcc pkg-config glib2"
+deps="core-libs garcon libxfce4ui xfconf gtk3"
+
+configure() {
+    meson_configure
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

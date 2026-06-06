@@ -1,0 +1,118 @@
+diff -urN --no-dereference lightdm-clean/liblightdm-gobject/session.c lightdm-workdir/liblightdm-gobject/session.c
+--- lightdm-clean/liblightdm-gobject/session.c	2021-02-15 23:11:06.000000000 +0100
++++ lightdm-workdir/liblightdm-gobject/session.c	2026-06-06 00:20:40.610916968 +0200
+@@ -190,14 +190,14 @@
+     config_load_from_standard_locations (config_get_instance (), NULL, NULL);
+ 
+     gchar *value = config_get_string (config_get_instance (), "LightDM", "sessions-directory");
+-    if (value)
++    if (value && g_path_is_absolute (value))
+     {
+         g_free (sessions_dir);
+         sessions_dir = value;
+     }
+ 
+     value = config_get_string (config_get_instance (), "LightDM", "remote-sessions-directory");
+-    if (value)
++    if (value && g_path_is_absolute (value))
+     {
+         g_free (remote_sessions_dir);
+         remote_sessions_dir = value;
+diff -urN --no-dereference lightdm-clean/src/seat.c lightdm-workdir/src/seat.c
+--- lightdm-clean/src/seat.c	2020-07-14 01:35:34.000000000 +0200
++++ lightdm-workdir/src/seat.c	2026-06-06 00:20:40.609652480 +0200
+@@ -705,7 +705,7 @@
+         if (session == ignore_session)
+             continue;
+ 
+-        if (!session_get_is_stopping (session) && g_strcmp0 (session_get_username (session), username) == 0)
++        if (!IS_GREETER_SESSION (session) && !session_get_is_stopping (session) && g_strcmp0 (session_get_username (session), username) == 0)
+             return session;
+     }
+ 
+diff -urN --no-dereference lightdm-clean/src/session-child.c lightdm-workdir/src/session-child.c
+--- lightdm-clean/src/session-child.c	2021-04-12 06:52:50.000000000 +0200
++++ lightdm-workdir/src/session-child.c	2026-06-06 00:20:40.607412752 +0200
+@@ -16,6 +16,7 @@
+ #include <utmp.h>
+ #include <utmpx.h>
+ #include <sys/mman.h>
++#include <sys/time.h>
+ 
+ #if HAVE_LIBAUDIT
+ #include <libaudit.h>
+@@ -194,26 +195,6 @@
+ }
+ 
+ /* GNU provides this but we can't rely on that so let's make our own version */
+-static void
+-updwtmpx (const gchar *wtmp_file, struct utmpx *ut)
+-{
+-    struct utmp u;
+-    memset (&u, 0, sizeof (u));
+-    u.ut_type = ut->ut_type;
+-    u.ut_pid = ut->ut_pid;
+-    if (ut->ut_line)
+-        strncpy (u.ut_line, ut->ut_line, sizeof (u.ut_line));
+-    if (ut->ut_id)
+-        strncpy (u.ut_id, ut->ut_id, sizeof (u.ut_id));
+-    if (ut->ut_user)
+-        strncpy (u.ut_user, ut->ut_user, sizeof (u.ut_user));
+-    if (ut->ut_host)
+-        strncpy (u.ut_host, ut->ut_host, sizeof (u.ut_host));
+-    u.ut_tv.tv_sec = ut->ut_tv.tv_sec;
+-    u.ut_tv.tv_usec = ut->ut_tv.tv_usec;
+-
+-    updwtmp (wtmp_file, &u);
+-}
+ 
+ #if HAVE_LIBAUDIT
+ static void
+diff -urN --no-dereference lightdm-clean/src/vt.c lightdm-workdir/src/vt.c
+--- lightdm-clean/src/vt.c	2019-08-05 00:29:55.000000000 +0200
++++ lightdm-workdir/src/vt.c	2026-06-06 00:20:40.613163324 +0200
+@@ -16,8 +16,13 @@
+ #include <sys/stat.h>
+ #include <fcntl.h>
+ #include <sys/ioctl.h>
+-#ifdef __linux__
++#if defined (__linux__)
+ #include <linux/vt.h>
++#elif defined (__zinnia__)
++struct vt_stat { unsigned short v_active, v_signal, v_state; };
++#define VT_GETSTATE 0x5603
++#define VT_ACTIVATE 0x5606
++#define VT_WAITACTIVE 0x5607
+ #endif
+ 
+ #include "vt.h"
+@@ -47,7 +52,7 @@
+ gint
+ vt_get_active (void)
+ {
+-#ifdef __linux__
++#if defined (__linux__) || defined (__zinnia__)
+     /* Pretend always active */
+     if (getuid () != 0)
+         return 1;
+@@ -73,7 +78,7 @@
+ void
+ vt_set_active (gint number)
+ {
+-#ifdef __linux__
++#if defined (__linux__) || defined (__zinnia__)
+     g_debug ("Activating VT %d", number);
+ 
+     /* Pretend always active */
+diff -urN --no-dereference lightdm-clean/src/x-server-local.c lightdm-workdir/src/x-server-local.c
+--- lightdm-clean/src/x-server-local.c	2020-08-07 06:52:25.000000000 +0200
++++ lightdm-workdir/src/x-server-local.c	2026-06-06 00:20:40.608702910 +0200
+@@ -504,7 +504,7 @@
+         g_string_append (command, " -nolisten tcp");
+ 
+     if (priv->vt >= 0)
+-        g_string_append_printf (command, " vt%d -novtswitch", priv->vt);
++        g_string_append_printf (command, " tty%d -novtswitch", priv->vt);
+ 
+     if (priv->background)
+         g_string_append_printf (command, " -background %s", priv->background);

@@ -76,7 +76,7 @@ index fe3315a..275a9a9 100644
  #ifdef XSERVER_PLATFORM_BUS
      ms_platform_probe,
 diff --git xorg-server-clean/hw/xfree86/os-support/bus/Pci.h xorg-server-workdir/hw/xfree86/os-support/bus/Pci.h
-index 1921e02..ff7e0de 100644
+index 1921e02..ceae994 100644
 --- xorg-server-clean/hw/xfree86/os-support/bus/Pci.h
 +++ xorg-server-workdir/hw/xfree86/os-support/bus/Pci.h
 @@ -139,7 +139,7 @@
@@ -88,6 +88,26 @@ index 1921e02..ff7e0de 100644
  extern void osPciInit(void);
  #else
  #error No PCI support available for this architecture/OS combination
+diff --git xorg-server-clean/hw/xfree86/os-support/meson.build xorg-server-workdir/hw/xfree86/os-support/meson.build
+index 236f5de..8e057ec 100644
+--- xorg-server-clean/hw/xfree86/os-support/meson.build
++++ xorg-server-workdir/hw/xfree86/os-support/meson.build
+@@ -153,6 +153,15 @@ else
+         'stub/stub_init.c',
+         'stub/stub_video.c',
+     ]
++
++    # zinnia uses udev + libdrm, so the Linux platform-bus probe works as-is
++    # (its body is guarded by XSERVER_PLATFORM_BUS). It provides
++    # xf86PlatformDeviceProbe/CheckBusID/ReprobeDevice and
++    # New/DeleteGPUDeviceRequest, which xf86platformBus.c and config/udev.c
++    # reference once udev_kms is enabled.
++    if build_udev_kms
++        srcs_xorg_os_support += 'linux/lnx_platform.c'
++    endif
+ endif
+ 
+ xorg_os_support = static_library('xorg_os_support',
 diff --git xorg-server-clean/hw/xfree86/os-support/shared/posix_tty.c xorg-server-workdir/hw/xfree86/os-support/shared/posix_tty.c
 index 0cb9788..e8cac5d 100644
 --- xorg-server-clean/hw/xfree86/os-support/shared/posix_tty.c

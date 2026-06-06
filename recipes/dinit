@@ -2,7 +2,7 @@
 
 name=dinit
 version=0.20.0
-revision=1
+revision=5
 git_url="https://github.com/davmac314/dinit.git"
 commit=8ba4caaa0e54754442c5c22282a0f28589ee0f61
 imagedeps="g++"
@@ -24,7 +24,8 @@ configure() {
         --mandir=${prefix}/share/man \
         --platform=Zinnia \
         --disable-strip \
-        --enable-utmpx
+        --enable-utmpx \
+        --enable-shutdown
 }
 
 build() {

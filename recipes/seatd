@@ -2,7 +2,7 @@
 
 name=seatd
 version=0.6.3
-revision=1
+revision=2
 tarball_url="https://git.sr.ht/~kennylevinsen/seatd/archive/${version}.tar.gz"
 tarball_blake2b="e1bdb85f9432a9a407ea7a72ed5790debf01a410546e9162641ab55179b3beefba0eb45fd24e2643dc5cfb2a26db2490f49095ff1d08b4a38663f93e46dc2ed5"
 hostdeps="gcc pkg-config"

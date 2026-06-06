@@ -1,15 +1,18 @@
 #! /bin/sh
 
 name=libudev
-version=259
+version=2026.05
 revision=1
-git_url="https://github.com/marv7000/libudev-freestanding.git"
-commit="3a7170ebb73c201d69e6224c279d3885616c7e15"
+git_url="https://github.com/wulf7/libudev-devd.git"
+commit="0f2c177600a5d2d89ecbc6fa4c1272e42ab224fb"
 hostdeps="gcc pkg-config"
 deps="core-libs libevdev"
 
 configure() {
-    meson_configure
+    # libudev-devd's tree.h uses the GNU `typeof` keyword, which the upstream
+    # default of c_std=c11 rejects. Build as GNU C11 instead.
+    meson_configure \
+        -Dc_std=gnu11
 }
 
 build() {
@@ -20,7 +23,4 @@ package() {
     DESTDIR="${dest_dir}" meson install --no-rebuild
 
     post_package_strip
-
-    mkdir -p "${dest_dir}/etc/udev/"
-    cp -rp "${base_dir}/extras/libudev/." "${dest_dir}/etc/udev/"
 }

@@ -1,0 +1,11 @@
+diff --git libudev-clean/udev-utils.c libudev-workdir/udev-utils.c
+--- libudev-clean/udev-utils.c
++++ libudev-workdir/udev-utils.c
+@@ -160,5 +160,5 @@ static const struct subsystem_config subsystems[] = {
+ 	}, {
+ 		.subsystem = "drm",
+-		.syspath = DEV_PATH_ROOT "/dri/card[0-9]*",
++		.syspath = DEV_PATH_ROOT "/drm/card[0-9]*",
+ 		.symlink = DEV_PATH_ROOT "/drm/[0-9]*",
+ 		.create_handler = create_drm_handler,
+ 	}, {

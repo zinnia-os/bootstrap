@@ -1,0 +1,12 @@
+type = process
+# LightDM runs in the foreground (it only writes a pid file, it does not
+# daemonise), so dinit can supervise it directly.  Ensure its runtime dir
+# exists and export XDG_RUNTIME_DIR so the greeter and sessions inherit it.
+# With --debug LightDM mirrors its full daemon log to stderr (lightdm.c:96);
+# redirect that to the serial console (/dev/com1) for headless debugging.
+command = /bin/sh -c "mkdir -p /run/lightdm; XDG_RUNTIME_DIR=/tmp exec /usr/bin/lightdm --debug >/dev/com1 2>&1"
+depends-on = dbus
+depends-on = seatd
+depends-on = devd
+working-dir = /root
+restart = yes

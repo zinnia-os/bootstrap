@@ -11,3 +11,25 @@ index b69e0ca..23ecde2 100644
          // Note: OpenBSD doesn't have this; most other systems do. Technically it is part of the STREAMS
          // interface.
          int get_siband() { return info.si_band; }
+diff --git dinit-clean/src/shutdown.cc dinit-workdir/src/shutdown.cc
+index 42893a3..4e42bb5 100644
+--- dinit-clean/src/shutdown.cc
++++ dinit-workdir/src/shutdown.cc
+@@ -777,6 +777,8 @@ static void unmount_disks(loop_t &loop, subproc_buffer &sub_buf)
+         const char * unmount_args[] = { "/sbin/umount", "-a", nullptr };
+ #elif __linux__
+         const char * unmount_args[] = { "/bin/umount", "-a", "-r", nullptr };
++#elif __zinnia__
++        const char * unmount_args[] = { "/bin/true", nullptr };
+ #else
+ #error "Unmount command not known for this system"
+ #endif
+@@ -796,6 +798,8 @@ static void swap_off(loop_t &loop, subproc_buffer &sub_buf)
+         const char * swapoff_args[] = { "/sbin/swapctl", "-U", nullptr };
+ #elif __linux__
+         const char * swapoff_args[] = { "/sbin/swapoff", "-a", nullptr };
++#elif __zinnia__
++        const char * swapoff_args[] = { "/bin/true", nullptr };
+ #else
+ #error "Swap-off command not known for this system"
+ #endif

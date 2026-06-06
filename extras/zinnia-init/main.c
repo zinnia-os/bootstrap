@@ -87,6 +87,16 @@ int main(int argc, char **argv, char **envp) {
   if (e)
     return e;
 
+  printf("init: Mounting tmpfs on /dev/shm\n");
+
+  // POSIX shared memory (shm_open(3)) is backed by files under /dev/shm.
+  // Multiprocess apps such as WebKitGTK (UI/Web/Network processes share render
+  // buffers and out-of-line IPC via shm_open + mmap(MAP_SHARED)) require it.
+  mkdir("/dev/shm", 01777);
+  e = mount("tmpfs", "/dev/shm", 0, NULL);
+  if (e)
+    return e;
+
   // Parse rd.init= from kernel command line
   const char *init_path = "/usr/bin/dinit";
   const char *prefix = "rd.init=";

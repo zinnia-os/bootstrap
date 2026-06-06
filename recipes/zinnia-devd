@@ -1,0 +1,16 @@
+#! /bin/sh
+
+name=zinnia-devd
+version=0.1
+revision=1
+hostdeps="gcc pkg-config"
+builddeps="mlibc"
+
+build() {
+    ${OS_TRIPLET}-gcc -o zinnia-devd -static "${base_dir}/extras/zinnia-devd/main.c"
+}
+
+package() {
+    mkdir -p ${dest_dir}/usr/bin
+    cp zinnia-devd ${dest_dir}/usr/bin/devd
+}

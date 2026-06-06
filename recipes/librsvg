@@ -1,0 +1,41 @@
+#! /bin/sh
+
+name=librsvg
+version=2.40.21
+revision=1
+tarball_url="https://download.gnome.org/sources/librsvg/2.40/librsvg-${version}.tar.xz"
+tarball_blake2b="a3fd7915d39984057e860da90115d9d95cef97e61d3f5e4c3aaaf399c4b3bfe781e6a7b969958ae84a3b7f2c788576fe26f56b037ca0a6a2e059b53f2bd1b9fc"
+imagedeps="build-essential"
+hostdeps="gcc pkg-config"
+deps="core-libs glib2 gdk-pixbuf cairo pango libxml2 libcroco freetype2 gtk3"
+
+prepare() {
+    autotools_recursive_regen
+}
+
+configure() {
+    TARGET_CFLAGS="${TARGET_CFLAGS} -Wno-error=incompatible-pointer-types -Wno-error=implicit-function-declaration -Wno-error=int-conversion"
+
+    GDK_PIXBUF_QUERYLOADERS=/bin/true \
+    autotools_configure \
+        --disable-introspection \
+        --disable-vala \
+        --disable-gtk-doc \
+        --disable-tools \
+        --enable-pixbuf-loader
+}
+
+build() {
+    make -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" make install
+
+    if [ -d "${dest_dir}/sysroot" ]; then
+        cp -rpv "${dest_dir}/sysroot/." "${dest_dir}/"
+        rm -rf "${dest_dir}/sysroot"
+    fi
+
+    post_package_strip
+}

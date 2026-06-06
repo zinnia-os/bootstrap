@@ -1,0 +1,39 @@
+#! /bin/sh
+
+name=lightdm-gtk-greeter
+version=2.0.8
+revision=3
+tarball_url="https://github.com/Xubuntu/lightdm-gtk-greeter/releases/download/lightdm-gtk-greeter-${version}/lightdm-gtk-greeter-${version}.tar.gz"
+tarball_blake2b="ae06ebbc07efe5c0131c07b293671f24683699eb84f12222de8165428e935b98bbf9d1e107eaeca8f10e725a6a11c97d4f4c3d415ada0b0876b0b0a99f21d1ee"
+imagedeps="intltool xfce4-dev-tools"
+hostdeps="gcc pkg-config"
+deps="core-libs gtk3 glib2 lightdm libx11"
+
+prepare() {
+    autotools_recursive_regen
+
+    sed -i 's/^        set_session (lightdm_user_get_session (user));/        if (!current_session)\n            set_session (lightdm_user_get_session (user));/' "${source_dir}/src/lightdm-gtk-greeter.c"
+    sed -i 's/^        set_session (lightdm_greeter_get_default_session_hint (ldm));/        if (!current_session)\n            set_session (lightdm_greeter_get_default_session_hint (ldm));/' "${source_dir}/src/lightdm-gtk-greeter.c"
+}
+
+configure() {
+    autotools_configure \
+        --disable-static \
+        --disable-introspection \
+        --disable-libindicator \
+        --disable-libido \
+        --disable-indicator-services-command \
+        --disable-at-spi-command \
+        --disable-nls \
+        --without-libxklavier
+}
+
+build() {
+    make -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" make install
+
+    post_package_strip
+}

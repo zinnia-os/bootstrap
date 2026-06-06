@@ -1,0 +1,26 @@
+#! /bin/sh
+
+name=gst-libav
+version=1.26.11
+revision=1
+tarball_url="https://gstreamer.freedesktop.org/src/gst-libav/gst-libav-${version}.tar.xz"
+tarball_blake2b="79ba4e475fba5cfb1c9fb48be77b9e8b1ecfa2bac165249ecb29a6bed7974bca0e7fe26d197a27ac59236570cb3d8006077e94a7445177a366151d86946062f4"
+imagedeps="libglib2.0-dev bison flex"
+hostdeps="gcc pkg-config"
+deps="core-libs glib2 gstreamer gst-plugins-base ffmpeg zlib"
+
+configure() {
+    meson_configure \
+        -Ddoc=disabled \
+        -Dtests=disabled
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}
