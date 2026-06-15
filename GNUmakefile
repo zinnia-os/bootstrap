@@ -4,9 +4,8 @@
 
 ARCH ?= x86_64
 
-# Prepares an ISO with all packages
 .PHONY: all
-all: desktop-install iso
+all: minimal-install image
 
 # Cleans up the entire build directory
 .PHONY: clean
