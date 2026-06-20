@@ -3,7 +3,7 @@
 name=netcat
 version=1.234p2
 revision=1
-tarball_url="https://salsa.debian.org/debian/netcat-openbsd/-/archive/debian/${version/p/-}/netcat-openbsd-debian-${version/p/-}.tar.gz"
+tarball_url="https://salsa.debian.org/debian/netcat-openbsd/-/archive/debian/$(echo $version | sed 's/p/-/')/netcat-openbsd-debian-$(echo $version | sed 's/p/-/').tar.gz"
 tarball_blake2b="4bd465e0be97549cbec1f1e8062fced1043c0db765ee4750c57564ef723403f637705918af6d38bed61685afe58bc4143e1b1a226a556ca8625ca26ade79deda"
 hostdeps="gcc pkg-config"
 deps="core-libs readline libbsd"
