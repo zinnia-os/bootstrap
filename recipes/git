@@ -1,0 +1,56 @@
+#! /bin/sh
+
+name=git
+version=2.49.0
+revision=1
+tarball_url="https://mirrors.edge.kernel.org/pub/software/scm/git/git-${version}.tar.xz"
+tarball_blake2b="c9a58cb4bcbc33d3c6ede2ce6e6131af3998669419c8d8e4317c52ee14ae4bfcdd209780c6dda31cd772bdb703096729de17f21579bf7f0bb830bc6c9e1d7ffd"
+hostdeps="gcc pkg-config"
+deps="core-libs zlib openssl curl libexpat pcre2 libiconv ca-certificates"
+
+build() {
+    cp -rp "${source_dir}"/. ./
+
+    sed -i '/BASIC_CFLAGS += -DHAVE_SYSINFO/d' config.mak.uname
+
+    make -j${parallelism} \
+        CC="${OS_TRIPLET}-gcc" \
+        AR="${OS_TRIPLET}-ar" \
+        CFLAGS="${TARGET_CFLAGS}" \
+        LDFLAGS="${TARGET_LDFLAGS}" \
+        prefix="${prefix}" \
+        CURL_CONFIG="${sysroot_dir}${prefix}/bin/curl-config" \
+        HAVE_SYNC_FILE_RANGE= \
+        NO_GETTEXT=YesPlease \
+        NO_PERL=YesPlease \
+        NO_PYTHON=YesPlease \
+        NO_TCLTK=YesPlease \
+        NO_REGEX=YesPlease \
+        USE_LIBPCRE2=YesPlease \
+        NEEDS_LIBICONV=YesPlease \
+        NO_INSTALL_HARDLINKS=YesPlease \
+        INSTALL_SYMLINKS=YesPlease
+}
+
+package() {
+    make \
+        CC="${OS_TRIPLET}-gcc" \
+        AR="${OS_TRIPLET}-ar" \
+        CFLAGS="${TARGET_CFLAGS}" \
+        LDFLAGS="${TARGET_LDFLAGS}" \
+        prefix="${prefix}" \
+        CURL_CONFIG="${sysroot_dir}${prefix}/bin/curl-config" \
+        HAVE_SYNC_FILE_RANGE= \
+        NO_GETTEXT=YesPlease \
+        NO_PERL=YesPlease \
+        NO_PYTHON=YesPlease \
+        NO_TCLTK=YesPlease \
+        NO_REGEX=YesPlease \
+        USE_LIBPCRE2=YesPlease \
+        NEEDS_LIBICONV=YesPlease \
+        NO_INSTALL_HARDLINKS=YesPlease \
+        INSTALL_SYMLINKS=YesPlease \
+        DESTDIR="${dest_dir}" install
+
+    post_package_strip
+}
