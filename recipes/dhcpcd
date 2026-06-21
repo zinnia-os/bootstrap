@@ -1,0 +1,39 @@
+#! /bin/sh
+
+name=dhcpcd
+version=10.3.2
+revision=1
+git_url="https://github.com/NetworkConfiguration/dhcpcd.git"
+commit=26e4325dce637d8ba7ac23a5b5665ca0db4916d4
+hostdeps="gcc pkg-config"
+deps="core-libs"
+
+configure() {
+    cp -rp "${source_dir}"/. ./
+
+    ./configure \
+        --os=zinnia \
+        CC="${OS_TRIPLET}-gcc" \
+        CFLAGS="${TARGET_CFLAGS}" \
+        --build="$(cc -dumpmachine)" \
+        --host="${OS_TRIPLET}" \
+        --prefix="${prefix}" \
+        --sbindir="${prefix}/sbin" \
+        --libexecdir="${prefix}/libexec" \
+        --sysconfdir=/etc \
+        --dbdir=/var/db/dhcpcd \
+        --rundir=/run \
+        --disable-privsep \
+        --disable-inet6 \
+        --without-dev
+}
+
+build() {
+    make -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" make install
+
+    post_package_strip
+}

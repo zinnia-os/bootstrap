@@ -29,7 +29,7 @@ full-install: build-$(ARCH)/.jinx-parameters
 	@cd build-$(ARCH) && ../jinx/jinx update '*'
 	@cd build-$(ARCH) && sudo ../jinx/jinx install sysroot '*'
 
-MINIMAL_PKGS = base-files zinnia zinnia-utils limine mlibc dinit zinnia-devd seatd weston bash coreutils fastfetch
+MINIMAL_PKGS = base-files zinnia zinnia-utils limine mlibc dinit zinnia-devd seatd dhcpcd weston bash coreutils fastfetch
 
 # Build only a minimal selection of packages
 .PHONY: minimal-install

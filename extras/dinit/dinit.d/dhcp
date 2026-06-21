@@ -1,0 +1,4 @@
+type = process
+command = /usr/sbin/dhcpcd -B -C resolv.conf eth0
+depends-on = devd
+restart = yes

@@ -1,3 +1,4 @@
 type = internal
 depends-on = system
+depends-on = dhcp
 depends-on = lightdm

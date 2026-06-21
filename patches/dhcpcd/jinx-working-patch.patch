@@ -1,0 +1,432 @@
+diff --git dhcpcd-clean/compat/arc4random.h dhcpcd-workdir/compat/arc4random.h
+index 910e080..6d704d3 100644
+--- dhcpcd-clean/compat/arc4random.h
++++ dhcpcd-workdir/compat/arc4random.h
+@@ -11,6 +11,7 @@
+ #ifndef ARC4RANDOM_H
+ #define ARC4RANDOM_H
+ 
++#include <stddef.h>
+ #include <stdint.h>
+ 
+ uint32_t arc4random(void);
+diff --git dhcpcd-clean/configure dhcpcd-workdir/configure
+index 3fbb735..9b42e24 100755
+--- dhcpcd-clean/configure
++++ dhcpcd-workdir/configure
+@@ -514,6 +514,14 @@ qnx*)
+ 	echo "CPPFLAGS+=	-D__EXT" >>$CONFIG_MK
+ 	echo "DHCPCD_SRCS+=	if-bsd.c" >>$CONFIG_MK
+ 	;;
++zinnia*)
++	echo "CPPFLAGS+=	-D_GNU_SOURCE" >>$CONFIG_MK
++	echo "DHCPCD_SRCS+=	if-zinnia.c" >>$CONFIG_MK
++	BPF_OS="bpf-zinnia.c"
++	echo "#define RTM_NEWADDR	0x0c" >>$CONFIG_H
++	echo "#define RTM_DELADDR	0x0d" >>$CONFIG_H
++	echo "#define RTM_CHGADDR	0x15" >>$CONFIG_H
++	;;
+ solaris*|sunos*)
+ 	echo "CPPFLAGS+=	-D_XPG4_2 -D__EXTENSIONS__ -DBSD_COMP" \
+ 	    >>$CONFIG_MK
+diff --git dhcpcd-workdir/src/bpf-zinnia.c dhcpcd-workdir/src/bpf-zinnia.c
+new file mode 100644
+index 0000000..6af6166
+--- /dev/null
++++ dhcpcd-workdir/src/bpf-zinnia.c
+@@ -0,0 +1,135 @@
++/* SPDX-License-Identifier: BSD-2-Clause */
++
++#include <sys/ioctl.h>
++#include <sys/socket.h>
++
++#include <errno.h>
++#include <netinet/if_ether.h>
++#include <netpacket/packet.h>
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
++
++#include "bpf.h"
++#include "if.h"
++
++#ifndef ETH_DATA_LEN
++#define ETH_DATA_LEN 1500
++#endif
++
++const char *bpf_name = "Packet Socket";
++
++struct bpf *
++bpf_open(const struct interface *ifp,
++    int (*filter)(const struct bpf *, const struct in_addr *),
++    const struct in_addr *ia)
++{
++	struct bpf *bpf;
++	union sockunion {
++		struct sockaddr sa;
++		struct sockaddr_ll sll;
++		struct sockaddr_storage ss;
++	} su = { .sll = {
++		     .sll_family = PF_PACKET,
++		     .sll_protocol = htons(ETH_P_ALL),
++		     .sll_ifindex = (int)ifp->index,
++		 } };
++	int mtu;
++
++	bpf = calloc(1, sizeof(*bpf));
++	if (bpf == NULL)
++		return NULL;
++	bpf->bpf_ifp = ifp;
++	bpf->bpf_flags = BPF_EOF;
++	bpf->bpf_fd = -1;
++
++	mtu = ifp->mtu ? ifp->mtu : ETH_DATA_LEN;
++	bpf->bpf_size = bpf_frame_header_len(ifp) + (size_t)mtu;
++	bpf->bpf_buffer = malloc(bpf->bpf_size);
++	if (bpf->bpf_buffer == NULL)
++		goto eexit;
++
++	bpf->bpf_fd = xsocket(PF_PACKET, SOCK_RAW | SOCK_CXNB, htons(ETH_P_ALL));
++	if (bpf->bpf_fd == -1)
++		goto eexit;
++
++	if (bind(bpf->bpf_fd, &su.sa, sizeof(su.sll)) == -1)
++		goto eexit;
++
++	if (filter(bpf, ia) != 0)
++		goto eexit;
++
++	return bpf;
++
++eexit:
++	bpf_close(bpf);
++	return NULL;
++}
++
++ssize_t
++bpf_read(struct bpf *bpf, void *data, size_t len)
++{
++	ssize_t bytes;
++	struct iovec iov = {
++		.iov_base = bpf->bpf_buffer,
++		.iov_len = bpf->bpf_size,
++	};
++	struct msghdr msg = { .msg_iov = &iov, .msg_iovlen = 1 };
++
++	bytes = recvmsg(bpf->bpf_fd, &msg, 0);
++	if (bytes == -1)
++		return -1;
++	if (msg.msg_flags & MSG_TRUNC) {
++		errno = ENOBUFS;
++		return -1;
++	}
++	bpf->bpf_flags |= BPF_EOF;
++	bpf->bpf_flags &= ~BPF_PARTIALCSUM;
++	if (bytes) {
++		if (bpf_frame_bcast(bpf->bpf_ifp, bpf->bpf_buffer) == 0)
++			bpf->bpf_flags |= BPF_BCAST;
++		else
++			bpf->bpf_flags &= ~BPF_BCAST;
++		if ((size_t)bytes > len)
++			bytes = (ssize_t)len;
++		memcpy(data, bpf->bpf_buffer, (size_t)bytes);
++	}
++	return bytes;
++}
++
++int
++bpf_setfilter(__unused const struct bpf *bpf, __unused void *filter,
++    __unused unsigned int filter_len)
++{
++	return 0;
++}
++
++int
++bpf_setwfilter(__unused const struct bpf *bpf, __unused void *filter,
++    __unused unsigned int filter_len)
++{
++	errno = ENOSYS;
++	return -1;
++}
++
++int
++bpf_lockfilter(__unused const struct bpf *bpf)
++{
++	errno = ENOSYS;
++	return -1;
++}
++
++ssize_t
++bpf_writev(const struct bpf *bpf, struct iovec *iov, int iovcnt)
++{
++	return writev(bpf->bpf_fd, iov, iovcnt);
++}
++
++void
++bpf_close(struct bpf *bpf)
++{
++	if (bpf->bpf_fd != -1)
++		close(bpf->bpf_fd);
++	free(bpf->bpf_buffer);
++	free(bpf);
++}
+diff --git dhcpcd-workdir/src/if-zinnia.c dhcpcd-workdir/src/if-zinnia.c
+new file mode 100644
+index 0000000..4d801d9
+--- /dev/null
++++ dhcpcd-workdir/src/if-zinnia.c
+@@ -0,0 +1,228 @@
++/* SPDX-License-Identifier: BSD-2-Clause */
++
++#include <sys/types.h>
++#include <sys/ioctl.h>
++#include <sys/socket.h>
++#include <sys/utsname.h>
++
++#include <net/if.h>
++#include <net/if_arp.h>
++#include <net/route.h>
++#include <netinet/in.h>
++
++#include <errno.h>
++#include <stddef.h>
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
++
++#include "config.h"
++#include "common.h"
++#include "dhcpcd.h"
++#include "if.h"
++#include "ipv4.h"
++#include "logerr.h"
++#include "route.h"
++#include "sa.h"
++
++int
++if_machinearch(char *str, size_t len)
++{
++	struct utsname utsn;
++
++	if (uname(&utsn) != 0)
++		return -1;
++	return snprintf(str, len, "%s", utsn.machine);
++}
++
++int
++os_init(void)
++{
++	return 0;
++}
++
++int
++if_init(__unused struct interface *ifp)
++{
++	return 0;
++}
++
++int
++if_init_os(__unused struct interface *ifp)
++{
++	return 0;
++}
++
++int
++if_conf(__unused struct interface *ifp)
++{
++	return 0;
++}
++
++int
++if_opensockets_os(struct dhcpcd_ctx *ctx)
++{
++	ctx->link_fd = -1;
++	ctx->priv = NULL;
++	return 0;
++}
++
++void
++if_closesockets_os(__unused struct dhcpcd_ctx *ctx)
++{
++}
++
++int
++if_handlelink(__unused struct dhcpcd_ctx *ctx)
++{
++	errno = ENOTSUP;
++	return -1;
++}
++
++bool
++if_ignore(__unused struct dhcpcd_ctx *ctx, __unused const char *ifname)
++{
++	return false;
++}
++
++int
++if_vimaster(__unused struct dhcpcd_ctx *ctx, __unused const char *ifname)
++{
++	return 0;
++}
++
++unsigned short
++if_vlanid(__unused const struct interface *ifp)
++{
++	return 0;
++}
++
++bool
++if_roaming(__unused struct interface *ifp)
++{
++	return false;
++}
++
++int
++if_getssid(struct interface *ifp)
++{
++	ifp->ssid_len = 0;
++	ifp->ssid[0] = '\0';
++	return -1;
++}
++
++int
++if_setmac(__unused struct interface *ifp, __unused void *mac,
++    __unused uint8_t maclen)
++{
++	errno = ENOTSUP;
++	return -1;
++}
++
++int
++if_carrier(struct interface *ifp, __unused const void *ifadata)
++{
++	struct ifreq ifr = { .ifr_flags = 0 };
++
++	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
++	if (ioctl(ifp->ctx->pf_inet_fd, SIOCGIFFLAGS, &ifr) == -1)
++		return LINK_UNKNOWN;
++
++	ifp->flags = (unsigned int)ifr.ifr_flags;
++
++	if (!(ifr.ifr_flags & IFF_UP))
++		return LINK_DOWN;
++	return (ifr.ifr_flags & IFF_RUNNING) ? LINK_UP : LINK_DOWN;
++}
++
++#ifdef INET
++static void
++sin_set(struct sockaddr *sa, struct in_addr addr)
++{
++	struct sockaddr_in *sin = satosin(sa);
++
++	memset(sin, 0, sizeof(*sin));
++	sin->sin_family = AF_INET;
++	sin->sin_addr = addr;
++}
++
++int
++if_address(unsigned char cmd, const struct ipv4_addr *ia)
++{
++	struct interface *ifp = ia->iface;
++	int fd = ifp->ctx->pf_inet_fd;
++	struct ifreq ifr;
++
++	memset(&ifr, 0, sizeof(ifr));
++	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
++
++	if (cmd == RTM_DELADDR) {
++		struct in_addr zero = { .s_addr = INADDR_ANY };
++		struct ifreq cur;
++
++		memset(&cur, 0, sizeof(cur));
++		strlcpy(cur.ifr_name, ifp->name, sizeof(cur.ifr_name));
++		if (ioctl(fd, SIOCGIFADDR, &cur) == 0 &&
++		    satosin(&cur.ifr_addr)->sin_addr.s_addr != ia->addr.s_addr)
++			return 0;
++
++		sin_set(&ifr.ifr_addr, zero);
++		return ioctl(fd, SIOCSIFADDR, &ifr);
++	}
++
++	sin_set(&ifr.ifr_addr, ia->addr);
++	if (ioctl(fd, SIOCSIFADDR, &ifr) == -1)
++		return -1;
++
++	sin_set(&ifr.ifr_addr, ia->mask);
++	if (ioctl(fd, SIOCSIFNETMASK, &ifr) == -1)
++		return -1;
++
++	if (ia->brd.s_addr != INADDR_ANY) {
++		sin_set(&ifr.ifr_addr, ia->brd);
++		if (ioctl(fd, SIOCSIFBRDADDR, &ifr) == -1)
++			return -1;
++	}
++
++	return if_setflag(ifp, IFF_UP | IFF_RUNNING, 0);
++}
++
++int
++if_addrflags(__unused const struct interface *ifp,
++    __unused const struct in_addr *addr, __unused const char *alias)
++{
++	return 0;
++}
++#endif
++
++int
++if_route(unsigned char cmd, const struct rt *rt)
++{
++	struct interface *ifp = rt->rt_ifp;
++	const struct sockaddr_in *dest = satocsin(rt->rt_dest);
++	struct rtentry rte;
++	unsigned long req;
++
++	if (dest == NULL || dest->sin_addr.s_addr != INADDR_ANY ||
++	    rt->rt_gateway == NULL)
++		return 0;
++
++	memset(&rte, 0, sizeof(rte));
++	memcpy(&rte.rt_dst, rt->rt_dest, sizeof(struct sockaddr));
++	if (rt->rt_netmask != NULL)
++		memcpy(&rte.rt_genmask, rt->rt_netmask, sizeof(struct sockaddr));
++	memcpy(&rte.rt_gateway, rt->rt_gateway, sizeof(struct sockaddr));
++	rte.rt_flags = RTF_UP | RTF_GATEWAY;
++
++	req = (cmd == RTM_DELETE) ? SIOCDELRT : SIOCADDRT;
++	if (ioctl(ifp->ctx->pf_inet_fd, req, &rte) == -1)
++		return -1;
++	return 0;
++}
++
++int
++if_initrt(__unused struct dhcpcd_ctx *ctx, __unused rb_tree_t *kroutes,
++    __unused int af)
++{
++	return 0;
++}
+diff --git dhcpcd-clean/src/ipv6.h dhcpcd-workdir/src/ipv6.h
+index 1b78532..be7c78c 100644
+--- dhcpcd-clean/src/ipv6.h
++++ dhcpcd-workdir/src/ipv6.h
+@@ -36,7 +36,7 @@
+ #include "config.h"
+ #include "if.h"
+ 
+-#ifndef __linux__
++#if !defined(__linux__) && !defined(__zinnia__)
+ #if !defined(__QNX__) && !defined(__sun)
+ #include <sys/endian.h>
+ #endif
+diff --git dhcpcd-clean/src/sa.c dhcpcd-workdir/src/sa.c
+index b91ff79..0fa7de8 100644
+--- dhcpcd-clean/src/sa.c
++++ dhcpcd-workdir/src/sa.c
+@@ -33,7 +33,7 @@
+ #ifdef AF_LINK
+ #include <net/if_dl.h>
+ #elif defined(AF_PACKET)
+-#include <linux/if_packet.h>
++#include <netpacket/packet.h>
+ #endif
+ 
+ #include <assert.h>

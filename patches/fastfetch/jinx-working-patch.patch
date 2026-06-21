@@ -107,20 +107,10 @@ index 71c0e88..648f6dd 100644
  
  if(FreeBSD OR OpenBSD OR NetBSD)
 diff --git fastfetch-clean/src/detection/localip/localip_linux.c fastfetch-workdir/src/detection/localip/localip_linux.c
-index 7a85528..b045443 100644
+index 7a85528..bce08ee 100644
 --- fastfetch-clean/src/detection/localip/localip_linux.c
 +++ fastfetch-workdir/src/detection/localip/localip_linux.c
-@@ -6,7 +6,9 @@
- #include <string.h>
- #include <ctype.h>
- #include <net/if.h>
-+#ifndef __zinnia__
- #include <ifaddrs.h>
-+#endif
- #include <netinet/in.h>
- #include <arpa/inet.h>
- #include <stdio.h>
-@@ -21,6 +23,7 @@
+@@ -21,6 +21,7 @@
  #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__NetBSD__)
  #include <net/if_media.h>
  #include <net/if_dl.h>
@@ -128,15 +118,7 @@ index 7a85528..b045443 100644
  #else
  #include <netpacket/packet.h>
  #endif
-@@ -120,6 +123,7 @@ static void addNewIp(FFlist* list, const char* name, const char* addr, int type,
- 
- const char* ffDetectLocalIps(const FFLocalIpOptions* options, FFlist* results)
- {
-+#ifndef __zinnia__
-     struct ifaddrs* ifAddrStruct = NULL;
-     if(getifaddrs(&ifAddrStruct) < 0)
-         return "getifaddrs(&ifAddrStruct) failed";
-@@ -202,6 +206,7 @@ const char* ffDetectLocalIps(const FFLocalIpOptions* options, FFlist* results)
+@@ -202,6 +203,7 @@ const char* ffDetectLocalIps(const FFLocalIpOptions* options, FFlist* results)
                          ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5]);
              addNewIp(results, ifa->ifa_name, addressBuffer, -1, isDefaultRoute, flags, false);
          }
@@ -144,7 +126,15 @@ index 7a85528..b045443 100644
          #else
          else if (ifa->ifa_addr->sa_family == AF_PACKET)
          {
-@@ -631,6 +636,7 @@ const char* ffDetectLocalIps(const FFLocalIpOptions* options, FFlist* results)
+@@ -219,6 +221,7 @@ const char* ffDetectLocalIps(const FFLocalIpOptions* options, FFlist* results)
+ 
+     if (ifAddrStruct) freeifaddrs(ifAddrStruct);
+ 
++#ifndef __zinnia__
+     if ((options->showType & FF_LOCALIP_TYPE_MTU_BIT) || (options->showType & FF_LOCALIP_TYPE_SPEED_BIT)
+         #ifdef __sun
+         || (options->showType & FF_LOCALIP_TYPE_MAC_BIT)
+@@ -631,6 +634,7 @@ const char* ffDetectLocalIps(const FFLocalIpOptions* options, FFlist* results)
              }
          }
      }
