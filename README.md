@@ -18,6 +18,7 @@ To create a bootable image you will additionally need:
 - dosfstools (for mkfs.vfat)
 - e2fsprogs (for mkfs.ext2)
 - sgdisk (for partitioning the image)
+- build dependencies for the [xbps package manager](https://docs.voidlinux.org/xbps/index.html)
 
 To run the built image you will also need QEMU for the target architecture.
 
