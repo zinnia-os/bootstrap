@@ -18,6 +18,7 @@ To create a bootable image you will additionally need:
 - dosfstools (for mkfs.vfat)
 - e2fsprogs (for mkfs.ext2)
 - sgdisk (for partitioning the image)
+- build dependencies for the [xbps package manager](https://docs.voidlinux.org/xbps/index.html)
 
 To run the built image you will also need QEMU for the target architecture.
 
@@ -32,6 +33,10 @@ $ make
 in the root of the repository.
 This will build a small subset of the distribution and create a bootable image
 named `zinnia.img` in the build directory.
+
+> [!TIP]
+> On some distributions, you may need to run the build command as root
+> to fix a `file not found` error when bootstrap attempts to run `sgdisk`
 
 You can also build separate packages by running `../jinx/jinx build <package>`
 inside the respective build directory for the target architecture.
