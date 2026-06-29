@@ -1,4 +1,4 @@
 type = internal
 depends-on = system
-depends-on = dhcp
+waits-for = dhcp
 depends-on = lightdm

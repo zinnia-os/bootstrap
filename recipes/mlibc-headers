@@ -2,7 +2,7 @@
 
 name=mlibc-headers
 repology_id=mlibc
-revision=6
+revision=7
 from_source=mlibc
 imagedeps="meson ninja-build"
 hostdeps="pkg-config"

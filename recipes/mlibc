@@ -1,7 +1,7 @@
 #! /bin/sh
 
 name=mlibc
-revision=8
+revision=9
 from_source=mlibc
 imagedeps="build-essential meson ninja-build"
 hostdeps="gcc pkg-config libgcc-binaries"
