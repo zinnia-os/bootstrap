@@ -1,0 +1,17 @@
+#!/bin/sh
+[ -n "${USER}" ] || exit 0
+uid="$(id -u "${USER}" 2>/dev/null)" || exit 0
+gid="$(id -g "${USER}" 2>/dev/null)" || exit 0
+
+dir="/run/user/${uid}"
+mkdir -p "${dir}" && chown "${uid}:${gid}" "${dir}" && chmod 700 "${dir}"
+
+home=""
+while IFS=: read -r u _ _ _ _ h _; do
+    [ "${u}" = "${USER}" ] && home="${h}" && break
+done < /etc/passwd
+case "${home}" in
+    /home/?*) [ -d "${home}" ] && chown "${uid}:${gid}" "${home}" 2>/dev/null || true ;;
+esac
+
+exit 0

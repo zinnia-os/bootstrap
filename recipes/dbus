@@ -2,7 +2,7 @@
 
 name=dbus
 version=1.16.2
-revision=2
+revision=3
 git_url="https://gitlab.freedesktop.org/dbus/dbus.git"
 commit=958bf9db2100553bcd2fe2a854e1ebb42e886054
 hostdeps="gcc pkg-config"
@@ -31,6 +31,8 @@ package() {
 
     touch "${dest_dir}${prefix}"/share/dbus-1/session.d/.keep
     touch "${dest_dir}"/var/lib/dbus/.keep
+
+    cp -rp "${base_dir}/extras/dbus/." "${dest_dir}/"
 
     post_package_strip
 }

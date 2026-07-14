@@ -2,7 +2,7 @@
 
 name=zinnia-devd
 version=0.1
-revision=1
+revision=2
 hostdeps="gcc pkg-config"
 builddeps="mlibc"
 
@@ -13,4 +13,8 @@ build() {
 package() {
     mkdir -p ${dest_dir}/usr/bin
     cp zinnia-devd ${dest_dir}/usr/bin/devd
+
+    install -Dm644 "${base_dir}/extras/zinnia-devd/dinit.d/devd" "${dest_dir}/etc/dinit.d/devd"
+    install -d "${dest_dir}/etc/dinit.d/boot.d"
+    touch "${dest_dir}/etc/dinit.d/boot.d/devd"
 }

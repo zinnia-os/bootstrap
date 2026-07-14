@@ -2,7 +2,7 @@
 
 name=lightdm-gtk-greeter
 version=2.0.8
-revision=3
+revision=4
 tarball_url="https://github.com/Xubuntu/lightdm-gtk-greeter/releases/download/lightdm-gtk-greeter-${version}/lightdm-gtk-greeter-${version}.tar.gz"
 tarball_blake2b="ae06ebbc07efe5c0131c07b293671f24683699eb84f12222de8165428e935b98bbf9d1e107eaeca8f10e725a6a11c97d4f4c3d415ada0b0876b0b0a99f21d1ee"
 imagedeps="intltool xfce4-dev-tools"
@@ -34,6 +34,9 @@ build() {
 
 package() {
     DESTDIR="${dest_dir}" make install
+
+    cp -rp "${base_dir}/extras/lightdm-gtk-greeter/." "${dest_dir}/"
+    chmod 0755 "${dest_dir}/etc/lightdm/greeter-wrapper"
 
     post_package_strip
 }

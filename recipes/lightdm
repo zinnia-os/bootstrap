@@ -2,12 +2,12 @@
 
 name=lightdm
 version=1.32.0
-revision=12
+revision=14
 tarball_url="https://github.com/canonical/lightdm/releases/download/${version}/lightdm-${version}.tar.xz"
 tarball_blake2b="90191559895a58e2c5892705ea95766aaaaa87d3470f1372ab90fcf3991d27f9280d5bbabe0cfce70e25f960d63c1e7eab7beeeb501341996afd155788cbe1c7"
 imagedeps="intltool itstool"
 hostdeps="gcc pkg-config"
-deps="core-libs glib2 libgcrypt libx11 libxcb libxklavier openpam dbus xorg-server xorg-xauth adwaita-icon-theme"
+deps="core-libs glib2 libgcrypt libx11 libxcb libxklavier openpam dbus xorg-server xorg-xauth xf86-input-evdev adwaita-icon-theme"
 
 prepare() {
     autotools_recursive_regen
@@ -35,10 +35,8 @@ build() {
 package() {
     DESTDIR="${dest_dir}" make install
 
-    # lightdm's stock PAM stacks reference Linux-PAM modules that OpenPAM does not provide.
-    rm -f "${dest_dir}/etc/pam.d/lightdm" \
-          "${dest_dir}/etc/pam.d/lightdm-greeter" \
-          "${dest_dir}/etc/pam.d/lightdm-autologin"
+    cp -rp "${base_dir}/extras/lightdm/." "${dest_dir}/"
+    chmod 0755 "${dest_dir}/etc/lightdm/Xsession" "${dest_dir}/etc/lightdm/setup-runtime-dir"
 
     post_package_strip
 }

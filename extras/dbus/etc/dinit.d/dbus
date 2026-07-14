@@ -1,0 +1,5 @@
+type = process
+command = /bin/sh -c "mkdir -p /run/dbus && exec /usr/bin/dbus-daemon --system --nofork --nopidfile --print-address=3"
+ready-notification = pipefd:3
+depends-on = devd
+restart = yes

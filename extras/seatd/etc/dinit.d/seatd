@@ -1,5 +1,5 @@
 type = process
-command = /usr/bin/seatd -n 3
+command = /usr/bin/seatd -n 3 -u zinnia
 depends-on = devd
 ready-notification = pipefd:3
 smooth-recovery = yes
