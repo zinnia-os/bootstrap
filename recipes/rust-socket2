@@ -1,0 +1,10 @@
+#! /bin/sh
+
+name=rust-socket2
+skip_pkg_check=yes
+version=0.6.2
+revision=1
+tarball_url="https://static.crates.io/crates/socket2/socket2-${version}.crate"
+tarball_blake2b="0f2c125ee64a24cd719d3fdf303d718ba645918f87e78dd0e89b2517af69136286387a94f1355815b7079655d68affb8036571c9ffe6dd409d686168c1cee7a5"
+
+package_rust_crate

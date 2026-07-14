@@ -4,14 +4,18 @@ name=rust
 from_source=rust
 revision=2
 imagedeps="build-essential cmake ninja-build python3 curl git"
-hostdeps="pkg-config"
+hostdeps="pkg-config cargo rust"
 hostrundeps="gcc llvm"
-deps="core-libs rust-libc"
+deps="core-libs ${RUST_ZINNIA_FORKS}"
 builddeps="mlibc"
 allow_network=yes
 
+prepare_rust_source() {
+    rust_src="$(pwd -P)/rust-src"
+    prepare_rust_toolchain_source "${rust_src}" "${sysroot_dir}/usr/src/rust"
+}
+
 configure() {
-    # Create config.toml for cross-compilation
     cat > config.toml << EOF
 change-id = "ignore"
 
@@ -50,26 +54,22 @@ EOF
 
 
 build() {
+    prepare_rust_source
+
         BOOTSTRAP_SKIP_TARGET_SANITY=1 \
-        CARGO_HOME="${build_dir}/.cargo" \
-    ${source_dir}/x.py build rustc std --stage 2 -j${parallelism}
+    "${rust_src}"/x.py build rustc std --stage 2 -j${parallelism}
 }
 
 package() {
-        BOOTSTRAP_SKIP_TARGET_SANITY=1 \
-        CARGO_HOME="${build_dir}/.cargo" \
-        DESTDIR="${dest_dir}" \
-    ${source_dir}/x.py install rustc std --stage 2 -j${parallelism}
+    prepare_rust_source
 
-    # Remove documentation and other unnecessary files
+        BOOTSTRAP_SKIP_TARGET_SANITY=1 \
+        DESTDIR="${dest_dir}" \
+    "${rust_src}"/x.py install rustc std --stage 2 -j${parallelism}
+
     rm -rf "${dest_dir}${prefix}"/share/doc
     rm -rf "${dest_dir}${prefix}"/share/man
 
-    # Strip binaries
-    strip_command=strip \
-    post_package_strip
-
-    # TODO: Install actual source
     mkdir -p "${dest_dir}${prefix}"/lib/rustlib/src/rust/library/
-    cp -rp "${source_dir}"/library/. "${dest_dir}${prefix}"/lib/rustlib/src/rust/library/
+    cp -rp "${rust_src}"/library/. "${dest_dir}${prefix}"/lib/rustlib/src/rust/library/
 }

@@ -1,0 +1,12 @@
+diff --git rust-errno-clean/src/unix.rs rust-errno-workdir/src/unix.rs
+index 5536eef..04843ad 100644
+--- rust-errno-clean/src/unix.rs
++++ rust-errno-workdir/src/unix.rs
+@@ -95,6 +95,7 @@ extern "C" {
+             target_os = "redox",
+             target_os = "dragonfly",
+             target_os = "emscripten",
++            target_os = "zinnia",
+         ),
+         link_name = "__errno_location"
+     )]

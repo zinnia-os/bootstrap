@@ -1,0 +1,178 @@
+diff --git rust-rustix-clean/src/backend/libc/fs/dir.rs rust-rustix-workdir/src/backend/libc/fs/dir.rs
+index 3c4c389..aeaba1c 100644
+--- rust-rustix-clean/src/backend/libc/fs/dir.rs
++++ rust-rustix-workdir/src/backend/libc/fs/dir.rs
+@@ -22,6 +22,7 @@ use crate::fs::{fstat, Stat};
+     target_os = "redox",
+     target_os = "vita",
+     target_os = "wasi",
++    target_os = "zinnia",
+ )))]
+ use crate::fs::{fstatfs, StatFs};
+ #[cfg(not(any(solarish, target_os = "vita", target_os = "wasi")))]
+@@ -249,6 +250,7 @@ impl Dir {
+         target_os = "redox",
+         target_os = "vita",
+         target_os = "wasi",
++        target_os = "zinnia",
+     )))]
+     #[inline]
+     pub fn statfs(&self) -> io::Result<StatFs> {
+diff --git rust-rustix-clean/src/backend/libc/fs/syscalls.rs rust-rustix-workdir/src/backend/libc/fs/syscalls.rs
+index 8cbd3a2..886b30a 100644
+--- rust-rustix-clean/src/backend/libc/fs/syscalls.rs
++++ rust-rustix-workdir/src/backend/libc/fs/syscalls.rs
+@@ -47,6 +47,7 @@ use crate::fs::SealFlags;
+     target_os = "redox",
+     target_os = "vita",
+     target_os = "wasi",
++    target_os = "zinnia",
+ )))]
+ use crate::fs::StatFs;
+ #[cfg(not(any(target_os = "espidf", target_os = "vita")))]
+@@ -261,6 +262,7 @@ pub(crate) fn openat(
+     target_os = "redox",
+     target_os = "vita",
+     target_os = "wasi",
++    target_os = "zinnia",
+ )))]
+ #[inline]
+ pub(crate) fn statfs(filename: &CStr) -> io::Result<StatFs> {
+@@ -1582,6 +1584,7 @@ fn fstat_old(fd: BorrowedFd<'_>) -> io::Result<Stat> {
+     target_os = "redox",
+     target_os = "vita",
+     target_os = "wasi",
++    target_os = "zinnia",
+ )))]
+ pub(crate) fn fstatfs(fd: BorrowedFd<'_>) -> io::Result<StatFs> {
+     let mut statfs = MaybeUninit::<StatFs>::uninit();
+diff --git rust-rustix-clean/src/backend/libc/fs/types.rs rust-rustix-workdir/src/backend/libc/fs/types.rs
+index d570c5b..a55bf36 100644
+--- rust-rustix-clean/src/backend/libc/fs/types.rs
++++ rust-rustix-workdir/src/backend/libc/fs/types.rs
+@@ -768,6 +768,7 @@ bitflags! {
+             target_os = "haiku",
+             target_os = "hurd",
+             target_os = "wasi",
++            target_os = "zinnia",
+         )))]
+         const KEEP_SIZE = bitcast!(c::FALLOC_FL_KEEP_SIZE);
+         /// `FALLOC_FL_PUNCH_HOLE`
+@@ -778,6 +779,7 @@ bitflags! {
+             target_os = "haiku",
+             target_os = "hurd",
+             target_os = "wasi",
++            target_os = "zinnia",
+         )))]
+         const PUNCH_HOLE = bitcast!(c::FALLOC_FL_PUNCH_HOLE);
+         /// `FALLOC_FL_NO_HIDE_STALE`
+@@ -793,6 +795,7 @@ bitflags! {
+             target_os = "l4re",
+             target_os = "linux",
+             target_os = "wasi",
++            target_os = "zinnia",
+         )))]
+         const NO_HIDE_STALE = bitcast!(c::FALLOC_FL_NO_HIDE_STALE);
+         /// `FALLOC_FL_COLLAPSE_RANGE`
+@@ -804,6 +807,7 @@ bitflags! {
+             target_os = "hurd",
+             target_os = "emscripten",
+             target_os = "wasi",
++            target_os = "zinnia",
+         )))]
+         const COLLAPSE_RANGE = bitcast!(c::FALLOC_FL_COLLAPSE_RANGE);
+         /// `FALLOC_FL_ZERO_RANGE`
+@@ -815,6 +819,7 @@ bitflags! {
+             target_os = "hurd",
+             target_os = "emscripten",
+             target_os = "wasi",
++            target_os = "zinnia",
+         )))]
+         const ZERO_RANGE = bitcast!(c::FALLOC_FL_ZERO_RANGE);
+         /// `FALLOC_FL_INSERT_RANGE`
+@@ -826,6 +831,7 @@ bitflags! {
+             target_os = "hurd",
+             target_os = "emscripten",
+             target_os = "wasi",
++            target_os = "zinnia",
+         )))]
+         const INSERT_RANGE = bitcast!(c::FALLOC_FL_INSERT_RANGE);
+         /// `FALLOC_FL_UNSHARE_RANGE`
+@@ -837,6 +843,7 @@ bitflags! {
+             target_os = "hurd",
+             target_os = "emscripten",
+             target_os = "wasi",
++            target_os = "zinnia",
+         )))]
+         const UNSHARE_RANGE = bitcast!(c::FALLOC_FL_UNSHARE_RANGE);
+ 
+@@ -1048,6 +1055,7 @@ pub struct Stat {
+     target_os = "redox",
+     target_os = "vita",
+     target_os = "wasi",
++    target_os = "zinnia",
+ )))]
+ #[allow(clippy::module_name_repetitions)]
+ pub type StatFs = c::statfs;
+@@ -1070,6 +1078,7 @@ pub type StatFs = c::statfs64;
+     target_os = "redox",
+     target_os = "vita",
+     target_os = "wasi",
++    target_os = "zinnia",
+ )))]
+ pub type Fsid = c::fsid_t;
+ 
+diff --git rust-rustix-clean/src/fs/abs.rs rust-rustix-workdir/src/fs/abs.rs
+index 6642fee..3ccc24b 100644
+--- rust-rustix-clean/src/fs/abs.rs
++++ rust-rustix-workdir/src/fs/abs.rs
+@@ -13,6 +13,7 @@ use crate::fs::Access;
+     target_os = "redox",
+     target_os = "vita",
+     target_os = "wasi",
++    target_os = "zinnia",
+ )))]
+ use crate::fs::StatFs;
+ #[cfg(not(any(target_os = "wasi")))]
+@@ -264,6 +265,7 @@ pub fn access<P: path::Arg>(path: P, access: Access) -> io::Result<()> {
+     target_os = "redox",
+     target_os = "vita",
+     target_os = "wasi",
++    target_os = "zinnia",
+ )))]
+ #[inline]
+ pub fn statfs<P: path::Arg>(path: P) -> io::Result<StatFs> {
+diff --git rust-rustix-clean/src/fs/fd.rs rust-rustix-workdir/src/fs/fd.rs
+index 61cd3f4..31ad783 100644
+--- rust-rustix-clean/src/fs/fd.rs
++++ rust-rustix-workdir/src/fs/fd.rs
+@@ -38,6 +38,7 @@ use backend::fs::types::Stat;
+     target_os = "redox",
+     target_os = "vita",
+     target_os = "wasi",
++    target_os = "zinnia",
+ )))]
+ use backend::fs::types::StatFs;
+ #[cfg(not(target_os = "wasi"))]
+@@ -176,6 +177,7 @@ pub fn fstat<Fd: AsFd>(fd: Fd) -> io::Result<Stat> {
+     target_os = "redox",
+     target_os = "vita",
+     target_os = "wasi",
++    target_os = "zinnia",
+ )))]
+ #[inline]
+ pub fn fstatfs<Fd: AsFd>(fd: Fd) -> io::Result<StatFs> {
+diff --git rust-rustix-clean/src/ioctl/mod.rs rust-rustix-workdir/src/ioctl/mod.rs
+index 70c6905..fdd54b6 100644
+--- rust-rustix-clean/src/ioctl/mod.rs
++++ rust-rustix-workdir/src/ioctl/mod.rs
+@@ -320,7 +320,8 @@ type _Opcode = c::c_int;
+     target_os = "haiku",
+     target_os = "horizon",
+     target_os = "hurd",
+-    target_os = "vita"
++    target_os = "vita",
++    target_os = "zinnia"
+ ))]
+ type _Opcode = c::c_ulong;
+ 

@@ -1,30 +1,3 @@
-diff --git rust-clean/Cargo.lock rust-workdir/Cargo.lock
-index 9ff977e..2cb3d1d 100644
---- rust-clean/Cargo.lock
-+++ rust-workdir/Cargo.lock
-@@ -2146,9 +2146,7 @@ checksum = "9fa0e2a1fcbe2f6be6c42e342259976206b383122fc152e872795338b5a3f3a7"
- 
- [[package]]
- name = "libc"
--version = "0.2.177"
--source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "2874a2af47a2325c2001a6e6fad9b16a53b802102b528163885171cf92b15976"
-+version = "0.2.178"
- 
- [[package]]
- name = "libdbus-sys"
-diff --git rust-clean/Cargo.toml rust-workdir/Cargo.toml
-index 67c7a9d..56ce708 100644
---- rust-clean/Cargo.toml
-+++ rust-workdir/Cargo.toml
-@@ -91,5 +91,5 @@ codegen-units = 1
- 
- # If you want to use a crate with local modifications, you can set a path or git dependency here.
- # For git dependencies, also add your source to ALLOWED_SOURCES in src/tools/tidy/src/extdeps.rs.
--#[patch.crates-io]
--
-+[patch.crates-io]
-+libc = { path = "/base_dir/sources/rust-libc" }
 diff --git rust-clean/compiler/rustc_target/src/spec/base/mod.rs rust-workdir/compiler/rustc_target/src/spec/base/mod.rs
 index 9e7ff62..7faabc6 100644
 --- rust-clean/compiler/rustc_target/src/spec/base/mod.rs
@@ -67,7 +40,7 @@ index d9c872c..1f1e4cf 100644
 @@ -1571,6 +1571,10 @@ supported_targets! {
      ("aarch64-unknown-managarm-mlibc", aarch64_unknown_managarm_mlibc),
      ("riscv64gc-unknown-managarm-mlibc", riscv64gc_unknown_managarm_mlibc),
- 
+
 +    ("x86_64-unknown-zinnia-mlibc", x86_64_unknown_zinnia_mlibc),
 +    ("aarch64-unknown-zinnia-mlibc", aarch64_unknown_zinnia_mlibc),
 +    ("riscv64gc-unknown-zinnia-mlibc", riscv64gc_unknown_zinnia_mlibc),
@@ -171,31 +144,6 @@ index 0000000..33e9d26
 +        options: base,
 +    }
 +}
-diff --git rust-clean/library/Cargo.lock rust-workdir/library/Cargo.lock
-index 4801f92..8e527a2 100644
---- rust-clean/library/Cargo.lock
-+++ rust-workdir/library/Cargo.lock
-@@ -147,8 +147,6 @@ dependencies = [
- [[package]]
- name = "libc"
- version = "0.2.178"
--source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "37c93d8daa9d8a012fd8ab92f088405fb202ea0b6ab73ee2482ae66af4f42091"
- dependencies = [
-  "rustc-std-workspace-core",
- ]
-diff --git rust-clean/library/Cargo.toml rust-workdir/library/Cargo.toml
-index 87df966..020e1e2 100644
---- rust-clean/library/Cargo.toml
-+++ rust-workdir/library/Cargo.toml
-@@ -82,6 +82,7 @@ rustflags = [
- 
- [patch.crates-io]
- # See comments in `library/rustc-std-workspace-core/README.md` for what's going on here
-+libc = { path = "/base_dir/sources/rust-libc" }
- rustc-std-workspace-core = { path = 'rustc-std-workspace-core' }
- rustc-std-workspace-alloc = { path = 'rustc-std-workspace-alloc' }
- rustc-std-workspace-std = { path = 'rustc-std-workspace-std' }
 diff --git rust-clean/library/std/build.rs rust-workdir/library/std/build.rs
 index c0a6e30..1e07e73 100644
 --- rust-clean/library/std/build.rs
@@ -205,7 +153,7 @@ index c0a6e30..1e07e73 100644
          || target_os == "cygwin"
          || target_os == "vexos"
 +        || target_os == "zinnia"
- 
+
          // See src/bootstrap/src/core/build_steps/synthetic_targets.rs
          || env::var("RUSTC_BOOTSTRAP_SYNTHETIC_TARGET").is_ok()
 diff --git rust-clean/library/std/src/os/mod.rs rust-workdir/library/std/src/os/mod.rs
@@ -444,7 +392,7 @@ index 573f540..fc6b192 100644
 @@ -147,6 +147,17 @@ pub mod os {
      pub const EXE_EXTENSION: &str = "";
  }
- 
+
 +#[cfg(target_os = "zinnia")]
 +pub mod os {
 +    pub const FAMILY: &str = "unix";
@@ -460,7 +408,7 @@ index 573f540..fc6b192 100644
  pub mod os {
      pub const FAMILY: &str = "unix";
 diff --git rust-clean/library/std/src/sys/fd/unix.rs rust-workdir/library/std/src/sys/fd/unix.rs
-index bb6c0ac..ef02271 100644
+index bb6c0ac..b4e27d9 100644
 --- rust-clean/library/std/src/sys/fd/unix.rs
 +++ rust-workdir/library/std/src/sys/fd/unix.rs
 @@ -66,6 +66,7 @@ const READ_LIMIT: usize = if cfg!(target_vendor = "apple") {
@@ -511,6 +459,22 @@ index bb6c0ac..ef02271 100644
      )))]
      pub fn write_vectored_at(&self, bufs: &[IoSlice<'_>], offset: u64) -> io::Result<usize> {
          io::default_write_vectored(|b| self.write_at(b, offset), bufs)
+@@ -562,6 +568,7 @@ impl FileDesc {
+         target_os = "vxworks",
+         target_os = "nto",
+         target_os = "wasi",
++        target_os = "zinnia",
+     )))]
+     pub fn set_cloexec(&self) -> io::Result<()> {
+         unsafe {
+@@ -586,6 +593,7 @@ impl FileDesc {
+         target_os = "vxworks",
+         target_os = "nto",
+         target_os = "wasi",
++        target_os = "zinnia",
+     ))]
+     pub fn set_cloexec(&self) -> io::Result<()> {
+         unsafe {
 diff --git rust-clean/library/std/src/sys/fs/unix.rs rust-workdir/library/std/src/sys/fs/unix.rs
 index 7db4745..caa63dc 100644
 --- rust-clean/library/std/src/sys/fs/unix.rs
@@ -570,7 +534,7 @@ index 494d944..e25d582 100644
 @@ -360,6 +360,12 @@ pub fn current_exe() -> io::Result<PathBuf> {
      Err(io::const_error!(io::ErrorKind::Unsupported, "not yet implemented!"))
  }
- 
+
 +#[cfg(target_os = "zinnia")]
 +pub fn current_exe() -> io::Result<PathBuf> {
 +    use crate::io::ErrorKind;
@@ -624,7 +588,7 @@ index cce6ca7..da5eda0 100644
 @@ -163,6 +163,11 @@ unsafe extern "C" {}
  #[link(name = "gcc_s")]
  unsafe extern "C" {}
- 
+
 +#[cfg(target_os = "zinnia")]
 +#[link(name = "gcc_eh", kind = "static", modifiers = "-bundle", cfg(target_feature = "crt-static"))]
 +#[link(name = "gcc_s", cfg(not(target_feature = "crt-static")))]
@@ -633,3 +597,61 @@ index cce6ca7..da5eda0 100644
  #[cfg(target_os = "freebsd")]
  #[link(name = "gcc", kind = "static", modifiers = "-bundle", cfg(target_feature = "crt-static"))]
  #[link(name = "gcc_eh", kind = "static", modifiers = "-bundle", cfg(target_feature = "crt-static"))]
+diff --git rust-clean/src/tools/generate-copyright/src/cargo_metadata.rs rust-workdir/src/tools/generate-copyright/src/cargo_metadata.rs
+index 87cd85c..1eab545 100644
+--- rust-clean/src/tools/generate-copyright/src/cargo_metadata.rs
++++ rust-workdir/src/tools/generate-copyright/src/cargo_metadata.rs
+@@ -77,11 +77,25 @@ pub fn get_metadata(
+         if manifest_path.file_name() != Some(OsStr::new("Cargo.toml")) {
+             panic!("cargo_manifest::get requires a path to a Cargo.toml file");
+         }
+-        let metadata = cargo_metadata::MetadataCommand::new()
++        let metadata = match cargo_metadata::MetadataCommand::new()
+             .cargo_path(cargo)
+             .env("RUSTC_BOOTSTRAP", "1")
+             .manifest_path(manifest_path)
+-            .exec()?;
++            .exec()
++        {
++            Ok(metadata) => metadata,
++            Err(e) if is_non_installed_example_manifest(root_path, manifest_path) => {
++                eprintln!(
++                    "Skipping optional manifest {:?} while collecting copyright metadata: {e}",
++                    manifest_path
++                );
++                continue;
++            }
++            Err(e) => return Err(e.into()),
++        };
+         for package in metadata.packages {
+             let package_manifest_path = package.manifest_path.as_path();
+ 
+@@ -110,6 +124,15 @@ pub fn get_metadata(
+     Ok(output)
+ }
+ 
++fn is_non_installed_example_manifest(root_path: &Path, manifest_path: &Path) -> bool {
++    let Ok(relative) = manifest_path.strip_prefix(root_path) else {
++        return false;
++    };
++
++    relative.starts_with("src/doc") || relative.starts_with("tests")
++}
++
+ /// Add important files off disk into this dependency.
+ ///
+ /// Maybe one-day Cargo.toml will contain enough information that we don't need
+@@ -121,7 +144,12 @@ fn load_important_files(
+     let name_version = format!("{}-{}", package.name, package.version);
+     println!("Scraping notices for {}...", name_version);
+     let dep_vendor_path = vendor_root.join(name_version);
+-    for entry in std::fs::read_dir(dep_vendor_path)? {
++    let dep_vendor_entries = match std::fs::read_dir(&dep_vendor_path) {
++        Ok(entries) => entries,
++        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
++        Err(e) => return Err(e.into()),
++    };
++    for entry in dep_vendor_entries {
+         let entry = entry?;
+         let metadata = entry.metadata()?;
+         let path = entry.path();

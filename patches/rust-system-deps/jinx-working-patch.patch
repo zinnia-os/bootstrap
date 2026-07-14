@@ -1,0 +1,16 @@
+diff --git rust-system-deps-clean/src/lib.rs rust-system-deps-workdir/src/lib.rs
+index 45ab1ce..d4a2374 100644
+--- rust-system-deps-clean/src/lib.rs
++++ rust-system-deps-workdir/src/lib.rs
+@@ -807,6 +807,11 @@ impl Config {
+             .get("TARGET")
+             .expect("no TARGET env variable defined");
+         let target = get_builtin_target_by_triple(&target)
++            .or_else(|| {
++                std::env::var("CARGO_CFG_TARGET_ARCH").ok().and_then(|arch| {
++                    get_builtin_target_by_triple(&format!("{}-unknown-linux-gnu", arch))
++                })
++            })
+             .unwrap_or_else(|| panic!("Invalid TARGET: {}", target));
+ 
+         let res = cfg.eval(|pred| match pred {

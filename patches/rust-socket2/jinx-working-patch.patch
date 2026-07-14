@@ -1,0 +1,54 @@
+diff --git rust-socket2-clean/src/socket.rs rust-socket2-workdir/src/socket.rs
+index 6a4423a..ffe28fd 100644
+--- rust-socket2-clean/src/socket.rs
++++ rust-socket2-workdir/src/socket.rs
+@@ -1655,6 +1655,7 @@ impl Socket {
+         target_os = "espidf",
+         target_os = "vita",
+         target_os = "cygwin",
++        target_os = "zinnia",
+     )))]
+     pub fn set_recv_tos_v4(&self, recv_tos: bool) -> io::Result<()> {
+         unsafe {
+@@ -1687,6 +1688,7 @@ impl Socket {
+         target_os = "espidf",
+         target_os = "vita",
+         target_os = "cygwin",
++        target_os = "zinnia",
+     )))]
+     pub fn recv_tos_v4(&self) -> io::Result<bool> {
+         unsafe {
+diff --git rust-socket2-clean/src/sys/unix.rs rust-socket2-workdir/src/sys/unix.rs
+index 3a60ada..2151c8f 100644
+--- rust-socket2-clean/src/sys/unix.rs
++++ rust-socket2-workdir/src/sys/unix.rs
+@@ -163,6 +163,7 @@ pub(crate) use libc::IP_HDRINCL;
+     target_os = "espidf",
+     target_os = "vita",
+     target_os = "cygwin",
++    target_os = "zinnia",
+ )))]
+ pub(crate) use libc::IP_RECVTOS;
+ #[cfg(not(any(
+@@ -382,6 +383,7 @@ type IovLen = usize;
+     target_os = "espidf",
+     target_os = "vita",
+     target_os = "cygwin",
++    target_os = "zinnia",
+ ))]
+ type IovLen = c_int;
+ 
+@@ -481,7 +483,12 @@ impl_debug!(
+     libc::SOCK_DCCP,
+     #[cfg(not(any(target_os = "redox", target_os = "espidf")))]
+     libc::SOCK_RAW,
+-    #[cfg(not(any(target_os = "redox", target_os = "haiku", target_os = "espidf")))]
++    #[cfg(not(any(
++        target_os = "redox",
++        target_os = "haiku",
++        target_os = "espidf",
++        target_os = "zinnia"
++    )))]
+     libc::SOCK_RDM,
+     #[cfg(not(target_os = "espidf"))]
+     libc::SOCK_SEQPACKET,

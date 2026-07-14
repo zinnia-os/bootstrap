@@ -1,0 +1,36 @@
+diff --git rust-libloading-clean/src/os/unix/consts.rs rust-libloading-workdir/src/os/unix/consts.rs
+index 4ae0059..8367a2a 100644
+--- rust-libloading-clean/src/os/unix/consts.rs
++++ rust-libloading-workdir/src/os/unix/consts.rs
+@@ -89,6 +89,7 @@ mod posix {
+             target_os = "nto",
+             target_os = "hurd",
+             target_os = "cygwin",
++            target_os = "zinnia",
+         ))] {
+             pub(super) const RTLD_LAZY: c_int = 1;
+         } else {
+@@ -129,6 +130,7 @@ mod posix {
+             target_os = "nto",
+             target_os = "hurd",
+             target_os = "cygwin",
++            target_os = "zinnia",
+         ))] {
+             pub(super) const RTLD_NOW: c_int = 2;
+         } else if #[cfg(all(target_os = "android",target_pointer_width = "32"))] {
+@@ -153,6 +155,7 @@ mod posix {
+             all(target_os = "linux", target_arch = "mips"),
+             all(target_os = "linux", target_arch = "mips64"),
+             target_os = "cygwin",
++            target_os = "zinnia",
+         ))] {
+             pub(super) const RTLD_GLOBAL: c_int = 4;
+         } else if #[cfg(any(
+@@ -228,6 +231,7 @@ mod posix {
+             target_os = "redox",
+             target_os = "hurd",
+             target_os = "cygwin",
++            target_os = "zinnia",
+         ))] {
+             pub(super) const RTLD_LOCAL: c_int = 0;
+         } else {

@@ -1,0 +1,25 @@
+diff --git rust-getrandom-clean/src/lib.rs rust-getrandom-workdir/src/lib.rs
+index 68b5af9..799402c 100644
+--- rust-getrandom-clean/src/lib.rs
++++ rust-getrandom-workdir/src/lib.rs
+@@ -243,6 +243,7 @@ cfg_if! {
+         target_os = "openbsd",
+         target_os = "vita",
+         target_os = "emscripten",
++        target_os = "zinnia",
+     ))] {
+         mod util_libc;
+         #[path = "getentropy.rs"] mod imp;
+diff --git rust-getrandom-clean/src/util_libc.rs rust-getrandom-workdir/src/util_libc.rs
+index f488b41..f4a7ced 100644
+--- rust-getrandom-clean/src/util_libc.rs
++++ rust-getrandom-workdir/src/util_libc.rs
+@@ -11,7 +11,7 @@ use libc::c_void;
+ cfg_if! {
+     if #[cfg(any(target_os = "netbsd", target_os = "openbsd", target_os = "android", target_os = "cygwin"))] {
+         use libc::__errno as errno_location;
+-    } else if #[cfg(any(target_os = "linux", target_os = "emscripten", target_os = "hurd", target_os = "redox", target_os = "dragonfly"))] {
++    } else if #[cfg(any(target_os = "linux", target_os = "emscripten", target_os = "hurd", target_os = "redox", target_os = "dragonfly", target_os = "zinnia"))] {
+         use libc::__errno_location as errno_location;
+     } else if #[cfg(any(target_os = "solaris", target_os = "illumos"))] {
+         use libc::___errno as errno_location;

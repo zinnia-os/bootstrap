@@ -13,7 +13,7 @@ case ${HOST_ARCH} in
         RUST_HOST_TRIPLET=riscv64gc-unknown-linux-gnu
         ;;
     *)
-        RUST_HOST_TRIPLET=${JINX_ARCH}-unknown-linux-gnu
+        RUST_HOST_TRIPLET=${HOST_ARCH}-unknown-linux-gnu
         ;;
 esac
 
@@ -253,7 +253,9 @@ cmake_configure_noflags() {
         "$@"
 }
 
-# Build while ignoring the lockfile.
+RUST_ZINNIA_FORKS="rust-libc rust-rustix rust-getrandom rust-nix rust-errno rust-socket2 rust-system-deps rust-libloading rust-libloading-09"
+RUST_GETRANDOM_RUSTFLAG='--cfg getrandom_backend="rdrand"'
+
 cargo_build_nolock() {
     TARGET_DIR=$(pwd -P)
     cd "${source_dir}"
@@ -269,16 +271,47 @@ cargo_build_nolock() {
         "$@"
 }
 
-cargo_build() {
-    TARGET_DIR=$(pwd -P)
-    cd "${source_dir}"
+prepare_rust_toolchain_source() {
+    rust_src="$1"
+    fork_src="$2"
 
-        RUSTUP_HOME="${build_dir}/.rustup" \
-        CARGO_HOME="${build_dir}/.cargo" \
-        CARGO_TARGET_DIR="${TARGET_DIR}" \
-    cargo build \
-        --release \
-        "$@"
+    if ! [ -f "${rust_src}/x.py" ]; then
+        rm -rf "${rust_src}"
+        cp -a "${source_dir}/." "${rust_src}"
+        cp -a "${fork_src}"/rust-* "$(dirname "${rust_src}")"/
+        rm -rf "${rust_src}/vendor" "${rust_src}/.cargo/config.toml"
+    fi
+
+    export RUSTUP_HOME="${build_dir}/.rustup"
+    export CARGO_HOME="$(pwd -P)/.cargo"
+}
+
+cargo_zinnia_build_env() {
+    export RUSTUP_HOME="${build_dir}/.rustup"
+    export CARGO_HOME="$(pwd -P)/.cargo"
+    mkdir -p "${CARGO_HOME}"
+
+    fork_root="${sysroot_dir}/usr/src/rust"
+    cat > "${CARGO_HOME}/config.toml" << EOF
+[patch.crates-io]
+libc = { path = "${fork_root}/rust-libc" }
+rustix = { path = "${fork_root}/rust-rustix" }
+getrandom = { path = "${fork_root}/rust-getrandom" }
+nix = { path = "${fork_root}/rust-nix" }
+errno = { path = "${fork_root}/rust-errno" }
+socket2 = { path = "${fork_root}/rust-socket2" }
+system-deps = { path = "${fork_root}/rust-system-deps" }
+libloading = { path = "${fork_root}/rust-libloading" }
+libloading_09 = { package = "libloading", path = "${fork_root}/rust-libloading-09" }
+EOF
+
+    cargo_linker_var="CARGO_TARGET_$(printf '%s' "${RUST_TRIPLET}" | tr '[:lower:]-' '[:upper:]_')_LINKER"
+    export "${cargo_linker_var}=${OS_TRIPLET}-gcc"
+    cargo_rustflags_var="CARGO_TARGET_$(printf '%s' "${RUST_TRIPLET}" | tr '[:lower:]-' '[:upper:]_')_RUSTFLAGS"
+    export "${cargo_rustflags_var}=${RUST_GETRANDOM_RUSTFLAG}"
+    export PKG_CONFIG="${OS_TRIPLET}-pkg-config"
+    export PKG_CONFIG_ALLOW_CROSS=1
+    export RUST_TARGET="${RUST_TRIPLET}"
 }
 
 package_rust_crate() {

@@ -1,0 +1,192 @@
+diff --git rust-nix-clean/build.rs rust-nix-workdir/build.rs
+index eb27943..8da57d7 100644
+--- rust-nix-clean/build.rs
++++ rust-nix-workdir/build.rs
+@@ -21,7 +21,7 @@ fn main() {
+         apple_targets: { any(ios, macos, watchos, tvos, visionos) },
+         bsd: { any(freebsd, dragonfly, netbsd, openbsd, apple_targets) },
+         bsd_without_apple: { any(freebsd, dragonfly, netbsd, openbsd) },
+-        linux_android: { any(android, linux) },
++        linux_android: { any(android, linux, target_os = "zinnia") },
+         freebsdlike: { any(dragonfly, freebsd) },
+         netbsdlike: { any(netbsd, openbsd) },
+         solarish: { any(illumos, solaris) },
+@@ -32,4 +32,5 @@ fn main() {
+     println!("cargo:rustc-check-cfg=cfg(qemu)");
+     // Cygwin target, added in 1.86
+     println!("cargo:rustc-check-cfg=cfg(target_os, values(\"cygwin\"))");
++    println!("cargo:rustc-check-cfg=cfg(target_os, values(\"zinnia\"))");
+ }
+diff --git rust-nix-clean/src/errno.rs rust-nix-workdir/src/errno.rs
+index 497e33d..06a02e1 100644
+--- rust-nix-clean/src/errno.rs
++++ rust-nix-workdir/src/errno.rs
+@@ -33,6 +33,7 @@ cfg_if! {
+                         target_os = "dragonfly",
+                         target_os = "fuchsia",
+                         target_os = "hurd",
++                        target_os = "zinnia",
+                         target_os = "emscripten"))] {
+         unsafe fn errno_location() -> *mut c_int {
+             unsafe { libc::__errno_location() }
+@@ -829,6 +830,7 @@ fn desc(errno: Errno) -> &'static str {
+             all(target_os = "linux", not(target_arch = "mips")),
+             target_os = "fuchsia",
+             target_os = "emscripten",
++            target_os = "zinnia",
+         ))]
+         ERFKILL => "Operation not possible due to RF-kill",
+ 
+@@ -836,6 +838,7 @@ fn desc(errno: Errno) -> &'static str {
+             all(target_os = "linux", not(target_arch = "mips")),
+             target_os = "fuchsia",
+             target_os = "emscripten",
++            target_os = "zinnia",
+         ))]
+         EHWPOISON => "Memory page has hardware error",
+ 
+@@ -1087,7 +1090,7 @@ fn desc(errno: Errno) -> &'static str {
+     }
+ }
+ 
+-#[cfg(any(linux_android, target_os = "fuchsia", target_os = "emscripten"))]
++#[cfg(any(linux_android, target_os = "fuchsia", target_os = "emscripten", target_os = "zinnia"))]
+ mod consts {
+     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+     #[repr(i32)]
+diff --git rust-nix-clean/src/fcntl.rs rust-nix-workdir/src/fcntl.rs
+index 13ee191..c2f95c3 100644
+--- rust-nix-clean/src/fcntl.rs
++++ rust-nix-workdir/src/fcntl.rs
+@@ -95,7 +95,7 @@ libc_bitflags! {
+         AT_SYMLINK_NOFOLLOW;
+         /// Don't automount the terminal ("basename") component of pathname if it is a directory
+         /// that is an automount point.
+-        #[cfg(linux_android)]
++        #[cfg(all(linux_android, not(target_os = "zinnia")))]
+         AT_NO_AUTOMOUNT;
+         /// If the provided path is an empty string, operate on the provided directory file
+         /// descriptor instead.
+diff --git rust-nix-clean/src/sys/mod.rs rust-nix-workdir/src/sys/mod.rs
+index c17c7be..3088eb7 100644
+--- rust-nix-clean/src/sys/mod.rs
++++ rust-nix-workdir/src/sys/mod.rs
+@@ -117,7 +117,7 @@ feature! {
+ 
+ pub mod signal;
+ 
+-#[cfg(linux_android)]
++#[cfg(all(linux_android, not(target_os = "zinnia")))]
+ feature! {
+     #![feature = "signal"]
+     #[allow(missing_docs)]
+@@ -153,7 +153,7 @@ feature! {
+     pub mod statvfs;
+ }
+ 
+-#[cfg(linux_android)]
++#[cfg(all(linux_android, not(target_os = "zinnia")))]
+ #[allow(missing_docs)]
+ pub mod sysinfo;
+ 
+diff --git rust-nix-clean/src/sys/signal.rs rust-nix-workdir/src/sys/signal.rs
+index 2b0c779..3476831 100644
+--- rust-nix-clean/src/sys/signal.rs
++++ rust-nix-workdir/src/sys/signal.rs
+@@ -68,7 +68,7 @@ libc_enum! {
+                           target_arch = "mips64",
+                           target_arch = "mips64r6",
+                           target_arch = "sparc",
+-                          target_arch = "sparc64"))))]
++                          target_arch = "sparc64", target_os = "zinnia"))))]
+         SIGSTKFLT,
+         /// To parent on child stop or exit
+         SIGCHLD,
+@@ -150,7 +150,7 @@ impl FromStr for Signal {
+                     target_arch = "mips64",
+                     target_arch = "mips64r6",
+                     target_arch = "sparc",
+-                    target_arch = "sparc64"
++                    target_arch = "sparc64", target_os = "zinnia"
+                 ))
+             ))]
+             "SIGSTKFLT" => Signal::SIGSTKFLT,
+@@ -235,7 +235,7 @@ impl Signal {
+                     target_arch = "mips64",
+                     target_arch = "mips64r6",
+                     target_arch = "sparc",
+-                    target_arch = "sparc64"
++                    target_arch = "sparc64", target_os = "zinnia"
+                 ))
+             ))]
+             Signal::SIGSTKFLT => "SIGSTKFLT",
+@@ -325,7 +325,7 @@ const SIGNALS: [Signal; 28] = [
+         target_arch = "mips64",
+         target_arch = "mips64r6",
+         target_arch = "sparc",
+-        target_arch = "sparc64"
++        target_arch = "sparc64", target_os = "zinnia"
+     ))
+ ))]
+ #[cfg(feature = "signal")]
+@@ -343,7 +343,7 @@ const SIGNALS: [Signal; 31] = [
+         target_arch = "mips64",
+         target_arch = "mips64r6",
+         target_arch = "sparc",
+-        target_arch = "sparc64"
++        target_arch = "sparc64", target_os = "zinnia"
+     )
+ ))]
+ #[cfg(feature = "signal")]
+@@ -430,6 +430,8 @@ cfg_if! {
+         type SaFlags_t = libc::c_ulong;
+     } else if #[cfg(target_env = "uclibc")] {
+         type SaFlags_t = libc::c_ulong;
++    } else if #[cfg(target_os = "zinnia")] {
++        type SaFlags_t = libc::c_ulong;
+     } else {
+         type SaFlags_t = libc::c_int;
+     }
+diff --git rust-nix-clean/src/sys/wait.rs rust-nix-workdir/src/sys/wait.rs
+index 844e165..ba647d3 100644
+--- rust-nix-clean/src/sys/wait.rs
++++ rust-nix-workdir/src/sys/wait.rs
+@@ -52,13 +52,13 @@ libc_bitflags!(
+                   target_os = "netbsd"))]
+         WNOWAIT;
+         /// Don't wait on children of other threads in this group
+-        #[cfg(any(linux_android, target_os = "redox"))]
++        #[cfg(all(any(linux_android, target_os = "redox"), not(target_os = "zinnia")))]
+         __WNOTHREAD;
+         /// Wait on all children, regardless of type
+-        #[cfg(any(linux_android, target_os = "redox"))]
++        #[cfg(all(any(linux_android, target_os = "redox"), not(target_os = "zinnia")))]
+         __WALL;
+         /// Wait for "clone" children only.
+-        #[cfg(any(linux_android, target_os = "redox"))]
++        #[cfg(all(any(linux_android, target_os = "redox"), not(target_os = "zinnia")))]
+         __WCLONE;
+     }
+ );
+diff --git rust-nix-clean/src/unistd.rs rust-nix-workdir/src/unistd.rs
+index 8995fbe..318289a 100644
+--- rust-nix-clean/src/unistd.rs
++++ rust-nix-workdir/src/unistd.rs
+@@ -398,7 +398,7 @@ pub fn getpgrp() -> Pid {
+ ///
+ /// No error handling is required as a thread id should always exist for any
+ /// process, even if threads are not being used.
+-#[cfg(linux_android)]
++#[cfg(all(linux_android, not(target_os = "zinnia")))]
+ #[inline]
+ pub fn gettid() -> Pid {
+     Pid(unsafe { libc::syscall(libc::SYS_gettid) as pid_t })
+@@ -1209,7 +1209,7 @@ pub fn fexecve<Fd: std::os::fd::AsFd, SA: AsRef<CStr>, SE: AsRef<CStr>>(
+ ///
+ /// This function is similar to `execve`, except that the program to be executed
+ /// is referenced as a file descriptor to the base directory plus a path.
+-#[cfg(linux_android)]
++#[cfg(all(linux_android, not(target_os = "zinnia")))]
+ #[inline]
+ pub fn execveat<Fd: std::os::fd::AsFd, SA: AsRef<CStr>, SE: AsRef<CStr>>(
+     dirfd: Fd,

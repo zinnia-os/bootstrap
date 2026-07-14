@@ -1,0 +1,10 @@
+#! /bin/sh
+
+name=rust-rustix
+skip_pkg_check=yes
+version=1.1.3
+revision=1
+tarball_url="https://static.crates.io/crates/rustix/rustix-${version}.crate"
+tarball_blake2b="0148cc9c0941d416c7ec0b47685210e898ac4fb5ab91e2fb7489aaedfafdd266965ac494c14706c48f7f323e4e7719001744c25697c046f8c8013c080c2fab53"
+
+package_rust_crate
