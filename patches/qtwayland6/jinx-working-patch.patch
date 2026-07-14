@@ -1,0 +1,13 @@
+diff --git qtwayland6-clean/CMakeLists.txt qtwayland6-workdir/CMakeLists.txt
+index 60cec50..f4ace01 100644
+--- qtwayland6-clean/CMakeLists.txt
++++ qtwayland6-workdir/CMakeLists.txt
+@@ -18,7 +18,7 @@ find_package(Qt6 ${PROJECT_VERSION} CONFIG REQUIRED COMPONENTS
+ )
+ qt_internal_project_setup()
+ 
+-if(NOT MACOS AND NOT QNX AND (ANDROID OR NOT LINUX))
++if(NOT MACOS AND NOT QNX AND (ANDROID OR NOT LINUX) AND NOT (CMAKE_SYSTEM_NAME STREQUAL "Zinnia"))
+     message(NOTICE "Skipping the build as the condition \"LINUX OR MACOS OR QNX\" is not met.")
+     return()
+ endif()

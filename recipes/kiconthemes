@@ -1,0 +1,24 @@
+#! /bin/sh
+
+name=kiconthemes
+version=6.25.0
+revision=1
+git_url="https://github.com/KDE/kiconthemes.git"
+commit=00bc0afa394a33190c66e68169c50ea7561d12bf
+imagedeps="cmake ninja-build pkg-config gettext"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules kconfig"
+deps="core-libs breeze-icons karchive kcolorscheme kconfig kconfigwidgets ki18n kwidgetsaddons qtbase6 qtdeclarative6 qtsvg6"
+
+configure() {
+    kf6_configure
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

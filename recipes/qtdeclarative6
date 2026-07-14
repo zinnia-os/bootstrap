@@ -1,0 +1,27 @@
+#! /bin/sh
+
+name=qtdeclarative6
+version=6.11.0
+git_url="https://github.com/qt/qtdeclarative.git"
+commit=e602a097ca314e9610b1fd3b7dbfa467a868731a
+imagedeps="ninja-build pkg-config python3 perl libegl1 libgl1 libx11-6 libxkbcommon0 libdbus-1-3 libsystemd0"
+hostdeps="gcc pkg-config cmake qt6"
+deps="core-libs libxkbcommon mesa qtbase6 qtimageformats6 qtlanguageserver6 qtshadertools6 qtsvg6"
+revision=1
+
+configure() {
+    cmake_configure \
+        -DQT_HOST_PATH=/usr/local \
+        -DQT_BUILD_EXAMPLES=OFF \
+        -DQT_BUILD_TESTS=OFF
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

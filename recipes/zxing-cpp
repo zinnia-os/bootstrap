@@ -1,0 +1,31 @@
+#! /bin/sh
+
+name=zxing-cpp
+version=2.3.0
+revision=1
+git_url="https://github.com/zxing-cpp/zxing-cpp.git"
+commit=d6068bcebeb8fd9f0d35a99b00d202be86a14dbe
+imagedeps="cmake ninja-build pkg-config"
+hostdeps="gcc pkg-config cmake"
+deps="core-libs"
+
+configure() {
+    cmake_configure \
+        -DZXING_USE_BUNDLED_ZINT=OFF \
+        -DZXING_EXAMPLES=OFF \
+        -DZXING_BLACKBOX_TESTS=OFF \
+        -DZXING_UNIT_TESTS=OFF \
+        -DZXING_DEPENDENCIES=LOCAL \
+        -DZXING_WRITERS=OLD \
+        -DZXING_EXPERIMENTAL_API=FALSE
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

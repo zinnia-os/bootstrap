@@ -1,0 +1,24 @@
+#! /bin/sh
+
+name=kcompletion
+version=6.25.0
+revision=1
+git_url="https://github.com/KDE/kcompletion.git"
+commit=1c6b1d1d6612f45dce6dadc4529d2e75571b6be3
+imagedeps="cmake ninja-build pkg-config"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules kconfig"
+deps="core-libs kcodecs kconfig kcoreaddons kwidgetsaddons qtbase6"
+
+configure() {
+    kf6_configure
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

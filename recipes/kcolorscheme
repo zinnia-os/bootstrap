@@ -1,0 +1,24 @@
+#! /bin/sh
+
+name=kcolorscheme
+version=6.25.0
+revision=1
+git_url="https://github.com/KDE/kcolorscheme.git"
+commit=54f10b9ed83fcd4e2d1b670eec23b8ecf1d37898
+imagedeps="cmake ninja-build pkg-config gettext"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules kconfig"
+deps="core-libs kconfig kguiaddons ki18n qtbase6 qtdeclarative6"
+
+configure() {
+    kf6_configure
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

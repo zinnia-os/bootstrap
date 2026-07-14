@@ -1,0 +1,13 @@
+diff --git knotifications-clean/CMakeLists.txt knotifications-workdir/CMakeLists.txt
+index d712111..e2cb4d7 100644
+--- knotifications-clean/CMakeLists.txt
++++ knotifications-workdir/CMakeLists.txt
+@@ -78,7 +78,7 @@ find_package(KF6Config ${KF_DEP_VERSION} REQUIRED)
+ 
+ if (NOT APPLE AND NOT ANDROID AND NOT WIN32 AND NOT HAIKU OR (WIN32 AND NOT WITH_SNORETOAST))
+     find_package(Qt6 ${REQUIRED_QT_VERSION} CONFIG REQUIRED DBus)
+-    find_package(Canberra REQUIRED)
++    find_package(Canberra)
+     set_package_properties(Canberra PROPERTIES
+         PURPOSE "Needed to build audio notification support")
+     if (TARGET Canberra::Canberra)

@@ -1,0 +1,24 @@
+#! /bin/sh
+
+name=karchive
+version=6.25.0
+revision=1
+git_url="https://github.com/KDE/karchive.git"
+commit=f897c3b110c3508fedac378cbef76ce7db3d5264
+imagedeps="cmake ninja-build pkg-config"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules"
+deps="core-libs qtbase6 zlib bzip2 xz zstd"
+
+configure() {
+    kf6_configure
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

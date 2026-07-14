@@ -1,0 +1,24 @@
+#! /bin/sh
+
+name=kio
+version=6.25.0
+revision=1
+git_url="https://github.com/KDE/kio.git"
+commit=ce50359496800bbf30703d63982613a6357dd902
+imagedeps="cmake ninja-build pkg-config libdbus-1-3 gettext libegl1 libgl1 libx11-6 libxkbcommon0 libsystemd0"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules kconfig kcoreaddons"
+deps="core-libs kauth kbookmarks kcodecs kcolorscheme kcompletion kconfig kconfigwidgets kcoreaddons kcrash kdbusaddons kded kguiaddons ki18n kiconthemes kitemviews kjobwidgets knotifications kservice ktextwidgets kwidgetsaddons kwindowsystem kxmlgui qtbase6 qtdeclarative6 solid"
+
+configure() {
+    kf6_configure
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

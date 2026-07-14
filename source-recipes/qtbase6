@@ -1,0 +1,28 @@
+#! /bin/sh
+
+name=qtbase6
+version=6.11.0
+git_url="https://github.com/qt/qtbase.git"
+commit=8ba7ea4b77a4b8f1948760221e264917ddc9e1c8
+imagedeps="git"
+
+prepare() {
+    cd "${source_dir}"
+
+    sed -i 's@if(CMAKE_SYSTEM_NAME STREQUAL "HPUX")@if(CMAKE_SYSTEM_NAME STREQUAL "Zinnia")\n    set(ZINNIA 1)\nelse()\n    set(ZINNIA 0)\nendif()\n\nif(CMAKE_SYSTEM_NAME STREQUAL "HPUX")@' \
+        cmake/QtPlatformSupport.cmake
+
+    sed -i 's@^    elseif(ANDROID)@    elseif(ZINNIA)\n        if(GCC)\n            set(QT_DEFAULT_MKSPEC zinnia-g++)\n        else()\n            message(FATAL_ERROR "Unknown compiler in use!")\n        endif()\n    elseif(ANDROID)@' \
+        cmake/QtMkspecHelpers.cmake
+
+    sed -i 's@if(LINUX OR HPUX OR FREEBSD OR NETBSD OR OPENBSD OR SOLARIS OR HURD)@if(LINUX OR HPUX OR FREEBSD OR NETBSD OR OPENBSD OR SOLARIS OR HURD OR ZINNIA)@' \
+        src/gui/configure.cmake
+
+    sed -i '0,/if(LINUX OR FREEBSD OR QT_FIND_ALL_PACKAGES_ALWAYS)/s//if(LINUX OR FREEBSD OR ZINNIA OR QT_FIND_ALL_PACKAGES_ALWAYS)/' \
+        src/gui/configure.cmake
+
+    grep -q 'zinnia-g++' cmake/QtMkspecHelpers.cmake || {
+        echo "ERROR: Zinnia mkspec edit failed to apply to QtMkspecHelpers.cmake" >&2
+        exit 1
+    }
+}

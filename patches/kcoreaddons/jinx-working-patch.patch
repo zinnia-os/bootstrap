@@ -1,0 +1,32 @@
+diff --git kcoreaddons-clean/src/lib/CMakeLists.txt kcoreaddons-workdir/src/lib/CMakeLists.txt
+index 00df4a8..512c99f 100644
+--- kcoreaddons-clean/src/lib/CMakeLists.txt
++++ kcoreaddons-workdir/src/lib/CMakeLists.txt
+@@ -20,7 +20,9 @@ if(UNIX)
+     endif()
+     check_dladdr()
+ 
+-    add_feature_info(dladdr ${HAVE_DLADDR} "Can resolve shared library paths and by extension libexec paths at runtime using dladdr() API")
++    if(NOT "${HAVE_DLADDR}" STREQUAL "")
++        add_feature_info(dladdr ${HAVE_DLADDR} "Can resolve shared library paths and by extension libexec paths at runtime using dladdr() API")
++    endif()
+ endif()
+ 
+ set(ACCOUNTS_SERVICE_ICON_DIR "/var/lib/AccountsService/icons" CACHE STRING "Accounts Services icon storage directory")
+diff --git kcoreaddons-clean/src/lib/io/kfilesystemtype.cpp kcoreaddons-workdir/src/lib/io/kfilesystemtype.cpp
+index 49ab7d8..4137cae 100644
+--- kcoreaddons-clean/src/lib/io/kfilesystemtype.cpp
++++ kcoreaddons-workdir/src/lib/io/kfilesystemtype.cpp
+@@ -224,6 +224,12 @@ KFileSystemType::Type determineFileSystemTypeImpl(const QByteArray &path)
+     return kde_typeFromName(buf.f_basetype);
+ #endif
+ }
++#elif defined(Q_OS_ZINNIA)
++KFileSystemType::Type determineFileSystemTypeImpl(const QByteArray &path)
++{
++    Q_UNUSED(path);
++    return KFileSystemType::Unknown;
++}
+ #endif
+ #else
+ KFileSystemType::Type determineFileSystemTypeImpl(const QByteArray &path)

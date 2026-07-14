@@ -1,0 +1,28 @@
+#! /bin/sh
+
+name=qtshadertools6
+version=6.11.0
+git_url="https://github.com/qt/qtshadertools.git"
+commit=1c7a78fd7480f11a49eb8135b44d138edb0f0df8
+imagedeps="ninja-build pkg-config python3 perl"
+hostdeps="gcc pkg-config cmake qt6"
+deps="core-libs libxkbcommon mesa qtbase6"
+revision=1
+
+configure() {
+    cmake_configure \
+        -DQT_HOST_PATH=/usr/local \
+        -DQT_FORCE_BUILD_TOOLS=ON \
+        -DQT_BUILD_EXAMPLES=OFF \
+        -DQT_BUILD_TESTS=OFF
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

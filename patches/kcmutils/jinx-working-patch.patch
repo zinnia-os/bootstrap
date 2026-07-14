@@ -1,0 +1,12 @@
+diff --git kcmutils-clean/CMakeLists.txt kcmutils-workdir/CMakeLists.txt
+index 9dc648b..3d23e56 100644
+--- kcmutils-clean/CMakeLists.txt
++++ kcmutils-workdir/CMakeLists.txt
+@@ -71,7 +71,6 @@ ecm_set_disabled_deprecation_versions(
+     KF 6.23.0
+ )
+ 
+-ecm_find_qmlmodule(org.kde.kirigami REQUIRED)
+ 
+ add_definitions(-DTRANSLATION_DOMAIN=\"kcmutils6\")
+ ki18n_install(po)

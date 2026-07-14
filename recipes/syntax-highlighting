@@ -1,0 +1,24 @@
+#! /bin/sh
+
+name=syntax-highlighting
+version=6.25.0
+revision=1
+git_url="https://github.com/KDE/syntax-highlighting.git"
+commit=24a0dfa3b431e164c5f858dbe3ecb775fab4e344
+imagedeps="build-essential cmake ninja-build pkg-config"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules"
+deps="core-libs qtbase6 qtdeclarative6"
+
+configure() {
+    kf6_configure
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

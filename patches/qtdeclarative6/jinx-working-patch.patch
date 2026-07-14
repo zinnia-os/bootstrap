@@ -1,0 +1,71 @@
+diff --git qtdeclarative6-clean/src/qml/jit/qv4assemblercommon_p.h qtdeclarative6-workdir/src/qml/jit/qv4assemblercommon_p.h
+index 47c5e37..04eab28 100644
+--- qtdeclarative6-clean/src/qml/jit/qv4assemblercommon_p.h
++++ qtdeclarative6-workdir/src/qml/jit/qv4assemblercommon_p.h
+@@ -34,7 +34,7 @@ namespace QV4 {
+ namespace JIT {
+ 
+ #if defined(Q_PROCESSOR_X86_64) || defined(ENABLE_ALL_ASSEMBLERS_FOR_REFACTORING_PURPOSES)
+-#if defined(Q_OS_LINUX) || defined(Q_OS_QNX) || defined(Q_OS_FREEBSD) || defined(Q_OS_DARWIN) || defined(Q_OS_SOLARIS) || defined(Q_OS_VXWORKS) || defined(Q_OS_HURD)
++#if defined(Q_OS_LINUX) || defined(Q_OS_QNX) || defined(Q_OS_FREEBSD) || defined(Q_OS_DARWIN) || defined(Q_OS_SOLARIS) || defined(Q_OS_VXWORKS) || defined(Q_OS_HURD) || defined(Q_OS_ZINNIA)
+ 
+ class PlatformAssembler_X86_64_SysV : public JSC::MacroAssembler<JSC::MacroAssemblerX86_64>
+ {
+diff --git qtdeclarative6-clean/src/qml/memory/qv4stacklimits.cpp qtdeclarative6-workdir/src/qml/memory/qv4stacklimits.cpp
+index 9494c62..e1258f8 100644
+--- qtdeclarative6-clean/src/qml/memory/qv4stacklimits.cpp
++++ qtdeclarative6-workdir/src/qml/memory/qv4stacklimits.cpp
+@@ -14,7 +14,7 @@
+ 
+ #ifdef Q_OS_WIN
+ #  include <QtCore/qt_windows.h>
+-#elif defined(Q_OS_FREEBSD_KERNEL) || defined(Q_OS_OPENBSD)
++#elif defined(Q_OS_FREEBSD_KERNEL) || defined(Q_OS_OPENBSD) || defined(Q_OS_ZINNIA)
+ #  include <pthread_np.h>
+ #elif defined(Q_OS_LINUX)
+ #  include <unistd.h>
+diff --git qtdeclarative6-clean/tools/qmleasing/CMakeLists.txt qtdeclarative6-workdir/tools/qmleasing/CMakeLists.txt
+index 7bbb0ce..849f5d4 100644
+--- qtdeclarative6-clean/tools/qmleasing/CMakeLists.txt
++++ qtdeclarative6-workdir/tools/qmleasing/CMakeLists.txt
+@@ -19,6 +19,9 @@ qt_internal_add_app(qmleasing
+     LIBRARIES
+         Qt::Gui
+         Qt::Qml
++        Qt::QmlMeta
++        Qt::QmlModels
++        Qt::QmlWorkerScript
+         Qt::Quick
+         Qt::Widgets
+     ENABLE_AUTOGEN_TOOLS
+diff --git qtdeclarative6-clean/tools/qmltestrunner/CMakeLists.txt qtdeclarative6-workdir/tools/qmltestrunner/CMakeLists.txt
+index 2bf40e7..ba35aa2 100644
+--- qtdeclarative6-clean/tools/qmltestrunner/CMakeLists.txt
++++ qtdeclarative6-workdir/tools/qmltestrunner/CMakeLists.txt
+@@ -51,6 +51,10 @@ qt_internal_add_tool(${target_name}
+     LIBRARIES
+         Qt::Gui
+         Qt::Qml
++        Qt::QmlMeta
++        Qt::QmlModels
++        Qt::QmlWorkerScript
++        Qt::Quick
+         Qt::QuickTest
+ )
+ qt_internal_return_unless_building_tools()
+diff --git qtdeclarative6-clean/tools/svgtoqml/CMakeLists.txt qtdeclarative6-workdir/tools/svgtoqml/CMakeLists.txt
+index ed70ea5..5ac69f5 100644
+--- qtdeclarative6-clean/tools/svgtoqml/CMakeLists.txt
++++ qtdeclarative6-workdir/tools/svgtoqml/CMakeLists.txt
+@@ -19,7 +19,11 @@ qt_internal_add_tool(${target_name}
+         Qt::Core
+         Qt::Gui
+         Qt::GuiPrivate
++        Qt::QuickShapes
+         Qt::Qml
++        Qt::QmlMeta
++        Qt::QmlModels
++        Qt::QmlWorkerScript
+         Qt::Quick
+         Qt::QuickVectorImageGeneratorPrivate
+ )

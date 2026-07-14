@@ -1,0 +1,27 @@
+#! /bin/sh
+
+name=qtpositioning6
+version=6.11.0
+git_url="https://github.com/qt/qtpositioning.git"
+commit=1007e149184402b24e06842febbc3e7da83cd64f
+imagedeps="ninja-build pkg-config python3 perl"
+hostdeps="gcc pkg-config cmake qt6"
+deps="core-libs qtbase6 qtdeclarative6"
+revision=1
+
+configure() {
+    cmake_configure \
+        -DQT_HOST_PATH=/usr/local \
+        -DQT_BUILD_EXAMPLES=OFF \
+        -DQT_BUILD_TESTS=OFF
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

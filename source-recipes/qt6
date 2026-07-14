@@ -1,16 +1,13 @@
 #! /bin/sh
 
 name=qt6
-version=0.1.0
-git_url="https://code.qt.io/qt/qt5.git"
-commit=16ff073337ff8fb50a0ca24fa4e5a76b15d5c2f9
+version=6.11.0
+git_url="https://github.com/qt/qt5.git"
+commit=b3a9d45d2d5474a39c76fddc50bf6d55bcb7858d
 imagedeps="git"
 allow_network=yes
 shallow=no
 
 prepare() {
-	git remote set-url origin https://code.qt.io/qt/qt5.git
-	./init-repository -f --module-subset qtbase,qtsvg,qtimageformats,qtshadertools,qtlanguageserver,qtdeclarative,qtwayland,qtmultimedia,qttools,qt5compat,qtsensors,qtcharts,qtpositioning,qtspeech
-	cd ${source_dir}/qtbase
-	git pull origin 6.8.1
+    ./init-repository -f --module-subset qtbase,qtsvg,qtimageformats,qtshadertools,qtlanguageserver,qtdeclarative,qtwayland,qtmultimedia,qttools,qt5compat,qtsensors,qtpositioning,qtspeech
 }
