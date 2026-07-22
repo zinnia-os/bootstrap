@@ -2,11 +2,11 @@
 
 name=sdl3
 version=3.2.16
-revision=1
+revision=2
 tarball_url="https://github.com/libsdl-org/SDL/releases/download/release-${version}/SDL3-${version}.tar.gz"
 tarball_blake2b="b39912ca801dddb9c28143971658bf1fcfb92a4dbacb2ed0157d6615cfb9c61d8924880eb449f9ef59c0d917f2142cc430ba535272054e90af903a1f9e154e89"
-hostdeps="gcc pkg-config cmake"
-deps="core-libs libx11 libxext libxcursor libxi libxfixes libxkbcommon libxrandr libxrender libxxf86vm libxscrnsaver dbus mesa wayland"
+hostdeps="gcc pkg-config cmake wayland"
+deps="core-libs libx11 libxext libxcursor libxi libxfixes libxkbcommon libxrandr libxrender libxxf86vm libxscrnsaver dbus mesa wayland wayland-protocols"
 
 configure() {
     cmake_configure \
