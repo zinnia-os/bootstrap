@@ -1,10 +1,10 @@
 #! /bin/sh
 
 name=mesa
-version=25.3.0
-revision=2
+version=26.1.5
+revision=1
 tarball_url="https://archive.mesa3d.org/mesa-${version}.tar.xz"
-tarball_blake2b="54cd99f9a4f14bf070f5525a91a776f0b7042ce7c056bf8db388baa5c98e0065799cdc376c0c42205b08eff18f252b6e7be5987e44fb628b97a360a7e89c300f"
+tarball_blake2b="80f874e7f5ab1b6874926e8463a93c0e2c016092f1e5c3375e48178c3ae995ee17988ee07eea28cada5729edc12a5a3cfd7e0338c14f15a2ed029fb1057a09cc"
 imagedeps="python3-mako python3-yaml glslang-tools pkg-config"
 hostdeps="gcc pkg-config wayland"
 deps="core-libs libdrm libexpat libglvnd libx11 libxcb libxext libxfixes libxrandr libxshmfence libxxf86vm llvm xcb-util-keysyms wayland-protocols zlib zstd"
@@ -21,6 +21,7 @@ configure() {
         -Dgles2=enabled \
         -Dglvnd=enabled \
         -Degl=enabled \
+        -Dplatforms=wayland,x11 \
         -Dllvm=enabled \
         -Dzstd=enabled \
         -Dvideo-codecs=all_free \
