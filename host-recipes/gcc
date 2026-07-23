@@ -2,7 +2,7 @@
 
 name=gcc
 from_source=gcc
-revision=1
+revision=2
 imagedeps="build-essential"
 hostdeps="libtool pkg-config"
 hostrundeps="binutils"
@@ -31,12 +31,18 @@ configure() {
 
 build() {
     cd build
-    make -j${parallelism} all-gcc
+    make -j${parallelism} \
+        all-gcc \
+        all-target-libatomic \
+        all-target-libstdc++-v3
 }
 
 package() {
     cd build
-    DESTDIR="${dest_dir}" make install-gcc
+    DESTDIR="${dest_dir}" make \
+        install-gcc \
+        install-target-libatomic \
+        install-target-libstdc++-v3
 
         strip_command=strip \
     post_package_strip
