@@ -1,0 +1,31 @@
+#! /bin/sh
+
+name=xonotic-data
+version=0.8.6
+revision=1
+imagedeps="curl unzip"
+allow_network=yes
+
+# Xonotic ships its game data only as a .zip
+zip_url="https://dl.xonotic.org/xonotic-${version}.zip"
+zip_sha256="50850f8d800e7499722f6ea61e478e96464a375494b5a24da93aa0598cbe964d"
+
+build() {
+    curl -L --retry 3 -o xonotic.zip "${zip_url}"
+
+    echo "${zip_sha256} xonotic.zip" | sha256sum -c -
+}
+
+package() {
+    install -dm755 "${dest_dir}${prefix}/share/xonotic/data"
+
+    unzip -j -o xonotic.zip 'Xonotic/data/*.pk3' \
+        -d "${dest_dir}${prefix}/share/xonotic/data"
+
+    # This can't be removed or auth breaks.
+    unzip -j -o xonotic.zip 'Xonotic/key_0.d0pk' \
+        -d "${dest_dir}${prefix}/share/xonotic"
+
+    chmod 644 "${dest_dir}${prefix}/share/xonotic/data"/*.pk3
+    chmod 644 "${dest_dir}${prefix}/share/xonotic/key_0.d0pk"
+}

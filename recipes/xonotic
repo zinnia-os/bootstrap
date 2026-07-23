@@ -1,0 +1,58 @@
+#! /bin/sh
+
+name=xonotic
+version=0.8.6
+revision=1
+git_url="https://gitlab.com/xonotic/darkplaces.git"
+commit=f244ef2525c9c018f1b077d49959df3c77ebc7b1
+hostdeps="gcc pkg-config"
+deps="core-libs mesa sdl2-compat zlib libjpeg-turbo libpng curl libogg libvorbis freetype2 d0_blind_id xonotic-data"
+
+build() {
+    # Great start...
+    cp -rp "${source_dir}"/. ./
+
+    # The build system seems to be dumb and calls the pkg-config from the host otherwise.
+    sdl_cflags="$(${OS_TRIPLET}-pkg-config --cflags sdl2)"
+    sdl_libs="$(${OS_TRIPLET}-pkg-config --libs sdl2)"
+
+    # Again, if we don't do this, it infers things from the host machine.
+    case "${JINX_ARCH}" in
+        x86_64) dp_sse=1 ;;
+        *)      dp_sse=0 ;;
+    esac
+
+
+    # TODO: Remove -DNOSUPPORTIPV6 once kernel has IPv6 support.
+    make -j${parallelism} sdl-release \
+        DP_MAKE_TARGET=linux \
+        DP_SSE=${dp_sse} \
+        DP_CDDA=disabled \
+        DP_LINK_ZLIB=shared \
+        DP_LINK_JPEG=shared \
+        DP_LINK_CRYPTO=shared \
+        DP_LINK_CRYPTO_RIJNDAEL=shared \
+        DP_FS_BASEDIR="${prefix}/share/xonotic" \
+        CC="${OS_TRIPLET}-gcc ${TARGET_LDFLAGS}" \
+        STRIP="${OS_TRIPLET}-strip" \
+        CFLAGS_EXTRA="${TARGET_CFLAGS} -std=gnu17 -DNOSUPPORTIPV6" \
+        SDLCONFIG_UNIXCFLAGS="${sdl_cflags}" \
+        SDLCONFIG_UNIXCFLAGS_X11= \
+        SDLCONFIG_UNIXLIBS="${sdl_libs}" \
+        SDLCONFIG_UNIXLIBS_X11=
+}
+
+package() {
+    install -dm755 "${dest_dir}${prefix}/lib/xonotic"
+    install -dm755 "${dest_dir}${prefix}/bin"
+
+    install -m755 darkplaces-sdl "${dest_dir}${prefix}/lib/xonotic/xonotic-sdl"
+
+    cat <<EOF >"${dest_dir}${prefix}/bin/xonotic"
+#! /bin/sh
+exec ${prefix}/lib/xonotic/xonotic-sdl -xonotic -basedir ${prefix}/share/xonotic "\$@"
+EOF
+    chmod 755 "${dest_dir}${prefix}/bin/xonotic"
+
+    post_package_strip
+}

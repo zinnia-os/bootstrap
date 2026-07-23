@@ -1,0 +1,26 @@
+diff --git xonotic-clean/sys_sdl.c xonotic-workdir/sys_sdl.c
+index d3564ba..2c20958 100644
+--- xonotic-clean/sys_sdl.c
++++ xonotic-workdir/sys_sdl.c
+@@ -6,16 +6,17 @@
+ #include <unistd.h>
+ #include <fcntl.h>
+ #include <sys/time.h>
+-#endif
+-
+-#ifdef __ANDROID__
+-#include <android/log.h>
+ 
++// glibc only exposes FNDELAY under __USE_MISC; mlibc does not define it at all.
+ #ifndef FNDELAY
+ #define FNDELAY		O_NDELAY
+ #endif
+ #endif
+ 
++#ifdef __ANDROID__
++#include <android/log.h>
++#endif
++
+ #include <signal.h>
+ 
+ #include <SDL.h>

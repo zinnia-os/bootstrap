@@ -1,0 +1,31 @@
+#! /bin/sh
+
+name=d0_blind_id
+version=0.5
+revision=1
+git_url="https://gitlab.com/xonotic/d0_blind_id.git"
+commit=c32ee93edd10288ca40e1eb81263f0a37309b32c
+imagedeps="autoconf automake libtool pkg-config"
+source_imagedeps="autoconf automake libtool pkg-config"
+hostdeps="gcc pkg-config"
+deps="core-libs gmp"
+
+prepare() {
+    cd "${source_dir}"
+    autoreconf -fvi
+    autotools_recursive_regen
+}
+
+configure() {
+    autotools_configure
+}
+
+build() {
+    make -j${parallelism}
+}
+
+package() {
+    make install DESTDIR="${dest_dir}"
+
+    post_package_strip
+}
