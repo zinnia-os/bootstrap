@@ -1,8 +1,9 @@
 #! /bin/sh
 
-name=gcc
+name=gcc-bootstrap
+repology_id=gcc
 from_source=gcc
-revision=3
+revision=1
 imagedeps="build-essential"
 hostdeps="libtool pkg-config"
 hostrundeps="binutils"
@@ -21,22 +22,34 @@ configure() {
         --prefix="${prefix}" \
         --target=${OS_TRIPLET} \
         --with-sysroot="${sysroot_dir}" \
-        --enable-languages=c,c++,lto \
+        --without-headers \
+        --without-newlib \
+        --enable-languages=c,c++ \
         --disable-multilib \
         --enable-initfini-array \
-        --enable-threads=posix \
-        --enable-shared \
-        --enable-host-shared
+        --disable-shared \
+        --disable-hosted-libstdcxx \
+        --disable-fixincludes \
+        --disable-wchar_t \
+        --disable-libssp \
+        --disable-libsanitizer \
+        --disable-libquadmath
 }
 
 build() {
     cd build
-    make -j${parallelism} all-gcc
+    make -j${parallelism} \
+        all-gcc \
+        all-target-libgcc \
+        all-target-libstdc++-v3
 }
 
 package() {
     cd build
-    DESTDIR="${dest_dir}" make install-gcc
+    DESTDIR="${dest_dir}" make \
+        install-gcc \
+        install-target-libgcc \
+        install-target-libstdc++-v3
 
         strip_command=strip \
     post_package_strip

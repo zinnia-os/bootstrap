@@ -1,10 +1,10 @@
 #! /bin/sh
 
 name=mlibc
-revision=1
+revision=2
 from_source=mlibc
 imagedeps="build-essential meson ninja-build"
-hostdeps="gcc pkg-config libgcc-binaries"
+hostdeps="gcc-bootstrap pkg-config"
 builddeps="frigg libsmarter"
 deps="mlibc-headers"
 allow_network=yes
@@ -12,11 +12,10 @@ allow_network=yes
 configure() {
         CFLAGS="$TARGET_CFLAGS" \
         CXXFLAGS="$TARGET_CXXFLAGS" \
-        LDFLAGS="$TARGET_LDFLAGS -Wl,/usr/local/libgcc-binaries/libgcc-${JINX_ARCH}.a" \
+        LDFLAGS="$TARGET_LDFLAGS" \
     meson_configure_noflags \
         -Dno_headers=true \
-        -Ddefault_library=both \
-        -Dlibgcc_dependency=false
+        -Ddefault_library=both
 }
 
 build() {
