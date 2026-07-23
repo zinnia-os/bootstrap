@@ -1,0 +1,13 @@
+diff --git kwin-clean/src/utils/CMakeLists.txt kwin-workdir/src/utils/CMakeLists.txt
+index 08bc6bc..34d5a74 100644
+--- kwin-clean/src/utils/CMakeLists.txt
++++ kwin-workdir/src/utils/CMakeLists.txt
+@@ -19,7 +19,7 @@ if (KWIN_BUILD_X11)
+     target_sources(kwin PRIVATE xcbutils.cpp)
+ endif()
+ 
+-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
++if(CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Zinnia")
+     target_sources(kwin PRIVATE executable_path_proc.cpp)
+ elseif(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+     target_sources(kwin PRIVATE executable_path_sysctl.cpp)

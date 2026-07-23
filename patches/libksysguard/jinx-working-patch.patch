@@ -1,0 +1,26 @@
+diff --git libksysguard-clean/processcore/plugins/gpu/gpu.cpp libksysguard-workdir/processcore/plugins/gpu/gpu.cpp
+index 70d0922..b2af70b 100644
+--- libksysguard-clean/processcore/plugins/gpu/gpu.cpp
++++ libksysguard-workdir/processcore/plugins/gpu/gpu.cpp
+@@ -25,7 +25,7 @@
+ 
+ #include <processcore/process.h>
+ #include <sys/stat.h>
+-#ifdef Q_OS_LINUX
++#if defined(Q_OS_LINUX) || defined(__zinnia__)
+ #include <sys/sysmacros.h>
+ #endif
+ #include <unistd.h>
+diff --git libksysguard-clean/processcore/processes_local_p.cpp libksysguard-workdir/processcore/processes_local_p.cpp
+index 70697b4..1ed0f8e 100644
+--- libksysguard-clean/processcore/processes_local_p.cpp
++++ libksysguard-workdir/processcore/processes_local_p.cpp
+@@ -14,7 +14,7 @@
+ #include "processes_openbsd_p.cpp"
+ #elif defined __NetBSD__
+ #include "processes_netbsd_p.cpp"
+-#elif defined __GNU__ || defined __APPLE__
++#elif defined __GNU__ || defined __APPLE__ || defined(__zinnia__)
+ #include "processes_gnu_p.cpp"
+ #else
+ // Use Qt's OS detection

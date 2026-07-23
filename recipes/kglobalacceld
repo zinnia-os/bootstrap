@@ -1,0 +1,24 @@
+#! /bin/sh
+
+name=kglobalacceld
+version=6.6.4
+revision=1
+git_url="https://github.com/KDE/kglobalacceld.git"
+commit=d8dd9f25b53f7f2a1967b398c607b6a9c809e9bd
+imagedeps="cmake ninja-build pkg-config libdbus-1-3 gettext libegl1 libgl1 libx11-6 libxkbcommon0 libsystemd0"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules kconfig kcoreaddons"
+deps="core-libs kconfig kcoreaddons kcrash kdbusaddons kio kjobwidgets knotifications kservice kwindowsystem libxcb qtbase6 xcb-util-keysyms"
+
+configure() {
+    kf6_configure
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

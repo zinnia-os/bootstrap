@@ -1,0 +1,12 @@
+diff --git plasma-workspace-clean/kcms/CMakeLists.txt plasma-workspace-workdir/kcms/CMakeLists.txt
+index 3e4b540..dc87513 100644
+--- plasma-workspace-clean/kcms/CMakeLists.txt
++++ plasma-workspace-workdir/kcms/CMakeLists.txt
+@@ -27,7 +27,6 @@ add_subdirectory(region_language)
+ add_subdirectory(notifications)
+ add_subdirectory(nightlight)
+ add_subdirectory(nighttime)
+-add_subdirectory(users)
+ add_subdirectory(soundtheme)
+ add_subdirectory(wallpaper)
+ add_subdirectory(componentchooser)

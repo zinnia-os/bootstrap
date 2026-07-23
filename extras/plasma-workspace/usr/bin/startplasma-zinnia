@@ -1,0 +1,13 @@
+#!/bin/sh
+
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
+
+# minilogind answers org.freedesktop.login1, but it cannot hand out devices,
+# so libseat must not probe the logind backend first.
+export LIBSEAT_BACKEND=seatd
+
+# Xwayland expects its socket directory to already exist.
+mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
+
+exec /usr/lib/libexec/plasma-dbus-run-session-if-needed /usr/bin/startplasma-wayland

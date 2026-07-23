@@ -1,0 +1,25 @@
+#! /bin/sh
+
+name=libplasma
+version=6.6.4
+revision=1
+git_url="https://github.com/KDE/libplasma.git"
+commit=3f43a246f61149a0f59b98f4480eb2631bb6324f
+imagedeps="cmake ninja-build pkg-config libdbus-1-3 gettext libegl1 libgl1 libx11-6 libxkbcommon0 libsystemd0"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules kconfig kcoreaddons wayland"
+deps="core-libs karchive kcmutils kconfig kcoreaddons kglobalaccel kguiaddons ki18n kiconthemes kio kirigami knotifications kpackage ksvg kwidgetsaddons kwindowsystem libglvnd libx11 libxcb plasma-activities plasma-wayland-protocols qtbase6 qtdeclarative6 qtsvg6 qtwayland6 wayland wayland-protocols"
+
+configure() {
+    kf6_configure \
+        -DWaylandScanner_EXECUTABLE=/usr/local/bin/wayland-scanner
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

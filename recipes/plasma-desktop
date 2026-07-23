@@ -1,0 +1,33 @@
+#! /bin/sh
+
+name=plasma-desktop
+version=6.6.4
+revision=1
+git_url="https://github.com/KDE/plasma-desktop.git"
+commit=d295eecfaf9b4780c392574a7b0f9472707fac28
+imagedeps="build-essential cmake ninja-build pkg-config libdbus-1-3 gettext libegl1 libgl1 libx11-6 libxkbcommon0 libsystemd0"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules kconfig kcoreaddons kpackage kcmutils wayland"
+deps="core-libs attica karchive kauth kbookmarks kcmutils kcodecs kcompletion kconfig kconfigwidgets kcoreaddons kcrash kdbusaddons kded kglobalaccel kguiaddons ki18n kiconthemes kio kitemmodels kitemviews kjobwidgets knewstuff knotifications knotifyconfig kpackage kparts krunner kservice ksvg kwidgetsaddons kwindowsystem kxmlgui libxkbcommon plasma-activities plasma-activities-stats plasma-workspace plasma5support qt5compat qtbase6 qtdeclarative6 qtshadertools6 qtsvg6 solid sonnet xkeyboard-config"
+
+configure() {
+    kf6_configure \
+        -DKF6_HOST_TOOLING=${KF6_HOST_TOOLING} \
+        -DWaylandScanner_EXECUTABLE=/usr/local/bin/wayland-scanner \
+        -DXKBDIR=/usr/share/X11/xkb \
+        -DBUILD_KCM_MOUSE_X11=OFF \
+        -DBUILD_KCM_TOUCHPAD_X11=OFF \
+        -DBUILD_KCM_TABLET=OFF \
+        -DBUILD_DOC=OFF \
+        -DCMAKE_DISABLE_FIND_PACKAGE_PackageKitQt6=ON \
+        -DCMAKE_DISABLE_FIND_PACKAGE_Systemd=ON
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

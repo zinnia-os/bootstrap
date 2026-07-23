@@ -1,0 +1,14 @@
+diff --git plasma-desktop-clean/ConfigureChecks.cmake plasma-desktop-workdir/ConfigureChecks.cmake
+index b10965e..79b6958 100644
+--- plasma-desktop-clean/ConfigureChecks.cmake
++++ plasma-desktop-workdir/ConfigureChecks.cmake
+@@ -1,6 +1,9 @@
+ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH} )
+ 
+ pkg_get_variable(XKBDIR xkeyboard-config xkb_base)
++if (CMAKE_SYSROOT AND XKBDIR)
++    string(REGEX REPLACE "^${CMAKE_SYSROOT}" "" XKBDIR "${XKBDIR}")
++endif()
+ if (NOT XKBDIR)
+     message(FATAL_ERROR "Couldn't find xkb_base using pkg-config: is xkeyboard-config installed?")
+ elseif (CMAKE_CROSSCOMPILING)

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Plasma (Wayland)
+Comment=Plasma 6 by KDE
+Exec=startplasma-zinnia
+TryExec=startplasma-zinnia
+Type=Application
+DesktopNames=KDE
