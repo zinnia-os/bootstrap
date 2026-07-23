@@ -1,5 +1,6 @@
 #! /bin/sh
 
+JINX_REPO_URL=https://download.zinnia-os.org/${JINX_ARCH}
 JINX_MAJOR_VER=0.8
 JINX_DEBIAN_SNAPSHOT="20251020T082908Z"
 JINX_BASE_PACKAGES="autopoint bison cmake docbook-xsl docbook-xml docbook-xsl-ns docbook5-xml doxygen file flex gettext
