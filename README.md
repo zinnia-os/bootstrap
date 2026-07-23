@@ -20,7 +20,6 @@ To create a bootable image you will additionally need:
 - sgdisk (for partitioning the image)
 - build dependencies for the [xbps package manager](https://docs.voidlinux.org/xbps/index.html)
 
-To run the built image you will also need QEMU for the target architecture.
 
 ## Build instructions
 
@@ -56,20 +55,29 @@ free disk space (>20GB) and some patience.
 
 ## Running the ISO/image
 
-To run the ISO/image in qemu, you can use the provided make targets:
+Download the UEFI firmware once per architecture:
 
 ```sh
-$ make qemu     # For zinnia.img
-$ make qemu-iso # For zinnia.iso
+$ ./tasks/get-ovmf.sh x86_64
+```
+
+To run the ISO/image in QEMU, use `scripts/vm-util.py`:
+
+```sh
+$ ./scripts/vm-util.py run                                # For zinnia.img
+$ ./scripts/vm-util.py run --iso build-x86_64/zinnia.iso  # For zinnia.iso
 ```
 
 This will run the image using QEMU with the appropriate options for the
-target architecture. If you want to pass your own QEMU flags,
-you can do so by setting the `QEMUFLAGS` variable, e.g.:
+target architecture. If you want to pass your own QEMU flags, you can do so
+after a `--` separator, e.g.:
 
 ```sh
-$ make qemu QEMUFLAGS="-s -d int"
+$ ./scripts/vm-util.py run -- -d int
 ```
+
+See `./scripts/vm-util.py run --help` for all options, such as `--arch`,
+`--smp`, `--mem`, `--headless`, `--nic` and `--pci`.
 
 ## Debugging
 
@@ -77,10 +85,10 @@ To debug Zinnia, build a normal image, but make sure to also build the package
 `zinnia-debug`.
 The binary is unstripped and contains debuginfo.
 
-Run QEMU with:
+Run QEMU with a GDB stub and the CPU halted, with KVM disabled:
 
 ```sh
-$ make qemu QEMUFLAGS="-s -S" KVM=0
+$ ./scripts/vm-util.py run --kvm off -- -s -S
 ```
 
 and then attach your debugger.
