@@ -1,0 +1,26 @@
+#! /bin/sh
+
+name=kcalc
+version=25.12.3
+revision=1
+git_url="https://github.com/KDE/kcalc.git"
+commit=7466ad45913a68245c5944ce82ee12224c4dcf25
+imagedeps="cmake ninja-build pkg-config gettext"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules kconfig kcoreaddons"
+deps="core-libs qtbase6 gmp mpfr mpc kcoreaddons kcrash kcolorscheme kconfig kconfigwidgets kguiaddons ki18n kiconthemes knotifications kxmlgui"
+
+configure() {
+    kf6_configure \
+        -DKF6_HOST_TOOLING=${KF6_HOST_TOOLING} \
+        -DCMAKE_DISABLE_FIND_PACKAGE_KF6DocTools=ON
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}
