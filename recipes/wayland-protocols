@@ -1,10 +1,10 @@
 #! /bin/sh
 
 name=wayland-protocols
-version=1.43
+version=1.48
 revision=1
 tarball_url="https://gitlab.freedesktop.org/wayland/wayland-protocols/-/releases/${version}/downloads/wayland-protocols-${version}.tar.xz"
-tarball_blake2b="a13d62e6870e70d1ffdf2e8ca97f4ab09e500e1b0f552fe05e5ce51325b40c050d6ab86260dc6778e191582d797f08909cfe77ea733f119f622082a974133fd0"
+tarball_blake2b="8e3b6797aa10e668b0c950e5ea4d234d0da756297bfe45f5a2fbb8f280ae81261ec0efc48a334d2c57cbe57a94cddce7a3e95b33abc88a9c67508a90120f9297"
 imagedeps="pkg-config"
 hostdeps="gcc pkg-config wayland"
 deps="core-libs wayland"

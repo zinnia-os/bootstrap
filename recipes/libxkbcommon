@@ -2,16 +2,16 @@
 
 name=libxkbcommon
 version=1.9.2
-revision=1
+revision=2
 git_url="https://github.com/xkbcommon/libxkbcommon.git"
 commit=dd642359f8d43c09968e34ca7f1eb1121b2dfd70
 imagedeps="pkg-config"
-hostdeps="gcc pkg-config"
-deps="core-libs libxcb libxml2 xkeyboard-config"
+hostdeps="gcc pkg-config wayland"
+deps="core-libs libxcb libxml2 xkeyboard-config wayland wayland-protocols"
 
 configure() {
     meson_configure \
-        -Denable-wayland=false \
+        -Denable-wayland=true \
         -Dxkb-config-root="$prefix"/share/X11/xkb
 }
 

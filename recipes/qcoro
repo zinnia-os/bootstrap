@@ -1,0 +1,35 @@
+#! /bin/sh
+
+name=qcoro
+version=0.13.0
+revision=1
+git_url="https://github.com/qcoro/qcoro.git"
+commit=d1b52b5db2ff9560185c39a4ed9f944dc610c235
+imagedeps="cmake ninja-build pkg-config"
+hostdeps="gcc pkg-config cmake qt6"
+deps="core-libs qtbase6 qtdeclarative6"
+
+configure() {
+    cmake_configure \
+        -DQT_HOST_PATH=/usr/local \
+        -DUSE_QT_VERSION=6 \
+        -DQCORO_BUILD_EXAMPLES=OFF \
+        -DQCORO_WITH_QTDBUS=ON \
+        -DQCORO_WITH_QTNETWORK=ON \
+        -DQCORO_WITH_QML=ON \
+        -DQCORO_WITH_QTQUICK=ON \
+        -DQCORO_WITH_QTTEST=ON \
+        -DQCORO_WITH_QTWEBSOCKETS=OFF \
+        -DBUILD_TESTING=OFF \
+        -DBUILD_SHARED_LIBS=ON
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}
