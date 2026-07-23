@@ -76,8 +76,8 @@ index ea01ccf..5ff7d22 100644
  aarch64-*-fuchsia*)	targ_emul=aarch64elf
  			targ_extra_emuls="aarch64elfb armelf armelfb"
  			;;
-+aarch64-*-zinnia*)	targ_emul=aarch64elf
-+			targ_extra_emuls="aarch64elfb armelf armelfb"
++aarch64-*-zinnia*)	targ_emul=aarch64linux
++			targ_extra_emuls="aarch64elf aarch64elfb armelf armelfb"
 +			;;
  aarch64_be-*-linux-gnu_ilp32)
  			targ_emul=aarch64linux32b

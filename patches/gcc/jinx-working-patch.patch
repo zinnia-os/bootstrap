@@ -12,7 +12,7 @@ index 7112f4d..6329678 100755
      powerpc-*-eabisim* | \
 diff --git gcc-workdir/gcc/config/aarch64/aarch64-zinnia.h gcc-workdir/gcc/config/aarch64/aarch64-zinnia.h
 new file mode 100644
-index 0000000..1a39ba4
+index 0000000..4b286a6
 --- /dev/null
 +++ gcc-workdir/gcc/config/aarch64/aarch64-zinnia.h
 @@ -0,0 +1,49 @@
@@ -76,7 +76,7 @@ index 0000000..33d112f
 +LIB1ASMFUNCS = _aarch64_sync_cache_range
 diff --git gcc-workdir/gcc/config/i386/zinnia.h gcc-workdir/gcc/config/i386/zinnia.h
 new file mode 100644
-index 0000000..889aeb0
+index 0000000..ff4ca21
 --- /dev/null
 +++ gcc-workdir/gcc/config/i386/zinnia.h
 @@ -0,0 +1,10 @@
@@ -92,7 +92,7 @@ index 0000000..889aeb0
 +#define GNU_USER_DYNAMIC_LINKERX32 "/dev/null"
 diff --git gcc-workdir/gcc/config/loongarch/zinnia.h gcc-workdir/gcc/config/loongarch/zinnia.h
 new file mode 100644
-index 0000000..2d22692
+index 0000000..869fe46
 --- /dev/null
 +++ gcc-workdir/gcc/config/loongarch/zinnia.h
 @@ -0,0 +1,6 @@
@@ -102,28 +102,9 @@ index 0000000..2d22692
 +#undef GNU_USER_DYNAMIC_LINKER
 +#define GNU_USER_DYNAMIC_LINKER "/lib/ld.so"
 +#define GNU_USER_LINK_EMULATION "elf" ABI_GRLEN_SPEC "loongarch"
-diff --git gcc-workdir/gcc/config/zinnia.h gcc-workdir/gcc/config/zinnia.h
-new file mode 100644
-index 0000000..7fe5504
---- /dev/null
-+++ gcc-workdir/gcc/config/zinnia.h
-@@ -0,0 +1,13 @@
-+#undef TARGET_ZINNIA
-+#define TARGET_ZINNIA 1
-+
-+#undef GNU_USER_TARGET_OS_CPP_BUILTINS
-+#define GNU_USER_TARGET_OS_CPP_BUILTINS() \
-+  do {                                    \
-+    builtin_define ("__zinnia__");         \
-+    builtin_define ("__mlibc__");         \
-+    builtin_define ("__unix__");          \
-+    builtin_assert ("system=zinnia");      \
-+    builtin_assert ("system=unix");       \
-+    builtin_assert ("system=posix");      \
-+  } while (0);
 diff --git gcc-workdir/gcc/config/riscv/zinnia.h gcc-workdir/gcc/config/riscv/zinnia.h
 new file mode 100644
-index 0000000..7bd7505
+index 0000000..be76226
 --- /dev/null
 +++ gcc-workdir/gcc/config/riscv/zinnia.h
 @@ -0,0 +1,33 @@
@@ -160,6 +141,25 @@ index 0000000..7bd7505
 +  do {                                 \
 +    GNU_USER_TARGET_OS_CPP_BUILTINS(); \
 +  } while (0)
+diff --git gcc-workdir/gcc/config/zinnia.h gcc-workdir/gcc/config/zinnia.h
+new file mode 100644
+index 0000000..02c3d55
+--- /dev/null
++++ gcc-workdir/gcc/config/zinnia.h
+@@ -0,0 +1,13 @@
++#undef TARGET_ZINNIA
++#define TARGET_ZINNIA 1
++
++#undef GNU_USER_TARGET_OS_CPP_BUILTINS
++#define GNU_USER_TARGET_OS_CPP_BUILTINS() \
++  do {                                    \
++    builtin_define ("__zinnia__");         \
++    builtin_define ("__mlibc__");         \
++    builtin_define ("__unix__");          \
++    builtin_assert ("system=zinnia");      \
++    builtin_assert ("system=unix");       \
++    builtin_assert ("system=posix");      \
++  } while (0);
 diff --git gcc-clean/gcc/config.build gcc-workdir/gcc/config.build
 index 7c80a0b..8fac7e4 100644
 --- gcc-clean/gcc/config.build
@@ -174,18 +174,9 @@ index 7c80a0b..8fac7e4 100644
  
  # System-specific settings.
 diff --git gcc-clean/gcc/config.gcc gcc-workdir/gcc/config.gcc
-index 40b50dc..c984584 100644
+index 40b50dc..ef71c85 100644
 --- gcc-clean/gcc/config.gcc
 +++ gcc-workdir/gcc/config.gcc
-@@ -187,7 +187,7 @@
- #			the --with-sysroot configure option or the
- #			--sysroot command line option is used this
- #			will be relative to the sysroot.
--# target_type_format_char 
-+# target_type_format_char
- # 			The default character to be used for formatting
- #			the attribute in a
- #			.type symbol_name, ${t_t_f_c}<property>
 @@ -885,6 +885,15 @@ case ${target} in
    rust_target_objs="${rust_target_objs} fuchsia-rust.o"
    target_has_targetrustm=yes
@@ -263,18 +254,9 @@ index 40b50dc..c984584 100644
  		  *-linux-musl*) triplet_os="linux-musl";;
  		  *-elf*) triplet_os="elf";;
 diff --git gcc-clean/gcc/config.host gcc-workdir/gcc/config.host
-index 4c1a5e9..d8185b0 100644
+index 4c1a5e9..a27d34e 100644
 --- gcc-clean/gcc/config.host
 +++ gcc-workdir/gcc/config.host
-@@ -61,7 +61,7 @@
- #			different from the default "liblto_plugin.so".
- 
- # When setting any of these variables, check to see if a corresponding
--# variable is present in config.build; if so, you will likely want to 
-+# variable is present in config.build; if so, you will likely want to
- # set it in both places.
- 
- # Default settings.
 @@ -100,7 +100,7 @@ esac
  
  case ${host} in
@@ -285,7 +267,7 @@ index 4c1a5e9..d8185b0 100644
        aarch64*-*-*)
  	host_extra_gcc_objs="driver-aarch64.o"
 diff --git gcc-clean/gcc/cp/module.cc gcc-workdir/gcc/cp/module.cc
-index 5ff5c46..5053307 100644
+index 5ff5c46..ce550c3 100644
 --- gcc-clean/gcc/cp/module.cc
 +++ gcc-workdir/gcc/cp/module.cc
 @@ -1697,9 +1697,10 @@ elf_in::defrost (const char *name)
@@ -351,7 +333,7 @@ index bb07e46..821fe80 100644
  LIBINTL = @LIBINTL@
  PACKAGE = @PACKAGE@
 diff --git gcc-clean/libgcc/config.host gcc-workdir/libgcc/config.host
-index 6a88ee5..c299cb8 100644
+index 6a88ee5..25ffc38 100644
 --- gcc-clean/libgcc/config.host
 +++ gcc-workdir/libgcc/config.host
 @@ -106,7 +106,7 @@ arm*-*-*)
@@ -375,13 +357,14 @@ index 6a88ee5..c299cb8 100644
  *-*-linux* | frv-*-*linux* | *-*-kfreebsd*-gnu | *-*-gnu* | *-*-kopensolaris*-gnu | *-*-uclinuxfdpiceabi)
    tmake_file="$tmake_file t-crtstuff-pic t-libgcc-pic t-eh-dw2-dip t-slibgcc t-slibgcc-gld t-slibgcc-elf-ver t-linux"
    extra_parts="crtbegin.o crtbeginS.o crtbeginT.o crtend.o crtendS.o"
-@@ -435,6 +440,14 @@ aarch64*-*-fuchsia*)
+@@ -435,6 +440,15 @@ aarch64*-*-fuchsia*)
  	tmake_file="${tmake_file} ${cpu_type}/t-softfp t-softfp"
  	tmake_file="${tmake_file} t-dfprules"
  	;;
 +aarch64*-*-zinnia*)
 +	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o"
 +	extra_parts="$extra_parts crtfastmath.o"
++	md_unwind_def_header=aarch64/aarch64-unwind-def.h
 +	md_unwind_header=aarch64/aarch64-unwind.h
 +	tmake_file="${tmake_file} ${cpu_type}/t-aarch64"
 +	tmake_file="${tmake_file} ${cpu_type}/t-lse t-slibgcc-libgcc"
@@ -390,7 +373,7 @@ index 6a88ee5..c299cb8 100644
  aarch64*-*-linux*)
  	extra_parts="$extra_parts crtfastmath.o"
  	md_unwind_def_header=aarch64/aarch64-unwind-def.h
-@@ -956,6 +969,11 @@ x86_64-*-mingw*)
+@@ -956,6 +970,11 @@ x86_64-*-mingw*)
  		extra_parts="$extra_parts vtv_start.o vtv_end.o vtv_start_preinit.o vtv_end_preinit.o"
  	fi
  	;;
@@ -402,7 +385,7 @@ index 6a88ee5..c299cb8 100644
  ia64*-*-elf*)
  	extra_parts="$extra_parts crtbeginS.o crtendS.o crtfastmath.o"
  	tmake_file="ia64/t-ia64 ia64/t-ia64-elf ia64/t-eh-ia64 t-crtfm t-softfp-tf ia64/t-softfp t-softfp ia64/t-softfp-compat"
-@@ -1013,6 +1031,11 @@ loongarch*-elf*)
+@@ -1013,6 +1032,11 @@ loongarch*-elf*)
  	tmake_file="${tmake_file} t-crtfm loongarch/t-crtstuff"
  	tmake_file="${tmake_file} t-slibgcc-libgcc"
  	;;
@@ -414,7 +397,7 @@ index 6a88ee5..c299cb8 100644
  m32r-*-elf*)
  	tmake_file="$tmake_file m32r/t-m32r t-fdpbit"
  	extra_parts="$extra_parts crtinit.o crtfini.o"
-@@ -1349,6 +1372,10 @@ pru-*-*)
+@@ -1349,6 +1373,10 @@ pru-*-*)
  	tmake_file="${tmake_file} t-softfp-sfdf t-softfp-excl t-softfp t-gnu-prefix pru/t-pru"
  	tm_file="$tm_file pru/pru-abi.h"
  	;;

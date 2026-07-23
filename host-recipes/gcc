@@ -26,7 +26,8 @@ configure() {
         --enable-initfini-array \
         --enable-threads=posix \
         --enable-shared \
-        --enable-host-shared
+        --enable-host-shared \
+        --enable-libstdcxx-time=rt
 }
 
 build() {
