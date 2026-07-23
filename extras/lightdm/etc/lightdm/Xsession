@@ -1,8 +1,15 @@
 #!/bin/sh
 
 export HOME="${HOME:-/root}"
-export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}"
-export PATH=/usr/local/sbin:/usr/local/bin:/usr/bin
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/sbin
+
+uid="$(id -u)"
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/${uid}}"
+if ! mkdir -p "${XDG_RUNTIME_DIR}" 2>/dev/null; then
+    export XDG_RUNTIME_DIR="/tmp/runtime-${uid}"
+    mkdir -p "${XDG_RUNTIME_DIR}"
+fi
+chmod 700 "${XDG_RUNTIME_DIR}"
 
 export NO_AT_BRIDGE=1
 export GTK_A11Y=none

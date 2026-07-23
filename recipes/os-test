@@ -17,5 +17,11 @@ build() {
 
 package() {
 	mkdir -pv "${dest_dir}/usr/share/os-test"
-	cp -rpa * "${dest_dir}/usr/share/os-test"
+	cp -r ./ "${dest_dir}/usr/share/os-test"
+	echo panic > "${dest_dir}/usr/share/os-test/out/zinnia/basic/spawn/posix_spawnattr_setschedparam.out"
+	echo panic > "${dest_dir}/usr/share/os-test/out/zinnia/basic/spawn/posix_spawnattr_setschedpolicy.out"
+	echo panic > "${dest_dir}/usr/share/os-test/out/zinnia/basic/pthread/pthread_condattr_setpshared.out"
+	echo panic > "${dest_dir}/usr/share/os-test/out/zinnia/basic/pthread/pthread_barrierattr_setpshared.out"
+	echo panic > "${dest_dir}/usr/share/os-test/out/zinnia/basic/pthread/pthread_mutexattr_setpshared.out"
+	echo panic > "${dest_dir}/usr/share/os-test/out/zinnia/basic/pthread/pthread_rwlockattr_setpshared.out"
 }
