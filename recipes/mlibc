@@ -5,8 +5,9 @@ revision=1
 from_source=mlibc
 imagedeps="build-essential meson ninja-build"
 hostdeps="gcc pkg-config libgcc-binaries"
-builddeps="freestnd-c-hdrs freestnd-cxx-hdrs frigg libsmarter"
+builddeps="frigg libsmarter"
 deps="mlibc-headers"
+allow_network=yes
 
 configure() {
         CFLAGS="$TARGET_CFLAGS" \
@@ -15,8 +16,7 @@ configure() {
     meson_configure_noflags \
         -Dno_headers=true \
         -Ddefault_library=both \
-        -Dlibgcc_dependency=false \
-        -Duse_freestnd_hdrs=enabled
+        -Dlibgcc_dependency=false
 }
 
 build() {
