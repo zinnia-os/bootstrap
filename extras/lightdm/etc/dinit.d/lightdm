@@ -3,6 +3,6 @@ command = /bin/sh -c "mkdir -p /run/lightdm; XDG_RUNTIME_DIR=/tmp exec /usr/bin/
 depends-on = dbus
 depends-on = seatd
 depends-on = devd
-depends-on = fake-logind
+depends-on = minilogind
 working-dir = /root
 restart = yes
