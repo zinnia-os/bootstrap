@@ -40,7 +40,7 @@ index d9c872c..1f1e4cf 100644
 @@ -1571,6 +1571,10 @@ supported_targets! {
      ("aarch64-unknown-managarm-mlibc", aarch64_unknown_managarm_mlibc),
      ("riscv64gc-unknown-managarm-mlibc", riscv64gc_unknown_managarm_mlibc),
-
+ 
 +    ("x86_64-unknown-zinnia-mlibc", x86_64_unknown_zinnia_mlibc),
 +    ("aarch64-unknown-zinnia-mlibc", aarch64_unknown_zinnia_mlibc),
 +    ("riscv64gc-unknown-zinnia-mlibc", riscv64gc_unknown_zinnia_mlibc),
@@ -153,7 +153,7 @@ index c0a6e30..1e07e73 100644
          || target_os == "cygwin"
          || target_os == "vexos"
 +        || target_os == "zinnia"
-
+ 
          // See src/bootstrap/src/core/build_steps/synthetic_targets.rs
          || env::var("RUSTC_BOOTSTRAP_SYNTHETIC_TARGET").is_ok()
 diff --git rust-clean/library/std/src/os/mod.rs rust-workdir/library/std/src/os/mod.rs
@@ -392,7 +392,7 @@ index 573f540..fc6b192 100644
 @@ -147,6 +147,17 @@ pub mod os {
      pub const EXE_EXTENSION: &str = "";
  }
-
+ 
 +#[cfg(target_os = "zinnia")]
 +pub mod os {
 +    pub const FAMILY: &str = "unix";
@@ -534,7 +534,7 @@ index 494d944..e25d582 100644
 @@ -360,6 +360,12 @@ pub fn current_exe() -> io::Result<PathBuf> {
      Err(io::const_error!(io::ErrorKind::Unsupported, "not yet implemented!"))
  }
-
+ 
 +#[cfg(target_os = "zinnia")]
 +pub fn current_exe() -> io::Result<PathBuf> {
 +    use crate::io::ErrorKind;
@@ -588,7 +588,7 @@ index cce6ca7..da5eda0 100644
 @@ -163,6 +163,11 @@ unsafe extern "C" {}
  #[link(name = "gcc_s")]
  unsafe extern "C" {}
-
+ 
 +#[cfg(target_os = "zinnia")]
 +#[link(name = "gcc_eh", kind = "static", modifiers = "-bundle", cfg(target_feature = "crt-static"))]
 +#[link(name = "gcc_s", cfg(not(target_feature = "crt-static")))]
@@ -601,7 +601,7 @@ diff --git rust-clean/src/tools/generate-copyright/src/cargo_metadata.rs rust-wo
 index 87cd85c..1eab545 100644
 --- rust-clean/src/tools/generate-copyright/src/cargo_metadata.rs
 +++ rust-workdir/src/tools/generate-copyright/src/cargo_metadata.rs
-@@ -77,11 +77,25 @@ pub fn get_metadata(
+@@ -77,11 +77,22 @@ pub fn get_metadata(
          if manifest_path.file_name() != Some(OsStr::new("Cargo.toml")) {
              panic!("cargo_manifest::get requires a path to a Cargo.toml file");
          }
@@ -626,7 +626,7 @@ index 87cd85c..1eab545 100644
          for package in metadata.packages {
              let package_manifest_path = package.manifest_path.as_path();
  
-@@ -110,6 +124,15 @@ pub fn get_metadata(
+@@ -110,6 +121,14 @@ pub fn get_metadata(
      Ok(output)
  }
  
@@ -641,7 +641,7 @@ index 87cd85c..1eab545 100644
  /// Add important files off disk into this dependency.
  ///
  /// Maybe one-day Cargo.toml will contain enough information that we don't need
-@@ -121,7 +144,12 @@ fn load_important_files(
+@@ -121,7 +140,12 @@ fn load_important_files(
      let name_version = format!("{}-{}", package.name, package.version);
      println!("Scraping notices for {}...", name_version);
      let dep_vendor_path = vendor_root.join(name_version);
