@@ -253,6 +253,24 @@ cmake_configure_noflags() {
         "$@"
 }
 
+kf6_configure() {
+    cmake_configure \
+        -DQT_MAJOR_VERSION=6 \
+        -DQT_HOST_PATH=/usr/local \
+        -DECM_DIR=/usr/local/share/ECM/cmake \
+        -DBUILD_TESTING=OFF \
+        -DBUILD_QCH=FALSE \
+        -DBUILD_PYTHON_BINDINGS=OFF \
+        -DKDE_INSTALL_USE_QT_SYS_PATHS=OFF \
+        -DKDE_INSTALL_QMLDIR=${prefix}/lib/qt6/qml \
+        -DKDE_INSTALL_QTPLUGINDIR=${prefix}/lib/qt6/plugins \
+        -DKDE_INSTALL_LIBEXECDIR_KF=${prefix}/libexec \
+        -DKF_IGNORE_PLATFORM_CHECK=TRUE \
+        "$@"
+}
+
+KF6_HOST_TOOLING="/usr/local/lib/x86_64-linux-gnu/cmake"
+
 RUST_GETRANDOM_RUSTFLAG='--cfg getrandom_backend="rdrand"'
 
 cargo_build_nolock() {
