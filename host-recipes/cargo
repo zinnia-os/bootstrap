@@ -4,12 +4,13 @@ name=cargo
 from_source=cargo
 revision=1
 imagedeps="build-essential libssl-dev pkg-config cargo"
-hostrundeps="gcc"
+hostrundeps="gcc rust"
 allow_network=yes
 
 build() {
         CARGO_HOME="${build_dir}/.cargo" \
     cargo install \
+        --locked \
         --target x86_64-unknown-linux-gnu \
         --target-dir "${build_dir}" \
         --path "${source_dir}" \
@@ -20,6 +21,7 @@ build() {
 package() {
         CARGO_HOME="${build_dir}/.cargo" \
     cargo install \
+        --locked \
         --target x86_64-unknown-linux-gnu \
         --target-dir "${build_dir}" \
         --path "${source_dir}" \
