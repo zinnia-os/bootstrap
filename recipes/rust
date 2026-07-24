@@ -5,7 +5,7 @@ from_source=rust
 revision=2
 imagedeps="build-essential cmake ninja-build python3 curl git"
 hostdeps="gcc pkg-config llvm cargo rust"
-deps="core-libs llvm zlib zstd libffi ncurses openssl curl nghttp2 ${RUST_ZINNIA_FORKS}"
+deps="core-libs llvm zlib zstd libffi ncurses openssl curl nghttp2 rust-libc rust-rustix rust-getrandom rust-nix rust-errno rust-socket2 rust-system-deps rust-libloading rust-libloading-09"
 builddeps="mlibc"
 allow_network=yes
 

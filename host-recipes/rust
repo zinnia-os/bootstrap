@@ -6,7 +6,7 @@ revision=2
 imagedeps="build-essential cmake ninja-build python3 curl git"
 hostdeps="pkg-config cargo rust"
 hostrundeps="gcc llvm"
-deps="core-libs ${RUST_ZINNIA_FORKS}"
+deps="core-libs rust-libc rust-rustix rust-getrandom rust-nix rust-errno rust-socket2 rust-system-deps rust-libloading rust-libloading-09"
 builddeps="mlibc"
 allow_network=yes
 

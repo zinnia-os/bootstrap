@@ -253,7 +253,6 @@ cmake_configure_noflags() {
         "$@"
 }
 
-RUST_ZINNIA_FORKS="rust-libc rust-rustix rust-getrandom rust-nix rust-errno rust-socket2 rust-system-deps rust-libloading rust-libloading-09"
 RUST_GETRANDOM_RUSTFLAG='--cfg getrandom_backend="rdrand"'
 
 cargo_build_nolock() {
