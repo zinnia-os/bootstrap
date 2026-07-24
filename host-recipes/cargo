@@ -4,7 +4,7 @@ name=cargo
 from_source=cargo
 revision=1
 imagedeps="build-essential libssl-dev pkg-config cargo"
-hostrundeps="gcc rust"
+hostrundeps="gcc"
 allow_network=yes
 
 build() {
