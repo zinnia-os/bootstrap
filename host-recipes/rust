@@ -2,11 +2,11 @@
 
 name=rust
 from_source=rust
-revision=2
+revision=3
 imagedeps="build-essential cmake ninja-build python3 curl git"
 hostdeps="pkg-config"
 hostrundeps="gcc llvm"
-deps="core-libs rust-libc rust-rustix rust-getrandom rust-nix rust-errno rust-socket2 rust-system-deps rust-libloading rust-libloading-09"
+deps="core-libs rust-crates"
 builddeps="mlibc"
 allow_network=yes
 
@@ -70,6 +70,5 @@ package() {
     rm -rf "${dest_dir}${prefix}"/share/doc
     rm -rf "${dest_dir}${prefix}"/share/man
 
-    mkdir -p "${dest_dir}${prefix}"/lib/rustlib/src/rust/library/
-    cp -rp "${rust_src}"/library/. "${dest_dir}${prefix}"/lib/rustlib/src/rust/library/
+    install_rust_toolchain_source "${rust_src}" "${dest_dir}${prefix}"/lib/rustlib/src
 }

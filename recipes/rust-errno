@@ -1,10 +1,8 @@
 #! /bin/sh
 
 name=rust-errno
-skip_pkg_check=yes
 version=0.3.14
 revision=1
-tarball_url="https://static.crates.io/crates/errno/errno-${version}.crate"
-tarball_blake2b="57fd842a717086ffdcfa5102a8c52bf8210672820366d78aadb6f159055917477e6771e9fbda88787278bf3a116bc7253dcb705b601e54038a93a1820c3c287a"
 
-package_rust_crate
+rust_crate_recipe errno \
+    57fd842a717086ffdcfa5102a8c52bf8210672820366d78aadb6f159055917477e6771e9fbda88787278bf3a116bc7253dcb705b601e54038a93a1820c3c287a

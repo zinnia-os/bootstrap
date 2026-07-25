@@ -1,0 +1,7 @@
+#! /bin/sh
+
+name=rust-crates
+version=0.0
+revision=1
+deps="rust-libc rust-rustix rust-getrandom rust-nix rust-errno rust-socket2 rust-system-deps rust-libloading rust-libloading-09"
+skip_pkg_check=yes

@@ -1,10 +1,8 @@
 #! /bin/sh
 
 name=rust-libloading-09
-skip_pkg_check=yes
 version=0.9.0
 revision=2
-tarball_url="https://static.crates.io/crates/libloading/libloading-${version}.crate"
-tarball_blake2b="058472bb1ca2f53c577ab2834583c8efa544d0d5493ec202fa93e4f58029908fa656f1ce3941d2012e15478bd883ce784fa40bab082f65e41ea0cf09b568c31f"
 
-package_rust_crate
+rust_crate_recipe libloading \
+    058472bb1ca2f53c577ab2834583c8efa544d0d5493ec202fa93e4f58029908fa656f1ce3941d2012e15478bd883ce784fa40bab082f65e41ea0cf09b568c31f

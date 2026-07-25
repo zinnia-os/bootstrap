@@ -1,10 +1,8 @@
 #! /bin/sh
 
 name=rust-libc
-skip_pkg_check=yes
 version=0.2.186
-revision=1
-tarball_url="https://github.com/rust-lang/libc/archive/refs/tags/${version}.tar.gz"
-tarball_blake2b="8cffe0986a7f3e693b84a9b7b3f7f59831f803d3430dcf3cc929074a766dfc6afed3b1f186c9ede2ef35591ea15d8e7c6ef7f1e731f10394882371d5371b666b"
+revision=2
 
-package_rust_crate
+rust_crate_recipe libc \
+    ebe7aac5f8937a8064c64a0d4dc72e5fc794080e09b96c6d245bdec0fd9a19d49ab38e25306e22e47564764cf5dcde45855237cffc70230a143eca2626bd5c3c

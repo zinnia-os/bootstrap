@@ -2,16 +2,20 @@
 
 name=rust
 from_source=rust
-revision=2
+revision=3
 imagedeps="build-essential cmake ninja-build python3 curl git"
 hostdeps="gcc pkg-config llvm cargo rust"
-deps="core-libs llvm zlib zstd libffi ncurses openssl curl nghttp2 rust-libc rust-rustix rust-getrandom rust-nix rust-errno rust-socket2 rust-system-deps rust-libloading rust-libloading-09"
+deps="core-libs llvm zlib zstd libffi ncurses openssl curl nghttp2 rust-crates"
 builddeps="mlibc"
 allow_network=yes
 
 prepare_rust_source() {
     rust_src="$(pwd -P)/rust-src"
     prepare_rust_toolchain_source "${rust_src}" "${sysroot_dir}/usr/src/rust"
+    cargo_zinnia_patch_rust_workspace "${rust_src}" \
+        ".." "$(dirname "${rust_src}")"
+    cargo_zinnia_patch_rust_workspace "${rust_src}/src/tools/cargo" \
+        "../../../.." "$(dirname "${rust_src}")"
 }
 
 configure() {
@@ -106,6 +110,5 @@ package() {
 
     post_package_strip
 
-    mkdir -p "${dest_dir}${prefix}"/lib/rustlib/src/rust/library/
-    cp -rp "${rust_src}"/library/. "${dest_dir}${prefix}"/lib/rustlib/src/rust/library/
+    install_rust_toolchain_source "${rust_src}" "${dest_dir}${prefix}"/lib/rustlib/src
 }

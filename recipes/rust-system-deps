@@ -1,10 +1,8 @@
 #! /bin/sh
 
 name=rust-system-deps
-skip_pkg_check=yes
 version=6.0.2
 revision=1
-tarball_url="https://static.crates.io/crates/system-deps/system-deps-${version}.crate"
-tarball_blake2b="0e5412b140cb4c667dd3e98a8b3c9bfae07c1df71abfde009dfe494bd11f3043cc3c7bb2c825b46caa8f47414b7c4076e131c47d3135c60678a2a826cc21899f"
 
-package_rust_crate
+rust_crate_recipe system-deps \
+    0e5412b140cb4c667dd3e98a8b3c9bfae07c1df71abfde009dfe494bd11f3043cc3c7bb2c825b46caa8f47414b7c4076e131c47d3135c60678a2a826cc21899f

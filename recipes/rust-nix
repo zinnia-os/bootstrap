@@ -1,10 +1,8 @@
 #! /bin/sh
 
 name=rust-nix
-skip_pkg_check=yes
 version=0.30.1
-revision=1
-tarball_url="https://github.com/nix-rust/nix/archive/refs/tags/v${version}.tar.gz"
-tarball_blake2b="dabb6f5fd9674c94ae2538bfdb2af1648aa1578ddb569283ef45a5cbc274d749958a97715615f3f01006b0d69e1bddcf858ac2e1526ed24bcde9dbdccf9c8193"
+revision=2
 
-package_rust_crate
+rust_crate_recipe nix \
+    efe5faaf142fbf8d97366d11f28189167d3d22c1ed76b65e7887064f2fd146ae27282aeb230eb798d7c1b3850ea1502bcb325dc23536800690f0be3d66d37b63

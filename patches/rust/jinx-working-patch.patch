@@ -144,6 +144,30 @@ index 0000000..33e9d26
 +        options: base,
 +    }
 +}
+diff --git rust-clean/library/Cargo.lock rust-workdir/library/Cargo.lock
+index 4801f92..074d3bd 100644
+--- rust-clean/library/Cargo.lock
++++ rust-workdir/library/Cargo.lock
+@@ -146,9 +146,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "libc"
+-version = "0.2.178"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "37c93d8daa9d8a012fd8ab92f088405fb202ea0b6ab73ee2482ae66af4f42091"
++version = "0.2.186"
+ dependencies = [
+  "rustc-std-workspace-core",
+ ]
+diff --git rust-clean/library/Cargo.toml rust-workdir/library/Cargo.toml
+index 87df966..9e44b16 100644
+--- rust-clean/library/Cargo.toml
++++ rust-workdir/library/Cargo.toml
+@@ -85,3 +85,4 @@ rustflags = [
+ rustc-std-workspace-core = { path = 'rustc-std-workspace-core' }
+ rustc-std-workspace-alloc = { path = 'rustc-std-workspace-alloc' }
+ rustc-std-workspace-std = { path = 'rustc-std-workspace-std' }
++libc = { path = '../../rust-libc' }
 diff --git rust-clean/library/std/build.rs rust-workdir/library/std/build.rs
 index c0a6e30..1e07e73 100644
 --- rust-clean/library/std/build.rs
@@ -598,7 +622,7 @@ index cce6ca7..da5eda0 100644
  #[link(name = "gcc", kind = "static", modifiers = "-bundle", cfg(target_feature = "crt-static"))]
  #[link(name = "gcc_eh", kind = "static", modifiers = "-bundle", cfg(target_feature = "crt-static"))]
 diff --git rust-clean/src/tools/generate-copyright/src/cargo_metadata.rs rust-workdir/src/tools/generate-copyright/src/cargo_metadata.rs
-index 87cd85c..1eab545 100644
+index 87cd85c..0c83c5e 100644
 --- rust-clean/src/tools/generate-copyright/src/cargo_metadata.rs
 +++ rust-workdir/src/tools/generate-copyright/src/cargo_metadata.rs
 @@ -77,11 +77,22 @@ pub fn get_metadata(
@@ -626,7 +650,7 @@ index 87cd85c..1eab545 100644
          for package in metadata.packages {
              let package_manifest_path = package.manifest_path.as_path();
  
-@@ -110,6 +121,14 @@ pub fn get_metadata(
+@@ -109,6 +120,14 @@ pub fn get_metadata(
      Ok(output)
  }
  

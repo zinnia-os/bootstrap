@@ -303,24 +303,31 @@ prepare_rust_toolchain_source() {
     export CARGO_HOME="$(pwd -P)/.cargo"
 }
 
+install_rust_toolchain_source() {
+    rust_src="$1"
+    src_root="$2"
+
+    mkdir -p "${src_root}"/rust/library/
+    cp -rp "${rust_src}"/library/. "${src_root}"/rust/library/
+
+    cp -rp "$(dirname "${rust_src}")"/rust-libc "${src_root}"/
+}
+
+zinnia_rust_forks() {
+    python3 "${base_dir}"/scripts/rust-forks.py "$@"
+}
+
 cargo_zinnia_build_env() {
     export RUSTUP_HOME="${build_dir}/.rustup"
     export CARGO_HOME="$(pwd -P)/.cargo"
     mkdir -p "${CARGO_HOME}"
 
     fork_root="${sysroot_dir}/usr/src/rust"
-    cat > "${CARGO_HOME}/config.toml" << EOF
-[patch.crates-io]
-libc = { path = "${fork_root}/rust-libc" }
-rustix = { path = "${fork_root}/rust-rustix" }
-getrandom = { path = "${fork_root}/rust-getrandom" }
-nix = { path = "${fork_root}/rust-nix" }
-errno = { path = "${fork_root}/rust-errno" }
-socket2 = { path = "${fork_root}/rust-socket2" }
-system-deps = { path = "${fork_root}/rust-system-deps" }
-libloading = { path = "${fork_root}/rust-libloading" }
-libloading_09 = { package = "libloading", path = "${fork_root}/rust-libloading-09" }
-EOF
+    zinnia_rust_forks patch-table --forks "${fork_root}" > "${CARGO_HOME}/config.toml"
+
+    if [ -f Cargo.lock ]; then
+        cargo_zinnia_relock Cargo.lock
+    fi
 
     cargo_linker_var="CARGO_TARGET_$(printf '%s' "${RUST_TRIPLET}" | tr '[:lower:]-' '[:upper:]_')_LINKER"
     export "${cargo_linker_var}=${OS_TRIPLET}-gcc"
@@ -329,6 +336,24 @@ EOF
     export PKG_CONFIG="${OS_TRIPLET}-pkg-config"
     export PKG_CONFIG_ALLOW_CROSS=1
     export RUST_TARGET="${RUST_TRIPLET}"
+}
+
+cargo_zinnia_relock() {
+    zinnia_rust_forks relock --forks "${sysroot_dir}/usr/src/rust" "$1"
+}
+
+cargo_zinnia_patch_rust_workspace() {
+    zinnia_rust_forks patch-workspace --forks "$3" --prefix "$2" "$1"
+}
+
+rust_crate_recipe() {
+    crate="$1"
+
+    skip_pkg_check=yes
+    tarball_url="https://static.crates.io/crates/${crate}/${crate}-${version}.crate"
+    tarball_blake2b="$2"
+
+    package_rust_crate
 }
 
 package_rust_crate() {
