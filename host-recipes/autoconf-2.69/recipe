@@ -1,0 +1,24 @@
+#! /bin/sh
+
+version=2.69
+revision=1
+tarball_url="https://ftpmirror.gnu.org/gnu/autoconf/autoconf-${version}.tar.gz"
+tarball_blake2b="7e8a513bbfcabadad1577919c048cc05ca0a084788850b42570f88afc2fa9c25fb32277412f135b81ba1c0d8079465a6b581d2d78662c991d2183b739fac407c"
+
+configure() {
+        CFLAGS="$HOST_CFLAGS" \
+        CXXFLAGS="$HOST_CXXFLAGS" \
+        LDFLAGS="$HOST_LDFLAGS" \
+    "${source_dir}"/configure --prefix="${prefix}"
+}
+
+build() {
+    make -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" make install
+
+        strip_command=strip \
+    post_package_strip
+}

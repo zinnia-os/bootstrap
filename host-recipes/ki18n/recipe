@@ -1,0 +1,26 @@
+#! /bin/sh
+
+from_source=ki18n
+revision=1
+imagedeps="build-essential cmake ninja-build pkg-config gettext"
+hostdeps="gcc pkg-config qt6 extra-cmake-modules"
+
+configure() {
+    cmake -GNinja \
+        -DCMAKE_INSTALL_PREFIX=${prefix} \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DECM_DIR=${prefix}/share/ECM/cmake \
+        -DQT_MAJOR_VERSION=6 \
+        -DBUILD_TESTING=OFF \
+        -DBUILD_QCH=FALSE \
+        -DKF_IGNORE_PLATFORM_CHECK=TRUE \
+        "${source_dir}"
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+}

@@ -1,0 +1,40 @@
+#! /bin/sh
+
+version=6.11.0
+revision=1
+git_url="https://github.com/qt/qt5.git"
+commit=b3a9d45d2d5474a39c76fddc50bf6d55bcb7858d
+shallow=no
+source_imagedeps="git"
+source_allow_network=yes
+imagedeps="build-essential cmake ninja-build pkg-config python3 perl libgl-dev libegl-dev libxkbcommon-dev libxkbcommon-x11-dev libx11-dev libxcb1-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-shape0-dev libxcb-sync-dev libxcb-util-dev libxcb-xfixes0-dev libxcb-xkb-dev libwayland-dev wayland-protocols libglib2.0-dev libdbus-1-dev zlib1g-dev"
+hostdeps="gcc pkg-config"
+
+prepare() {
+    ./init-repository -f --module-subset qtbase,qtsvg,qtimageformats,qtshadertools,qtlanguageserver,qtdeclarative,qtwayland,qtmultimedia,qttools,qt5compat,qtsensors,qtpositioning,qtspeech
+}
+
+configure() {
+    cmake -GNinja \
+        -DCMAKE_INSTALL_PREFIX=${prefix} \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_SHARED_LIBS=ON \
+        -DQT_BUILD_EXAMPLES=OFF \
+        -DQT_BUILD_TESTS=OFF \
+        -DFEATURE_glib=OFF \
+        -DFEATURE_icu=OFF \
+        -DFEATURE_system_zlib=OFF \
+        -DFEATURE_system_pcre2=OFF \
+        "${source_dir}"
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    strip_command=strip \
+        post_package_strip
+}

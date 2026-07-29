@@ -1,0 +1,39 @@
+#! /bin/sh
+
+version=26.1.5
+revision=1
+tarball_url="https://archive.mesa3d.org/mesa-${version}.tar.xz"
+tarball_blake2b="80f874e7f5ab1b6874926e8463a93c0e2c016092f1e5c3375e48178c3ae995ee17988ee07eea28cada5729edc12a5a3cfd7e0338c14f15a2ed029fb1057a09cc"
+imagedeps="python3-mako python3-yaml glslang-tools pkg-config"
+hostdeps="gcc pkg-config wayland"
+deps="core-libs libdrm libexpat libglvnd libx11 libxcb libxext libxfixes libxrandr libxshmfence libxxf86vm llvm xcb-util-keysyms wayland-protocols zlib zstd"
+
+configure() {
+    meson_configure \
+        -Db_ndebug=true \
+        -Dbuild-tests=false \
+        -Ddri-drivers-path=/usr/lib/dri \
+        -Dshared-glapi=enabled \
+        -Dexpat=enabled \
+        -Dgbm=enabled \
+        -Dgles1=enabled \
+        -Dgles2=enabled \
+        -Dglvnd=enabled \
+        -Degl=enabled \
+        -Dplatforms=wayland,x11 \
+        -Dllvm=enabled \
+        -Dzstd=enabled \
+        -Dvideo-codecs=all_free \
+        -Dvulkan-drivers="" \
+        -Dgallium-drivers=softpipe,llvmpipe
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

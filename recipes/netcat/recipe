@@ -1,0 +1,26 @@
+#! /bin/sh
+
+version=1.234p2
+revision=1
+tarball_url="https://salsa.debian.org/debian/netcat-openbsd/-/archive/debian/$(echo $version | sed 's/p/-/')/netcat-openbsd-debian-$(echo $version | sed 's/p/-/').tar.gz"
+tarball_blake2b="4bd465e0be97549cbec1f1e8062fced1043c0db765ee4750c57564ef723403f637705918af6d38bed61685afe58bc4143e1b1a226a556ca8625ca26ade79deda"
+hostdeps="gcc pkg-config"
+deps="core-libs readline libbsd"
+
+early_prepare() {
+    while read p; do
+        patch -p1 < ${source_dir}/debian/patches/$p
+    done < ${source_dir}/debian/patches/series
+}
+
+build() {
+    cp -rp "${source_dir}"/. ./
+    make -j${parallelism} PKG_CONFIG=${OS_TRIPLET}-pkg-config LD=${OS_TRIPLET}-ld CC=${OS_TRIPLET}-gcc LDFLAGS="${TARGET_LDFLAGS}" CFLAGS="${TARGET_CFLAGS} -fvisibility=hidden"
+}
+
+package() {
+    install -Dm755 nc ${dest_dir}${prefix}/bin/nc
+    install -Dm644 nc.1 ${dest_dir}${prefix}/share/man/man1/nc.1
+
+    post_package_strip
+}

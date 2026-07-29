@@ -1,0 +1,23 @@
+#! /bin/sh
+
+version=6.25.0
+revision=1
+git_url="https://github.com/KDE/kitemviews.git"
+commit=560d30dd4c0d913ff879471602ec4bd453e45a85
+imagedeps="cmake ninja-build pkg-config"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules"
+deps="core-libs qtbase6"
+
+configure() {
+    kf6_configure
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

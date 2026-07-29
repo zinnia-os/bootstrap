@@ -10,15 +10,23 @@ for pkg in $pkgs; do
     unset repology_status
     unset skip_pkg_check
     unset from_source
+    unset from_host_source
     unset version
 
-    . $(realpath $pkg)
+    recipe_dir="$(realpath $pkg)"
+    name="$(basename $recipe_dir)"
 
-    # If version is not set and from_source is, try to get version from source recipe
-    if [ -z "$version" ] && [ -n "$from_source" ]; then
-        source_recipe_dir="$(dirname $(dirname $(realpath $pkg)))/source-recipes"
-        if [ -f "$source_recipe_dir/$from_source" ]; then
-            . "$source_recipe_dir/$from_source"
+    . "$recipe_dir"/recipe
+
+    if [ -z "$version" ] && [ -n "$from_source$from_host_source" ]; then
+        root_dir="$(dirname $(dirname $recipe_dir))"
+        if [ -n "$from_host_source" ]; then
+            source_recipe="$root_dir/host-recipes/$from_host_source/recipe"
+        else
+            source_recipe="$root_dir/recipes/$from_source/recipe"
+        fi
+        if [ -f "$source_recipe" ]; then
+            . "$source_recipe"
         fi
     fi
 

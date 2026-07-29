@@ -1,0 +1,23 @@
+#! /bin/sh
+
+repology_id=mlibc
+version=0228ce219e2b33d911a351a95c7dc7ea0e7217c8
+revision=1
+git_url="https://github.com/zinnia-os/mlibc.git"
+commit=${version}
+shallow=no
+imagedeps="meson ninja-build"
+hostdeps="pkg-config"
+
+configure() {
+    meson_configure \
+        -Dheaders_only=true
+}
+
+build() {
+    ninja -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" ninja install
+}

@@ -1,0 +1,26 @@
+#! /bin/sh
+
+version=6.11.0
+git_url="https://github.com/qt/qtsvg.git"
+commit=4126867385dc0b7a9404dcd69726c28ed0d5e10a
+imagedeps="ninja-build pkg-config python3 perl"
+hostdeps="gcc pkg-config cmake qt6"
+deps="core-libs qtbase6 zlib"
+revision=1
+
+configure() {
+    cmake_configure \
+        -DQT_HOST_PATH=/usr/local \
+        -DQT_BUILD_EXAMPLES=OFF \
+        -DQT_BUILD_TESTS=OFF
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

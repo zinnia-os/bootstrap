@@ -19,7 +19,7 @@ PKGS=(
     zinnia
     zinnia-init
 )
-$JINX reinstall $INITRAMFS_DIR "${PKGS[@]}"
+$JINX install -f $INITRAMFS_DIR "${PKGS[@]}"
 
 # `tar` operates on the CWD.
 cd $INITRAMFS_DIR

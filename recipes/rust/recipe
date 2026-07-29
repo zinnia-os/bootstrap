@@ -1,0 +1,116 @@
+#! /bin/sh
+
+version=1.95.0
+revision=1
+tarball_url="https://static.rust-lang.org/dist/rustc-${version}-src.tar.xz"
+tarball_blake2b="0f255678231df79c9910cf5d9efbd762d1955ad78512194e3e06b3cec327f346bc98c526d2a8468ea53f57132c9765a134fe203267c1f6696e6719db820f342a"
+source_imagedeps="build-essential cmake ninja-build python3 curl git"
+imagedeps="build-essential cmake ninja-build python3 curl git"
+hostdeps="gcc pkg-config llvm cargo rust"
+deps="core-libs llvm zlib zstd libffi ncurses openssl curl nghttp2 rust-crates"
+builddeps="mlibc"
+allow_network=yes
+
+prepare_rust_source() {
+    rust_src="$(pwd -P)/rust-src"
+    prepare_rust_toolchain_source "${rust_src}" "${sysroot}/usr/src/rust"
+    cargo_zinnia_patch_rust_workspace "${rust_src}" \
+        ".." "$(dirname "${rust_src}")"
+    cargo_zinnia_patch_rust_workspace "${rust_src}/src/tools/cargo" \
+        "../../../.." "$(dirname "${rust_src}")"
+}
+
+configure() {
+    llvm_config_wrapper="$(pwd -P)/zinnia-llvm-config"
+    cat > "${llvm_config_wrapper}" << WRAP
+#! /bin/sh
+for arg in "\$@"; do
+    case "\$arg" in
+        --prefix)     echo "${sysroot}/usr"; exit 0 ;;
+        --libdir)     echo "${sysroot}/usr/lib"; exit 0 ;;
+        --bindir)     echo "${sysroot}/usr/bin"; exit 0 ;;
+        --includedir) echo "${sysroot}/usr/include"; exit 0 ;;
+        --ldflags)    echo "-L${sysroot}/usr/lib"; exit 0 ;;
+    esac
+done
+exec /usr/local/bin/llvm-config "\$@"
+WRAP
+    chmod +x "${llvm_config_wrapper}"
+
+    cat > config.toml << EOF
+change-id = "ignore"
+
+[llvm]
+link-shared = true
+download-ci-llvm = false
+
+[build]
+build = "${RUST_HOST_TRIPLET}"
+host = ["${RUST_TRIPLET}"]
+target = ["${RUST_TRIPLET}"]
+docs = false
+python = "python3"
+tools = ["cargo"]
+sanitizers = false
+profiler = false
+
+[install]
+prefix = "${prefix}"
+sysconfdir = "etc"
+
+[rust]
+channel = "nightly"
+codegen-tests = false
+deny-warnings = false
+llvm-tools = false
+
+[target.${RUST_HOST_TRIPLET}]
+llvm-config = "/usr/local/bin/llvm-config"
+
+[target.${RUST_TRIPLET}]
+llvm-config = "${llvm_config_wrapper}"
+cc = "${OS_TRIPLET}-gcc"
+cxx = "${OS_TRIPLET}-g++"
+ar = "${OS_TRIPLET}-ar"
+ranlib = "${OS_TRIPLET}-ranlib"
+linker = "${OS_TRIPLET}-gcc"
+EOF
+}
+
+build() {
+    prepare_rust_source
+
+    pkgconf_var="PKG_CONFIG_$(printf '%s' "${RUST_TRIPLET}" | tr - _)"
+    rustflags_var="CARGO_TARGET_$(printf '%s' "${RUST_TRIPLET}" | tr '[:lower:]-' '[:upper:]_')_RUSTFLAGS"
+
+        BOOTSTRAP_SKIP_TARGET_SANITY=1 \
+        CARGO_HOME="$(pwd -P)/.cargo" \
+        PKG_CONFIG_ALLOW_CROSS=1 \
+        OPENSSL_NO_VENDOR=1 \
+        env "${pkgconf_var}=${OS_TRIPLET}-pkg-config" \
+            "${rustflags_var}=${RUST_GETRANDOM_RUSTFLAG}" \
+    python3 "${rust_src}"/x.py build rustc cargo std --stage 2 -j${parallelism}
+}
+
+package() {
+    prepare_rust_source
+
+    pkgconf_var="PKG_CONFIG_$(printf '%s' "${RUST_TRIPLET}" | tr - _)"
+    rustflags_var="CARGO_TARGET_$(printf '%s' "${RUST_TRIPLET}" | tr '[:lower:]-' '[:upper:]_')_RUSTFLAGS"
+
+        BOOTSTRAP_SKIP_TARGET_SANITY=1 \
+        CARGO_HOME="$(pwd -P)/.cargo" \
+        PKG_CONFIG_ALLOW_CROSS=1 \
+        OPENSSL_NO_VENDOR=1 \
+        DESTDIR="${dest_dir}" \
+        env "${pkgconf_var}=${OS_TRIPLET}-pkg-config" \
+            "${rustflags_var}=${RUST_GETRANDOM_RUSTFLAG}" \
+    python3 "${rust_src}"/x.py install rustc cargo std --stage 2 -j${parallelism}
+
+    rm -rf "${dest_dir}${prefix}"/share/doc
+    rm -rf "${dest_dir}${prefix}"/share/man
+
+    post_package_strip
+
+    install_rust_toolchain_source "${rust_src}" "${dest_dir}${prefix}"/lib/rustlib/src
+}

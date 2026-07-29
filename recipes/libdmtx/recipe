@@ -1,0 +1,36 @@
+#! /bin/sh
+
+version=0.7.8
+revision=1
+git_url="https://github.com/dmtx/libdmtx.git"
+commit=500d7af6106713610a0f8b2d96aefa81912b96bc
+imagedeps="autoconf automake libtool pkg-config"
+source_imagedeps="autoconf automake libtool pkg-config"
+hostdeps="gcc pkg-config"
+deps="core-libs"
+
+prepare() {
+    cd "${source_dir}"
+    autoreconf -fvi
+    autotools_recursive_regen
+}
+
+configure() {
+    CC="$TARGET_CC" \
+    CXX="$TARGET_CXX" \
+    CFLAGS="$TARGET_CFLAGS -D_DEFAULT_SOURCE" \
+    CXXFLAGS="$TARGET_CXXFLAGS" \
+    LDFLAGS="$TARGET_LDFLAGS" \
+    autotools_configure_noflags \
+        --disable-static
+}
+
+build() {
+    make -j${parallelism}
+}
+
+package() {
+    make install DESTDIR="${dest_dir}"
+
+    post_package_strip
+}

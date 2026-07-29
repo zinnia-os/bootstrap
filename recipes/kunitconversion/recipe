@@ -1,0 +1,23 @@
+#! /bin/sh
+
+version=6.25.0
+revision=1
+git_url="https://github.com/KDE/kunitconversion.git"
+commit=8256d4c7036ec7309d2570426fdbb33744bc830b
+imagedeps="cmake ninja-build pkg-config gettext"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules"
+deps="core-libs ki18n qtbase6"
+
+configure() {
+    kf6_configure
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

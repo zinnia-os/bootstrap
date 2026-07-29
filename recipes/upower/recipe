@@ -1,0 +1,28 @@
+#! /bin/sh
+
+version=1.90.10
+revision=1
+tarball_url="https://gitlab.freedesktop.org/upower/upower/-/archive/v${version}/upower-v${version}.tar.bz2"
+tarball_blake2b="b0fdcee8cee066a31f9a42e5f77ff34e46f109f9c1a8f43cc66228b74fabd2203db925fa64b0bf825e7258b7ad888d07f3e6447532fa0c5fa0856be547b13751"
+imagedeps="build-essential patchelf"
+hostdeps="gcc pkg-config glib2"
+deps="core-libs glib2"
+
+configure() {
+    meson_configure \
+        -Dman=false \
+        -Dgtk-doc=false \
+        -Dintrospection=disabled \
+        -Dsystemdsystemunitdir=no \
+        -Dos_backend=dummy
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

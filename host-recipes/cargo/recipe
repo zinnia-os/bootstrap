@@ -1,0 +1,35 @@
+#! /bin/sh
+
+version=0.96.0
+revision=1
+git_url="https://github.com/rust-lang/cargo.git"
+commit=f2d3ce0bd7f24a49f8f72d9000448f8838c4e850
+imagedeps="build-essential libssl-dev pkg-config cargo"
+hostrundeps="gcc rust"
+allow_network=yes
+
+build() {
+        CARGO_HOME="${build_dir}/.cargo" \
+    cargo install \
+        --locked \
+        --target x86_64-unknown-linux-gnu \
+        --target-dir "${build_dir}" \
+        --path "${source_dir}" \
+        -j${parallelism} \
+        --root "${build_dir}/out"
+}
+
+package() {
+        CARGO_HOME="${build_dir}/.cargo" \
+    cargo install \
+        --locked \
+        --target x86_64-unknown-linux-gnu \
+        --target-dir "${build_dir}" \
+        --path "${source_dir}" \
+        -j${parallelism} \
+        --root "${dest_dir}${prefix}"
+
+    # Strip binaries
+    strip_command=strip \
+    post_package_strip
+}

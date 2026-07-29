@@ -1,0 +1,26 @@
+version=ec05ef048b20caf61afe5b7c0ff5212c6dd2a505
+revision=1
+git_url="https://gitlab.com/sortix/os-test.git"
+commit=${version}
+imagedeps="build-essential"
+hostdeps="gcc binutils"
+deps="core-libs"
+
+configure() {
+	cp -rpa ${source_dir}/* .
+}
+
+build() {
+	make -j${parallelism} OS=Zinnia CC=${TARGET_CC} CC_FOR_BUILD=gcc
+}
+
+package() {
+	mkdir -pv "${dest_dir}/usr/share/os-test"
+	cp -r ./ "${dest_dir}/usr/share/os-test"
+	echo panic > "${dest_dir}/usr/share/os-test/out/zinnia/basic/spawn/posix_spawnattr_setschedparam.out"
+	echo panic > "${dest_dir}/usr/share/os-test/out/zinnia/basic/spawn/posix_spawnattr_setschedpolicy.out"
+	echo panic > "${dest_dir}/usr/share/os-test/out/zinnia/basic/pthread/pthread_condattr_setpshared.out"
+	echo panic > "${dest_dir}/usr/share/os-test/out/zinnia/basic/pthread/pthread_barrierattr_setpshared.out"
+	echo panic > "${dest_dir}/usr/share/os-test/out/zinnia/basic/pthread/pthread_mutexattr_setpshared.out"
+	echo panic > "${dest_dir}/usr/share/os-test/out/zinnia/basic/pthread/pthread_rwlockattr_setpshared.out"
+}

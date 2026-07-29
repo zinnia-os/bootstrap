@@ -1,0 +1,23 @@
+#! /bin/sh
+
+version=4.21.3
+revision=1
+tarball_url="https://archive.xfce.org/src/xfce/thunar/4.21/thunar-${version}.tar.xz"
+tarball_blake2b="7b33c494353995646c2dc6ba74610be52e793267da79e7e88821da7951817223707d9b53dc15f6cd249efa38c974fa53845e817bb20bf75b6efb44be4aa1dac1"
+hostdeps="gcc pkg-config glib2"
+deps="core-libs exo"
+
+configure() {
+    meson_configure \
+        -Dintrospection=false
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

@@ -1,0 +1,25 @@
+#! /bin/sh
+
+version=2.16
+revision=1
+git_url="https://github.com/mm2/Little-CMS.git"
+commit=453bafeb85b4ef96498866b7a8eadcc74dff9223
+imagedeps="pkg-config"
+hostdeps="gcc pkg-config"
+deps="core-libs"
+
+configure() {
+    meson_configure \
+        -Djpeg=disabled \
+        -Dtiff=disabled
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

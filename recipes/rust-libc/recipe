@@ -1,0 +1,7 @@
+#! /bin/sh
+
+version=0.2.186
+revision=1
+
+rust_crate_recipe libc \
+    ebe7aac5f8937a8064c64a0d4dc72e5fc794080e09b96c6d245bdec0fd9a19d49ab38e25306e22e47564764cf5dcde45855237cffc70230a143eca2626bd5c3c

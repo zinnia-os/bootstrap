@@ -1,8 +1,0 @@
-#! /bin/sh
-
-name=rust-nix
-version=0.30.1
-revision=2
-
-rust_crate_recipe nix \
-    efe5faaf142fbf8d97366d11f28189167d3d22c1ed76b65e7887064f2fd146ae27282aeb230eb798d7c1b3850ea1502bcb325dc23536800690f0be3d66d37b63

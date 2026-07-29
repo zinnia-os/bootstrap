@@ -1,0 +1,30 @@
+#! /bin/sh
+
+version=0.0
+revision=1
+source_dir="extras/base-files"
+skip_pkg_check=yes
+
+package() {
+    mkdir -pv "${dest_dir}/dev"
+    mkdir -pv "${dest_dir}/etc"
+    mkdir -pv "${dest_dir}/home/zinnia"
+    mkdir -pv "${dest_dir}/run"
+    mkdir -pv "${dest_dir}/root"
+    mkdir -pv "${dest_dir}/tmp"
+    mkdir -pv "${dest_dir}/usr"
+    mkdir -pv "${dest_dir}/usr/bin"
+    mkdir -pv "${dest_dir}/usr/lib"
+    mkdir -pv "${dest_dir}/usr/sbin"
+    mkdir -pv "${dest_dir}/usr/share"
+    mkdir -pv "${dest_dir}/var"
+
+    ln -svf usr/bin "${dest_dir}/bin"
+    ln -svf usr/lib "${dest_dir}/lib"
+    ln -svf usr/sbin "${dest_dir}/sbin"
+    ln -svf ../run "${dest_dir}/var/run"
+
+    cp -rpv ${source_dir}/. "${dest_dir}"/
+
+    find "${dest_dir}" -type d -empty -exec touch {}/.keep \;
+}

@@ -1,7 +1,0 @@
-#! /bin/sh
-
-name=rust
-version=1.95.0
-tarball_url="https://static.rust-lang.org/dist/rustc-${version}-src.tar.xz"
-tarball_blake2b="0f255678231df79c9910cf5d9efbd762d1955ad78512194e3e06b3cec327f346bc98c526d2a8468ea53f57132c9765a134fe203267c1f6696e6719db820f342a"
-imagedeps="build-essential cmake ninja-build python3 curl git"

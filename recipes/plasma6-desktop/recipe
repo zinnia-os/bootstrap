@@ -1,0 +1,6 @@
+#! /bin/sh
+
+version=0.0
+revision=1
+deps="plasma-workspace plasma-desktop plasma-integration kwin kscreenlocker kactivitymanagerd breeze breeze-icons qqc2-desktop-style qqc2-breeze-style minilogind lightdm lightdm-gtk-greeter dbus seatd mesa xwayland xkeyboard-config ttf-dejavu ttf-liberation"
+skip_pkg_check=yes

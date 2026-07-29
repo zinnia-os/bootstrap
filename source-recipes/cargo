@@ -1,6 +1,0 @@
-#! /bin/sh
-
-name=cargo
-version=0.96.0
-git_url="https://github.com/rust-lang/cargo.git"
-commit=f2d3ce0bd7f24a49f8f72d9000448f8838c4e850

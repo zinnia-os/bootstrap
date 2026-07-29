@@ -1,0 +1,31 @@
+#! /bin/sh
+
+version=4.1.1
+revision=1
+git_url="https://github.com/fukuchi/libqrencode.git"
+commit=715e29fd4cd71b6e452ae0f4e36d917b43122ce8
+imagedeps="autoconf automake libtool pkg-config"
+source_imagedeps="autoconf automake libtool pkg-config"
+hostdeps="gcc pkg-config"
+deps="core-libs libpng"
+
+prepare() {
+    cd "${source_dir}"
+    autoreconf -fvi
+    autotools_recursive_regen
+}
+
+configure() {
+    autotools_configure \
+        --without-tools
+}
+
+build() {
+    make -j${parallelism}
+}
+
+package() {
+    make install DESTDIR="${dest_dir}"
+
+    post_package_strip
+}

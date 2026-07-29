@@ -1,0 +1,38 @@
+#! /bin/sh
+
+from_source=llvm
+revision=1
+imagedeps="build-essential cmake ninja-build git"
+hostdeps="pkg-config"
+hostrundeps="gcc"
+
+configure() {
+    cmake \
+        "${source_dir}/llvm" \
+        -DDEFAULT_SYSROOT=${sysroot} \
+        -DCMAKE_INSTALL_PREFIX=${prefix} \
+        -GNinja \
+        -UBUILD_SHARED_LIBS \
+        -UENABLE_STATIC \
+		-DCMAKE_BUILD_TYPE=Release \
+        -DLLVM_LINK_LLVM_DYLIB=ON \
+        -DLLVM_ENABLE_FFI=ON \
+        -DLLVM_ENABLE_EH=ON \
+        -DLLVM_ENABLE_RTTI=ON \
+        -DLLVM_ENABLE_PROJECTS="clang;lld;clang-tools-extra" \
+        -DLLVM_DEFAULT_TARGET_TRIPLE=${OS_TRIPLET} \
+        -DLLVM_HOST_TRIPLE=${OS_TRIPLET} \
+        -Wno-dev
+}
+
+build() {
+    ninja -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" ninja install
+
+    rm -rf "${dest_dir}${prefix}"/lib/*.a
+
+    # post_package_strip
+}

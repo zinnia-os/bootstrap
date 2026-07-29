@@ -1,0 +1,51 @@
+#! /bin/sh
+
+from_source=gcc
+revision=1
+imagedeps="build-essential"
+hostdeps="libtool pkg-config"
+hostrundeps="binutils"
+deps="mlibc"
+
+configure() {
+    cp -rp "${source_dir}"/. ./
+    mkdir -p build && cd build
+
+        CFLAGS="$HOST_CFLAGS" \
+        CXXFLAGS="$HOST_CXXFLAGS" \
+        LDFLAGS="$HOST_LDFLAGS" \
+        CFLAGS_FOR_TARGET="$TARGET_CFLAGS" \
+        CXXFLAGS_FOR_TARGET="$TARGET_CXXFLAGS" \
+    ../configure \
+        --prefix="${prefix}" \
+        --target=${OS_TRIPLET} \
+        --with-sysroot="${sysroot}" \
+        --enable-languages=c,c++,lto \
+        --disable-multilib \
+        --enable-initfini-array \
+        --enable-threads=posix \
+        --enable-shared \
+        --enable-host-shared \
+        --enable-libstdcxx-time=rt
+}
+
+build() {
+    cd build
+    make -j${parallelism} \
+        all-gcc \
+        all-target-libgcc \
+        all-target-libstdc++-v3 \
+        all-target-libatomic
+}
+
+package() {
+    cd build
+    DESTDIR="${dest_dir}" make \
+        install-gcc \
+        install-target-libgcc \
+        install-target-libstdc++-v3 \
+        install-target-libatomic
+
+        strip_command=strip \
+    post_package_strip
+}

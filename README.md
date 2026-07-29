@@ -12,6 +12,10 @@ To build the distribution you will need the following tools installed on your sy
 - Bash
 - GNU make
 - curl
+- wget
+- zstd
+- `unshare` (util-linux)
+- `free` (procps)
 
 To create a bootable image you will additionally need:
 
@@ -23,17 +27,19 @@ To create a bootable image you will additionally need:
 
 ## Build instructions
 
-The easiest way to get a bootable image is to run
+You can either build everything from source, or download pre-built packages.
 
+### Building from source
+
+The easiest way to get a bootable image from source is to run:
 ```sh
 $ make
 ```
-
 in the root of the repository.
 This will build a small subset of the distribution and create a bootable image
 named `zinnia.img` in the build directory.
 
-> [!TIP]
+> [!NOTE]
 > On some distributions, you may need to run the build command as root
 > to fix a `file not found` error when bootstrap attempts to run `sgdisk`
 
@@ -46,12 +52,35 @@ run the following commands (assuming you are in the root of the repository):
 ```sh
 $ cd build-x86_64           # Switch to the x86_64 build directory
 $ ../jinx/jinx build zinnia # Build the zinnia package
+$ sudo ../jinx/jinx install -f sysroot zinnia # Force install the package (sudo to preserve file attributes)
 ```
 
 The built package will be located in the `pkgs` directory.
 
-If you want a build of the **ENTIRE** distribution, you will need a lot of
-free disk space (>20GB) and some patience.
+> [!WARNING]
+> If you want a build of the **ENTIRE** distribution, you will need a lot of free disk space (>50GB) and some patience.
+
+### Using pre-built packages
+
+You can pull pre-built packages and host packages from our Buildbot workers into the build directory.
+
+> [!NOTE]
+> Host packages are only built to run on a x86_64 Linux host.
+> If you're using an aarch64 machine, you'll have to build from source.
+
+Example usage:
+
+```sh
+$ mkdir build-x86_64
+$ cd build-x86_64
+$ ../jinx/jinx init ..                # Setup build dir, pointing to the recipes in the parent
+$ ../jinx/jinx download bash          # A single package and its dependencies
+$ ../jinx/jinx download '*'           # Every target package
+$ ../jinx/jinx download 'host:*'      # Every host package (toolchain etc.)
+```
+
+Downloads are checksum-verified against the repository index.
+Afterwards, `make` will only build what is still missing.
 
 ## Running the ISO/image
 
@@ -79,11 +108,14 @@ $ ./scripts/vm-util.py run -- -d int
 See `./scripts/vm-util.py run --help` for all options, such as `--arch`,
 `--smp`, `--mem`, `--headless`, `--nic` and `--pci`.
 
-## Debugging
+## Working on the kernel
 
-To debug Zinnia, build a normal image, but make sure to also build the package
-`zinnia-debug`.
-The binary is unstripped and contains debuginfo.
+The most common use case of bootstrap is working on the kernel itself.
+It is recommended to build it once from source.
+
+For quick iteration speeds, you can run `make remake-kernel image` to rebuild the kernel and install it in the image.
+
+## Debugging
 
 Run QEMU with a GDB stub and the CPU halted, with KVM disabled:
 
@@ -95,5 +127,5 @@ and then attach your debugger.
 For convenicence, there is a debugging configuration using CodeLLDB for VS Code.
 Simply select Run > Start Debugging and use `.vscode/launch.json` as the config.
 
-Finally, start the `zinnia-debug` kernel in the bootloader and make sure KASLR
-has been disabled or you have provided the debugger with the base address.
+Remember to build the kernel in debug mode and make sure KASLR
+has been disabled in the bootloader, or you have provided the debugger with the base address.

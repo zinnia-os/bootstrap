@@ -1,0 +1,25 @@
+#! /bin/sh
+
+version=0.8.7
+revision=1
+git_url="https://gitlab.gnome.org/GNOME/libnotify.git"
+commit=1d9767a392cbac7e899e7ab80235cfceebd52731
+hostdeps="gcc pkg-config glib2"
+deps="core-libs glib2 gtk3"
+
+configure() {
+    meson_configure \
+        -Dgtk_doc=false \
+        -Dtests=false \
+        -Dintrospection=disabled
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

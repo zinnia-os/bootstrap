@@ -1,0 +1,24 @@
+#! /bin/sh
+
+version=4.21.0
+revision=1
+git_url="https://gitlab.xfce.org/xfce/xfconf.git"
+commit=aa1a5b5f327c616eb8d5abe4d458d971461f0576
+imagedeps="build-essential python3-distutils-extra patchelf"
+hostdeps="gcc pkg-config glib2"
+deps="core-libs glib2 libxfce4util"
+
+configure() {
+    meson_configure \
+        -Dintrospection=false
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

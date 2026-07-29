@@ -1,0 +1,190 @@
+#! /bin/sh
+
+version=0.30
+revision=1
+imagedeps="build-essential"
+hostdeps="gcc pkg-config"
+deps="core-libs"
+
+build() {
+    mkdir -p include
+    cat > include/canberra.h <<'HEOF'
+#ifndef foocanberrahfoo
+#define foocanberrahfoo
+
+#include <sys/types.h>
+#include <sys/param.h>
+#include <inttypes.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifndef CA_GCC_PRINTF_ATTR
+#define CA_GCC_PRINTF_ATTR(a,b)
+#endif
+
+#ifndef CA_GCC_SENTINEL
+#define CA_GCC_SENTINEL
+#endif
+
+typedef struct ca_context ca_context;
+typedef struct ca_proplist ca_proplist;
+
+#define CA_PROP_MEDIA_NAME                         "media.name"
+#define CA_PROP_MEDIA_TITLE                        "media.title"
+#define CA_PROP_MEDIA_ARTIST                       "media.artist"
+#define CA_PROP_MEDIA_LANGUAGE                     "media.language"
+#define CA_PROP_MEDIA_FILENAME                     "media.filename"
+#define CA_PROP_MEDIA_ICON                         "media.icon"
+#define CA_PROP_MEDIA_ICON_NAME                    "media.icon_name"
+#define CA_PROP_MEDIA_ROLE                         "media.role"
+#define CA_PROP_EVENT_ID                           "event.id"
+#define CA_PROP_EVENT_DESCRIPTION                  "event.description"
+#define CA_PROP_EVENT_MOUSE_X                      "event.mouse.x"
+#define CA_PROP_EVENT_MOUSE_Y                      "event.mouse.y"
+#define CA_PROP_EVENT_MOUSE_HPOS                   "event.mouse.hpos"
+#define CA_PROP_EVENT_MOUSE_VPOS                   "event.mouse.vpos"
+#define CA_PROP_EVENT_MOUSE_BUTTON                 "event.mouse.button"
+#define CA_PROP_WINDOW_NAME                        "window.name"
+#define CA_PROP_WINDOW_ID                          "window.id"
+#define CA_PROP_WINDOW_ICON                        "window.icon"
+#define CA_PROP_WINDOW_ICON_NAME                   "window.icon_name"
+#define CA_PROP_WINDOW_X                           "window.x"
+#define CA_PROP_WINDOW_Y                           "window.y"
+#define CA_PROP_WINDOW_WIDTH                       "window.width"
+#define CA_PROP_WINDOW_HEIGHT                      "window.height"
+#define CA_PROP_WINDOW_HPOS                        "window.hpos"
+#define CA_PROP_WINDOW_VPOS                        "window.vpos"
+#define CA_PROP_WINDOW_DESKTOP                     "window.desktop"
+#define CA_PROP_WINDOW_X11_DISPLAY                 "window.x11.display"
+#define CA_PROP_WINDOW_X11_SCREEN                  "window.x11.screen"
+#define CA_PROP_WINDOW_X11_MONITOR                 "window.x11.monitor"
+#define CA_PROP_WINDOW_X11_XID                     "window.x11.xid"
+#define CA_PROP_APPLICATION_NAME                   "application.name"
+#define CA_PROP_APPLICATION_ID                     "application.id"
+#define CA_PROP_APPLICATION_VERSION                "application.version"
+#define CA_PROP_APPLICATION_ICON                   "application.icon"
+#define CA_PROP_APPLICATION_ICON_NAME              "application.icon_name"
+#define CA_PROP_APPLICATION_LANGUAGE               "application.language"
+#define CA_PROP_APPLICATION_PROCESS_ID             "application.process.id"
+#define CA_PROP_APPLICATION_PROCESS_BINARY         "application.process.binary"
+#define CA_PROP_APPLICATION_PROCESS_USER           "application.process.user"
+#define CA_PROP_APPLICATION_PROCESS_HOST           "application.process.host"
+#define CA_PROP_CANBERRA_CACHE_CONTROL             "canberra.cache-control"
+#define CA_PROP_CANBERRA_VOLUME                    "canberra.volume"
+#define CA_PROP_CANBERRA_XDG_THEME_NAME            "canberra.xdg-theme.name"
+#define CA_PROP_CANBERRA_XDG_THEME_OUTPUT_PROFILE  "canberra.xdg-theme.output-profile"
+#define CA_PROP_CANBERRA_ENABLE                    "canberra.enable"
+#define CA_PROP_CANBERRA_FORCE_CHANNEL             "canberra.force_channel"
+
+enum {
+    CA_SUCCESS = 0,
+    CA_ERROR_NOTSUPPORTED = -1,
+    CA_ERROR_INVALID = -2,
+    CA_ERROR_STATE = -3,
+    CA_ERROR_OOM = -4,
+    CA_ERROR_NODRIVER = -5,
+    CA_ERROR_SYSTEM = -6,
+    CA_ERROR_CORRUPT = -7,
+    CA_ERROR_TOOBIG = -8,
+    CA_ERROR_NOTFOUND = -9,
+    CA_ERROR_DESTROYED = -10,
+    CA_ERROR_CANCELED = -11,
+    CA_ERROR_NOTAVAILABLE = -12,
+    CA_ERROR_ACCESS = -13,
+    CA_ERROR_IO = -14,
+    CA_ERROR_INTERNAL = -15,
+    CA_ERROR_DISABLED = -16,
+    CA_ERROR_FORKED = -17,
+    CA_ERROR_DISCONNECTED = -18,
+    _CA_ERROR_MAX = -19
+};
+
+typedef void (*ca_finish_callback_t)(ca_context *c, uint32_t id, int error_code, void *userdata);
+
+int ca_proplist_create(ca_proplist **p);
+int ca_proplist_destroy(ca_proplist *p);
+int ca_proplist_sets(ca_proplist *p, const char *key, const char *value);
+int ca_proplist_setf(ca_proplist *p, const char *key, const char *format, ...) CA_GCC_PRINTF_ATTR(3,4);
+int ca_proplist_set(ca_proplist *p, const char *key, const void *data, size_t nbytes);
+
+int ca_context_create(ca_context **c);
+int ca_context_set_driver(ca_context *c, const char *driver);
+int ca_context_change_device(ca_context *c, const char *device);
+int ca_context_open(ca_context *c);
+int ca_context_destroy(ca_context *c);
+int ca_context_change_props(ca_context *c, ...) CA_GCC_SENTINEL;
+int ca_context_change_props_full(ca_context *c, ca_proplist *p);
+int ca_context_play_full(ca_context *c, uint32_t id, ca_proplist *p, ca_finish_callback_t cb, void *userdata);
+int ca_context_play(ca_context *c, uint32_t id, ...) CA_GCC_SENTINEL;
+int ca_context_cache_full(ca_context *c, ca_proplist *p);
+int ca_context_cache(ca_context *c, ...) CA_GCC_SENTINEL;
+int ca_context_cancel(ca_context *c, uint32_t id);
+int ca_context_playing(ca_context *c, uint32_t id, int *playing);
+
+const char *ca_strerror(int code);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+HEOF
+
+    cat > canberra.c <<'CEOF'
+#include "canberra.h"
+#include <stdlib.h>
+
+struct ca_context { int unused; };
+struct ca_proplist { int unused; };
+
+int ca_proplist_create(ca_proplist **p) { if (!p) return CA_ERROR_INVALID; *p = calloc(1, sizeof(**p)); return *p ? CA_SUCCESS : CA_ERROR_OOM; }
+int ca_proplist_destroy(ca_proplist *p) { free(p); return CA_SUCCESS; }
+int ca_proplist_sets(ca_proplist *p, const char *key, const char *value) { (void)p;(void)key;(void)value; return CA_SUCCESS; }
+int ca_proplist_setf(ca_proplist *p, const char *key, const char *format, ...) { (void)p;(void)key;(void)format; return CA_SUCCESS; }
+int ca_proplist_set(ca_proplist *p, const char *key, const void *data, size_t nbytes) { (void)p;(void)key;(void)data;(void)nbytes; return CA_SUCCESS; }
+
+int ca_context_create(ca_context **c) { if (!c) return CA_ERROR_INVALID; *c = calloc(1, sizeof(**c)); return *c ? CA_SUCCESS : CA_ERROR_OOM; }
+int ca_context_set_driver(ca_context *c, const char *driver) { (void)c;(void)driver; return CA_SUCCESS; }
+int ca_context_change_device(ca_context *c, const char *device) { (void)c;(void)device; return CA_SUCCESS; }
+int ca_context_open(ca_context *c) { (void)c; return CA_SUCCESS; }
+int ca_context_destroy(ca_context *c) { free(c); return CA_SUCCESS; }
+int ca_context_change_props(ca_context *c, ...) { (void)c; return CA_SUCCESS; }
+int ca_context_change_props_full(ca_context *c, ca_proplist *p) { (void)c;(void)p; return CA_SUCCESS; }
+int ca_context_play_full(ca_context *c, uint32_t id, ca_proplist *p, ca_finish_callback_t cb, void *userdata) { (void)c;(void)p; if (cb) cb(c, id, CA_SUCCESS, userdata); return CA_SUCCESS; }
+int ca_context_play(ca_context *c, uint32_t id, ...) { (void)c;(void)id; return CA_SUCCESS; }
+int ca_context_cache_full(ca_context *c, ca_proplist *p) { (void)c;(void)p; return CA_SUCCESS; }
+int ca_context_cache(ca_context *c, ...) { (void)c; return CA_SUCCESS; }
+int ca_context_cancel(ca_context *c, uint32_t id) { (void)c;(void)id; return CA_SUCCESS; }
+int ca_context_playing(ca_context *c, uint32_t id, int *playing) { (void)c;(void)id; if (playing) *playing = 0; return CA_SUCCESS; }
+
+const char *ca_strerror(int code) { (void)code; return "(canberra stub)"; }
+CEOF
+
+    ${TARGET_CC} ${TARGET_CFLAGS} -fPIC -Iinclude -shared \
+        -Wl,-soname,libcanberra.so.0 -o libcanberra.so.0.30 canberra.c
+}
+
+package() {
+    mkdir -p "${dest_dir}${prefix}/lib/pkgconfig" "${dest_dir}${prefix}/include"
+    install -m644 include/canberra.h "${dest_dir}${prefix}/include/canberra.h"
+    install -m755 libcanberra.so.0.30 "${dest_dir}${prefix}/lib/libcanberra.so.0.30"
+    ln -sf libcanberra.so.0.30 "${dest_dir}${prefix}/lib/libcanberra.so.0"
+    ln -sf libcanberra.so.0 "${dest_dir}${prefix}/lib/libcanberra.so"
+
+    cat > "${dest_dir}${prefix}/lib/pkgconfig/libcanberra.pc" <<PEOF
+prefix=${prefix}
+exec_prefix=\${prefix}
+libdir=\${prefix}/lib
+includedir=\${prefix}/include
+
+Name: libcanberra
+Description: XDG Sound Theme implementation (Zinnia no-op stub)
+Version: ${version}
+Libs: -L\${libdir} -lcanberra
+Cflags: -I\${includedir}
+PEOF
+
+    post_package_strip
+}

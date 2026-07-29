@@ -1,7 +1,0 @@
-#! /bin/sh
-
-name=weston-desktop
-version=0.0
-revision=2
-deps="weston xwayland ttf-dejavu ttf-liberation lightdm minilogind lightdm-gtk-greeter"
-skip_pkg_check=yes

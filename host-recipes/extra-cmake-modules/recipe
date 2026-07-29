@@ -1,0 +1,22 @@
+#! /bin/sh
+
+from_source=extra-cmake-modules
+revision=1
+imagedeps="build-essential cmake ninja-build pkg-config"
+hostdeps="gcc pkg-config"
+
+configure() {
+    cmake -GNinja \
+        -DCMAKE_INSTALL_PREFIX=${prefix} \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_TESTING=OFF \
+        "${source_dir}"
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+}

@@ -1,6 +1,0 @@
-#! /bin/sh
-
-name=cmake
-version=4.0.0
-tarball_url="https://gitlab.kitware.com/cmake/cmake/-/archive/v${version}/cmake-v${version}.tar.gz"
-tarball_blake2b="659b8f54de89780326ff441620451c74b33712be32767800ce4f68d50fa67be2531f2073dc7123a213a9b81f1f99561a5078c5a9730a43600832c36970998212"

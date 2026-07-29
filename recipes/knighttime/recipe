@@ -1,0 +1,24 @@
+#! /bin/sh
+
+version=6.6.4
+revision=1
+git_url="https://github.com/KDE/knighttime.git"
+commit=d2a6984117b00595ac104334ecd5c3c7efeaba45
+imagedeps="cmake ninja-build pkg-config libdbus-1-3 gettext"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules kconfig kcoreaddons"
+deps="core-libs kconfig kcoreaddons kdbusaddons kholidays ki18n qtbase6 qtpositioning6"
+
+configure() {
+    kf6_configure \
+        -DKF6_HOST_TOOLING=${KF6_HOST_TOOLING}
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

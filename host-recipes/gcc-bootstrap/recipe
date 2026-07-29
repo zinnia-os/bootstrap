@@ -1,0 +1,55 @@
+#! /bin/sh
+
+repology_id=gcc
+from_source=gcc
+revision=1
+imagedeps="build-essential"
+hostdeps="libtool pkg-config"
+hostrundeps="binutils"
+deps="mlibc-headers"
+
+configure() {
+    cp -rp "${source_dir}"/. ./
+    mkdir -p build && cd build
+
+        CFLAGS="$HOST_CFLAGS" \
+        CXXFLAGS="$HOST_CXXFLAGS" \
+        LDFLAGS="$HOST_LDFLAGS" \
+        CFLAGS_FOR_TARGET="$TARGET_CFLAGS" \
+        CXXFLAGS_FOR_TARGET="$TARGET_CXXFLAGS" \
+    ../configure \
+        --prefix="${prefix}" \
+        --target=${OS_TRIPLET} \
+        --with-sysroot="${sysroot}" \
+        --without-headers \
+        --without-newlib \
+        --enable-languages=c,c++ \
+        --disable-multilib \
+        --enable-initfini-array \
+        --disable-shared \
+        --disable-hosted-libstdcxx \
+        --disable-fixincludes \
+        --disable-wchar_t \
+        --disable-libssp \
+        --disable-libsanitizer \
+        --disable-libquadmath
+}
+
+build() {
+    cd build
+    make -j${parallelism} \
+        all-gcc \
+        all-target-libgcc \
+        all-target-libstdc++-v3
+}
+
+package() {
+    cd build
+    DESTDIR="${dest_dir}" make \
+        install-gcc \
+        install-target-libgcc \
+        install-target-libstdc++-v3
+
+        strip_command=strip \
+    post_package_strip
+}

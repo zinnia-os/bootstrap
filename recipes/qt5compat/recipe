@@ -1,0 +1,26 @@
+#! /bin/sh
+
+version=6.11.0
+git_url="https://github.com/qt/qt5compat.git"
+commit=458e3557942828abe376f966b9ff09a37675c563
+imagedeps="ninja-build pkg-config python3 perl"
+hostdeps="gcc pkg-config cmake qt6"
+deps="core-libs icu qtbase6 qtdeclarative6 qtshadertools6"
+revision=1
+
+configure() {
+    cmake_configure \
+        -DQT_HOST_PATH=/usr/local \
+        -DQT_BUILD_EXAMPLES=OFF \
+        -DQT_BUILD_TESTS=OFF
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

@@ -1,0 +1,23 @@
+#! /bin/sh
+
+version=6.25.0
+revision=1
+git_url="https://github.com/KDE/kdeclarative.git"
+commit=fc3a2311dcd175a84706054503c18c07297cd94c
+imagedeps="cmake ninja-build pkg-config libdbus-1-3 gettext libegl1 libgl1 libx11-6 libxkbcommon0 libsystemd0"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules kconfig kcoreaddons"
+deps="core-libs kconfig kcoreaddons kglobalaccel kguiaddons ki18n kservice kwidgetsaddons qtbase6 qtdeclarative6"
+
+configure() {
+    kf6_configure
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

@@ -1,0 +1,60 @@
+#! /bin/sh
+
+version=15.1.0
+revision=1
+tarball_url="https://ftpmirror.gnu.org/gnu/gcc/gcc-${version}/gcc-${version}.tar.xz"
+tarball_blake2b="a902ce99db4e93615879e435bcd0b96d5a16ea0af42598ca0e6d12913b2ce3651a98574c3264b2717b848e6b5a823b403ccca0adde463938d5b41aa3f1da0d34"
+hostdeps="gcc pkg-config"
+deps="core-libs binutils zlib gmp mpfr mpc"
+imagedeps="build-essential"
+source_hostdeps="libtool pkg-config"
+source_imagedeps="git build-essential"
+source_allow_network=yes
+
+prepare() {
+    ./contrib/download_prerequisites
+
+    # Gettext causes issues and we don't want it anyways.
+    rm -rf gettext*
+
+    autotools_recursive_regen
+}
+
+configure() {
+    autotools_configure \
+        CFLAGS_FOR_BUILD="$HOST_CFLAGS" \
+        CPPFLAGS_FOR_BUILD="$HOST_CPPFLAGS" \
+        CXXFLAGS_FOR_BUILD="$HOST_CXXFLAGS" \
+        LDFLAGS_FOR_BUILD="$HOST_LDFLAGS" \
+        CFLAGS_FOR_TARGET="$TARGET_CFLAGS" \
+        CPPFLAGS_FOR_TARGET="$TARGET_CPPFLAGS" \
+        CXXFLAGS_FOR_TARGET="$TARGET_CXXFLAGS" \
+        LDFLAGS_FOR_TARGET="$TARGET_LDFLAGS" \
+        --target=${OS_TRIPLET} \
+        --with-sysroot=/ \
+        --with-build-sysroot=${sysroot} \
+        --with-linker-hash-style=gnu \
+        --enable-linker-build-id \
+        --enable-languages=c,c++,lto \
+        --enable-default-pie \
+        --enable-default-ssp \
+        --enable-initfini-array \
+        --disable-multilib \
+        --with-system-zlib \
+        --enable-host-shared
+}
+
+build() {
+    make -j${parallelism} all-gcc
+}
+
+package() {
+    DESTDIR="${dest_dir}" make install-gcc
+
+    ln -s gcc "${dest_dir}${prefix}"/bin/cc
+
+    # Remove static libraries
+    rm -rf "${dest_dir}${prefix}"/lib/*.a
+
+    post_package_strip
+}

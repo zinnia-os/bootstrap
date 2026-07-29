@@ -1,0 +1,47 @@
+#! /bin/sh
+
+version=a61e682d7330d2ddbf49922a952e0438fbe95352
+revision=1
+git_url=https://github.com/zinnia-os/zinnia.git
+commit=${version}
+shallow=no
+imagedeps="build-essential"
+allow_network=yes
+source_imagedeps="git"
+source_allow_network=yes
+
+prepare() {
+    git submodule update --init --recursive
+}
+hostdeps="llvm cargo rust"
+builddeps="mlibc-headers"
+skip_pkg_check=yes
+
+ZINNIA_ARCH="${JINX_ARCH}"
+case "${ZINNIA_ARCH}" in
+    "riscv64") ZINNIA_ARCH="riscv64gc" ;;
+esac
+
+build() {
+        TARGET_CC="clang" \
+    cargo_build_nolock \
+        -Zunstable-options \
+        -Zjson-target-spec \
+        --target="toolchain/${ZINNIA_ARCH}-kernel.json"
+}
+
+package() {
+    mkdir -p "${dest_dir}${prefix}/share/zinnia/"
+    mkdir -p "${dest_dir}${prefix}/share/zinnia/modules"
+
+    cp "${ZINNIA_ARCH}-kernel/release/zinnia.kso" "${dest_dir}${prefix}/share/zinnia/zinnia"
+
+    # The .rustc section contains linker information for lld.
+    # At runtime, this is completely irrelevant.
+    ${OS_TRIPLET}-strip "${dest_dir}${prefix}/share/zinnia/zinnia" -R .rustc
+
+    install -m644 "${ZINNIA_ARCH}-kernel/release/"*.kso "${dest_dir}${prefix}/share/zinnia/modules"
+    ${OS_TRIPLET}-strip "${dest_dir}${prefix}/share/zinnia/modules/"*.kso -R .rustc
+
+    rm "${dest_dir}${prefix}/share/zinnia/modules/zinnia.kso"
+}

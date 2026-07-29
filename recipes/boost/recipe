@@ -1,0 +1,22 @@
+#! /bin/sh
+
+version=1.89.0
+revision=1
+tarball_url="https://github.com/boostorg/boost/releases/download/boost-${version}/boost-${version}-b2-nodocs.tar.gz"
+tarball_blake2b="9d6a1596c597c8dadccfd36d4ad5ed3db014fac55d2490d3c33a1ffe93d241a6a352c7019d55cfbf9021d3533ec59536a3133bf621bcca8e2dfe72385e3b370d"
+imagedeps="build-essential"
+hostdeps="gcc"
+deps="core-libs"
+
+build() {
+    cp -r "${source_dir}/." .
+    ./bootstrap.sh --with-toolset=gcc
+    ./b2 headers
+}
+
+package() {
+    mkdir -p "${dest_dir}${prefix}/include"
+    cp -r --dereference ./boost "${dest_dir}${prefix}/include/"
+
+    post_package_strip
+}

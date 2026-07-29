@@ -1,0 +1,24 @@
+#! /bin/sh
+
+version=4.21.2
+revision=1
+tarball_url="https://archive.xfce.org/src/xfce/libxfce4ui/4.21/libxfce4ui-${version}.tar.xz"
+tarball_blake2b="380a9c568f0884506d77f0fa4c3a9e0c03e43191d8e2bd5b8e7d12bab74fc88e364d2e2f5a9413844ae8f0be627371a0c9fb23e4b861a3dd6c25e9e0eabaa7a7"
+imagedeps="build-essential patchelf pkg-config python3 python3-distutils-extra xfce4-dev-tools"
+hostdeps="gcc pkg-config glib2"
+deps="core-libs libxfce4util gtk3 xfconf libsm startup-notification libepoxy libgtop hicolor-icon-theme"
+
+configure() {
+    meson_configure \
+        -Dintrospection=false
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

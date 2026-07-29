@@ -1,8 +1,0 @@
-#! /bin/sh
-
-name=rust-getrandom
-version=0.2.16
-revision=1
-
-rust_crate_recipe getrandom \
-    cf95b380a610313eaf068fa210bdb4a9e0b9211321d708f9877cd9e1901df0f6b7f57462a4937da3419c7547ef300291deb5367f4dce4ff776e7f0d9d36dcd8d

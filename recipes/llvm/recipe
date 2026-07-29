@@ -1,0 +1,38 @@
+#! /bin/sh
+
+repology_id="llvm"
+version=21.1.6
+revision=1
+tarball_url=https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-${version}.tar.gz
+tarball_blake2b="cb7a51615be3979e32c0352e3d446ccf54f7338f4a31963d2c35073a96dc2ff5e7e0ba30005cc53fe4f570277bb5be9460ad64063db533dd632f6119d1b04b32"
+imagedeps="build-essential"
+hostdeps="gcc pkg-config cmake"
+deps="core-libs ncurses zlib zstd libffi"
+
+configure() {
+        cmake_source_dir="${source_dir}/llvm" \
+    cmake_configure \
+        -UBUILD_SHARED_LIBS \
+        -UENABLE_STATIC \
+        -DLLVM_LINK_LLVM_DYLIB=ON \
+        -DLLVM_ENABLE_FFI=ON \
+        -DLLVM_ENABLE_EH=ON \
+        -DLLVM_ENABLE_RTTI=ON \
+        -DLLVM_ENABLE_PROJECTS="clang;lld" \
+        -DLLVM_DEFAULT_TARGET_TRIPLE=${OS_TRIPLET} \
+        -DLLVM_HOST_TRIPLE=${OS_TRIPLET} \
+        -Wno-dev
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    rm -rf "${dest_dir}${prefix}"/lib/*.a
+    # rm -rf "${dest_dir}${prefix}"/bin
+
+    post_package_strip
+}

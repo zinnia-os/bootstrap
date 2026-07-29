@@ -1,0 +1,24 @@
+#! /bin/sh
+
+version=6.6.4
+revision=1
+git_url="https://github.com/KDE/libkscreen.git"
+commit=697366420638d9603a2a412e1e7891fb9b4ebf54
+imagedeps="cmake ninja-build pkg-config libdbus-1-3 gettext libegl1 libgl1 libx11-6 libxkbcommon0 libsystemd0"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules kconfig kcoreaddons wayland"
+deps="core-libs kconfig kwayland libxcb plasma-wayland-protocols qtbase6 qttools6 qtwayland6 wayland"
+
+configure() {
+    kf6_configure \
+        -DWaylandScanner_EXECUTABLE=/usr/local/bin/wayland-scanner
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

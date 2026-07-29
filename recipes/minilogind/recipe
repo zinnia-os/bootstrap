@@ -1,0 +1,25 @@
+#! /bin/sh
+
+version=1.0
+revision=1
+git_url="https://github.com/zinnia-os/minilogind.git"
+commit=cccc5dd58d228101f9c9fb71730c234c32afabaa
+hostdeps="gcc pkg-config"
+deps="core-libs glib2 dbus seatd libudev"
+
+configure() {
+    meson_configure
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    install -Dm644 "${base_dir}/extras/minilogind/dinit.d/minilogind" \
+        "${dest_dir}/etc/dinit.d/minilogind"
+
+    post_package_strip
+}

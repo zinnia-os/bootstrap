@@ -1,0 +1,7 @@
+#! /bin/sh
+
+version=0.6.2
+revision=1
+
+rust_crate_recipe socket2 \
+    0f2c125ee64a24cd719d3fdf303d718ba645918f87e78dd0e89b2517af69136286387a94f1355815b7079655d68affb8036571c9ffe6dd409d686168c1cee7a5

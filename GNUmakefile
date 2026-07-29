@@ -13,6 +13,7 @@ clean:
 	rm -rf build-$(ARCH)
 	rm -rf .jinx-cache
 	rm -rf sources
+	rm -rf host-sources
 	@echo "Cleaned repository"
 
 # -------------
@@ -23,19 +24,19 @@ build-$(ARCH)/.jinx-parameters:
 	@mkdir -p build-$(ARCH)
 	@cd build-$(ARCH) && ../jinx/jinx init .. ARCH=$(ARCH)
 
-# Build all packages
-.PHONY: full-install
-full-install: build-$(ARCH)/.jinx-parameters
-	@cd build-$(ARCH) && ../jinx/jinx update '*'
-	@cd build-$(ARCH) && sudo ../jinx/jinx install sysroot '*'
-
 MINIMAL_PKGS = base-files zinnia zinnia-utils zinnia-devd limine mlibc dinit bash coreutils dhcpcd xbps
 
 # Build only a minimal selection of packages
 .PHONY: minimal-install
 minimal-install: build-$(ARCH)/.jinx-parameters
-	@cd build-$(ARCH) && ../jinx/jinx update $(MINIMAL_PKGS)
+	@cd build-$(ARCH) && ../jinx/jinx update -b $(MINIMAL_PKGS)
 	@cd build-$(ARCH) && sudo ../jinx/jinx install sysroot $(MINIMAL_PKGS)
+
+# Build all packages
+.PHONY: full-install
+full-install: build-$(ARCH)/.jinx-parameters
+	@cd build-$(ARCH) && ../jinx/jinx update -b '*'
+	@cd build-$(ARCH) && sudo ../jinx/jinx install sysroot '*'
 
 # --------------
 # Image creation
@@ -78,5 +79,5 @@ iso: build-$(ARCH)/.jinx-parameters build-$(ARCH)/initramfs.tar
 .PHONY: remake-kernel
 remake-kernel: build-$(ARCH)/.jinx-parameters
 	@cd build-$(ARCH) && ../jinx/jinx build zinnia
-	@cd build-$(ARCH) && sudo ../jinx/jinx reinstall sysroot zinnia
-	@cd build-$(ARCH) && ../jinx/jinx reinstall initramfs zinnia
+	@cd build-$(ARCH) && sudo ../jinx/jinx install -f sysroot zinnia
+	@cd build-$(ARCH) && ../jinx/jinx install -f initramfs zinnia

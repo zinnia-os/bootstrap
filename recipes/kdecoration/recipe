@@ -1,0 +1,23 @@
+#! /bin/sh
+
+version=6.6.4
+revision=1
+git_url="https://github.com/KDE/kdecoration.git"
+commit=04f26735ad5d7588fe5c9a9a78ca0c16d506d37b
+imagedeps="cmake ninja-build pkg-config gettext"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules kconfig kcoreaddons"
+deps="core-libs ki18n qtbase6"
+
+configure() {
+    kf6_configure
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

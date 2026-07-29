@@ -1,0 +1,24 @@
+#! /bin/sh
+
+version=6.25.0
+revision=1
+git_url="https://github.com/KDE/kidletime.git"
+commit=535a47ca1dff96de9d1a9ece70a05484cbe2f2b1
+imagedeps="cmake ninja-build pkg-config libdbus-1-3"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules wayland"
+deps="core-libs libx11 libxcb libxext libxscrnsaver plasma-wayland-protocols qtbase6 qtwayland6 wayland wayland-protocols"
+
+configure() {
+    kf6_configure \
+        -DWaylandScanner_EXECUTABLE=/usr/local/bin/wayland-scanner
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

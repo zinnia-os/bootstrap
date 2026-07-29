@@ -1,0 +1,41 @@
+#! /bin/sh
+
+version=2.3.0
+revision=1
+tarball_url="https://distfiles.ariadne.space/pkgconf/pkgconf-${version}.tar.xz"
+tarball_blake2b="cca3476df0b79cdbca798ed3a067611414e9b422e8347d0f490e7c4d0c43cdd2c7b586ac11e028a8df365d4ea4194f46b1d9fc0acd0f5fd6b4a5548673a8f853"
+imagedeps="build-essential"
+hostdeps="automake autoconf libtool"
+source_hostdeps="autoconf automake libtool"
+
+prepare() {
+    autotools_recursive_regen
+}
+
+configure() {
+        CFLAGS="$HOST_CFLAGS" \
+        CXXFLAGS="$HOST_CXXFLAGS" \
+        LDFLAGS="$HOST_LDFLAGS" \
+    "${source_dir}"/configure \
+        --prefix="${prefix}"
+}
+
+build() {
+    make -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" make install
+    mkdir -p "${dest_dir}${prefix}/share/pkgconfig/personality.d"
+    cat <<EOF >"${dest_dir}${prefix}/share/pkgconfig/personality.d/${OS_TRIPLET}.personality"
+Triplet: ${OS_TRIPLET}
+SysrootDir: ${sysroot}
+DefaultSearchPaths: ${sysroot}/usr/lib/pkgconfig:${sysroot}/usr/share/pkgconfig
+SystemIncludePaths: ${sysroot}/usr/include
+SystemLibraryPaths: ${sysroot}/usr/lib
+EOF
+    ln -s pkgconf "${dest_dir}${prefix}/bin/${OS_TRIPLET}-pkg-config"
+
+        strip_command=strip \
+    post_package_strip
+}

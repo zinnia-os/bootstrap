@@ -1,0 +1,23 @@
+#! /bin/sh
+
+version=6.25.0
+revision=1
+git_url="https://github.com/KDE/kitemmodels.git"
+commit=3e95b761624b49f124fcff1468dd2322eef18501
+imagedeps="cmake ninja-build pkg-config"
+hostdeps="gcc pkg-config cmake qt6 extra-cmake-modules"
+deps="core-libs qtbase6 qtdeclarative6"
+
+configure() {
+    kf6_configure
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

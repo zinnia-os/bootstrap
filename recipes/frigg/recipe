@@ -1,0 +1,24 @@
+#! /bin/sh
+
+version=65db297ebd6db09e86fe737175631a872d81c39b
+revision=1
+git_url="https://github.com/managarm/frigg.git"
+commit=${version}
+imagedeps="meson ninja-build"
+hostdeps="pkg-config"
+
+configure() {
+    meson_configure \
+        --includedir=share/frigg/include \
+        -Dbuild_tests=disabled
+}
+
+build() {
+    ninja -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" ninja install
+
+    post_package_strip
+}

@@ -1,0 +1,33 @@
+#! /bin/sh
+
+version=1.13.6
+revision=1
+tarball_url="https://www.freedesktop.org/software/libevdev/libevdev-${version}.tar.xz"
+tarball_blake2b="18ebeb8915913d451372df8d58a6d8228df0416c87b507480562ebe144b073f4f03a5dcf6ab93ecaa3f32206bf91ebad64046ea722134ed221a479a2d59fe13a"
+imagedeps="python3"
+hostdeps="gcc pkg-config"
+deps="core-libs"
+
+prepare() {
+    autotools_recursive_regen
+}
+
+configure() {
+    autotools_configure
+}
+
+build() {
+    make -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" make install
+
+    mkdir -p "${dest_dir}/${prefix}/include/linux"
+
+    # Use the libevdev headers as a canonical source for definitions.
+    cp -r "${source_dir}/include/." "${dest_dir}/${prefix}/include"
+    cp "${source_dir}/include/linux/zinnia/input-event-codes.h" "${dest_dir}/${prefix}/include/linux/"
+
+    post_package_strip
+}

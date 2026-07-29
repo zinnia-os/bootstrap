@@ -1,0 +1,24 @@
+#! /bin/sh
+
+version=4.21.0
+revision=1
+tarball_url="https://archive.xfce.org/src/xfce/xfce4-power-manager/4.21/xfce4-power-manager-${version}.tar.xz"
+tarball_blake2b="f45ea03e39d7fdcf3db796c6f356b65218f5c64f31a235f4e3a73fc9e05e08ae3aa8d90520f73aac5316d7149b3a7cc135d87944277e29409a231b3574f4a649"
+imagedeps="pkg-config"
+hostdeps="gcc pkg-config glib2"
+deps="core-libs libnotify upower xfce4-panel"
+
+configure() {
+    meson_configure \
+        -Dx11=enabled
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}

@@ -1,0 +1,91 @@
+#! /bin/sh
+
+version=6.11.0
+revision=1
+git_url="https://github.com/qt/qtbase.git"
+commit=8ba7ea4b77a4b8f1948760221e264917ddc9e1c8
+source_imagedeps="git"
+imagedeps="ninja-build pkg-config python3 perl libdbus-1-3"
+hostdeps="gcc pkg-config cmake qt6 wayland"
+deps="core-libs at-spi2-core brotli dbus double-conversion fontconfig freetype2 glib2 harfbuzz icu libdrm libevdev libice libinput libjpeg-turbo libpng libsm libx11 libxcb libxcursor libxi libxinerama libxkbcommon mesa mtdev openssl pcre2 sqlite wayland wayland-protocols xcb-util xcb-util-cursor xcb-util-image xcb-util-keysyms xcb-util-renderutil xcb-util-wm zlib zstd"
+
+prepare() {
+    cd "${source_dir}"
+
+    sed -i 's@if(CMAKE_SYSTEM_NAME STREQUAL "HPUX")@if(CMAKE_SYSTEM_NAME STREQUAL "Zinnia")\n    set(ZINNIA 1)\nelse()\n    set(ZINNIA 0)\nendif()\n\nif(CMAKE_SYSTEM_NAME STREQUAL "HPUX")@' \
+        cmake/QtPlatformSupport.cmake
+
+    sed -i 's@^    elseif(ANDROID)@    elseif(ZINNIA)\n        if(GCC)\n            set(QT_DEFAULT_MKSPEC zinnia-g++)\n        else()\n            message(FATAL_ERROR "Unknown compiler in use!")\n        endif()\n    elseif(ANDROID)@' \
+        cmake/QtMkspecHelpers.cmake
+
+    sed -i 's@if(LINUX OR HPUX OR FREEBSD OR NETBSD OR OPENBSD OR SOLARIS OR HURD)@if(LINUX OR HPUX OR FREEBSD OR NETBSD OR OPENBSD OR SOLARIS OR HURD OR ZINNIA)@' \
+        src/gui/configure.cmake
+
+    sed -i '0,/if(LINUX OR FREEBSD OR QT_FIND_ALL_PACKAGES_ALWAYS)/s//if(LINUX OR FREEBSD OR ZINNIA OR QT_FIND_ALL_PACKAGES_ALWAYS)/' \
+        src/gui/configure.cmake
+
+    grep -q 'zinnia-g++' cmake/QtMkspecHelpers.cmake || {
+        echo "ERROR: Zinnia mkspec edit failed to apply to QtMkspecHelpers.cmake" >&2
+        exit 1
+    }
+}
+
+configure() {
+    cmake_configure \
+        -DQT_HOST_PATH=/usr/local \
+        -DWaylandScanner_EXECUTABLE=/usr/local/bin/wayland-scanner \
+        -DQT_FORCE_BUILD_TOOLS=ON \
+        -DQT_NO_GENERATE_QMAKE_WRAPPER_FOR_TARGET=ON \
+        -DBUILD_WITH_PCH=OFF \
+        -DINSTALL_BINDIR=bin \
+        -DINSTALL_INCLUDEDIR=include/qt6 \
+        -DINSTALL_LIBDIR=lib \
+        -DINSTALL_ARCHDATADIR=lib/qt6 \
+        -DINSTALL_PLUGINSDIR=lib/qt6/plugins \
+        -DINSTALL_LIBEXECDIR=lib/qt6/libexec \
+        -DINSTALL_QMLDIR=lib/qt6/qml \
+        -DINSTALL_DATADIR=share/qt6 \
+        -DINSTALL_DOCDIR=share/qt6-doc \
+        -DINSTALL_TRANSLATIONSDIR=share/qt6/translations \
+        -DINSTALL_SYSCONFDIR=/etc/xdg \
+        -DINSTALL_MKSPECSDIR=lib/qt6/mkspecs \
+        -DINSTALL_EXAMPLESDIR=share/qt6/examples \
+        -DQT_BUILD_EXAMPLES=OFF \
+        -DQT_BUILD_TESTS=OFF \
+        -DFEATURE_concurrent=ON \
+        -DFEATURE_dbus=ON \
+        -DFEATURE_gui=ON \
+        -DFEATURE_network=ON \
+        -DFEATURE_printsupport=ON \
+        -DFEATURE_sql=ON \
+        -DFEATURE_testlib=ON \
+        -DFEATURE_widgets=ON \
+        -DFEATURE_libudev=ON \
+        -DFEATURE_icu=ON \
+        -DFEATURE_glib=ON \
+        -DFEATURE_pcre2=ON \
+        -DFEATURE_xml=ON \
+        -DFEATURE_harfbuzz=ON \
+        -DFEATURE_xkbcommon=ON \
+        -DFEATURE_egl=ON \
+        -DFEATURE_opengl=ON \
+        -DFEATURE_accessibility=ON \
+        -DFEATURE_gtk3=OFF \
+        -DFEATURE_system_sqlite=ON \
+        -DFEATURE_cups=OFF \
+        -DFEATURE_ssl=ON \
+        -DFEATURE_inotify=OFF \
+        -DQT_FEATURE_jemalloc=OFF \
+        -DQT_FEATURE_androiddeployqt=OFF \
+        -DQT_UNITY_BUILD=ON
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}

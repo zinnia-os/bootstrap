@@ -1,8 +1,9 @@
 #! /bin/sh
 
 JINX_REPO_URL=https://download.zinnia-os.org/${JINX_ARCH}
-JINX_MAJOR_VER=0.8
-JINX_DEBIAN_SNAPSHOT="20251020T082908Z"
+JINX_HOST_REPO_URL=https://download.zinnia-os.org/${JINX_ARCH}/host
+JINX_MAJOR_VER=0.10
+JINX_DEBIAN_SNAPSHOT="20260523T083552Z"
 JINX_BASE_PACKAGES="autopoint bison cmake docbook-xsl docbook-xml docbook-xsl-ns docbook5-xml doxygen file flex gettext
                     m4 make mercurial meson ninja-build perl python3 texinfo w3m which xmlto xsltproc"
 
@@ -29,10 +30,12 @@ esac
 
 HOST_CFLAGS="-O2 -pipe -fPIC -fPIE"
 HOST_CXXFLAGS="${HOST_CFLAGS} -Wp,-D_GLIBCXX_ASSERTIONS"
+HOST_CPPFLAGS=""
 HOST_LDFLAGS="-Wl,-O1 -Wl,--sort-common -Wl,--as-needed -Wl,-z,now"
 
 TARGET_CFLAGS="$HOST_CFLAGS -g"
 TARGET_CXXFLAGS="$HOST_CXXFLAGS"
+TARGET_CPPFLAGS="$HOST_CPPFLAGS"
 TARGET_LDFLAGS="$HOST_LDFLAGS"
 
 TARGET_CC="${OS_TRIPLET}-gcc"
@@ -47,7 +50,7 @@ case "${JINX_ARCH}" in
 esac
 
 post_package_strip() {
-    if [ -z "$strip_command" ]; then
+    if [ -z "${strip_command-}" ]; then
         strip_command="${OS_TRIPLET}-strip"
     fi
 
@@ -64,8 +67,8 @@ post_package_strip() {
 
 # autotools_recursive_regen() {
 #     ACLOCAL_INCLUDE=""
-#     if [ -d ${sysroot_dir}/usr/share/aclocal ]; then
-#         ACLOCAL_INCLUDE="-I${sysroot_dir}/usr/share/aclocal"
+#     if [ -d ${sysroot}/usr/share/aclocal ]; then
+#         ACLOCAL_INCLUDE="-I${sysroot}/usr/share/aclocal"
 #     fi
 
 #     for f in $(find . -name configure.ac -o -name configure.in -type f | sort); do
@@ -145,7 +148,7 @@ autotools_configure() {
 }
 
 autotools_configure_noflags() {
-    if [ -z "${configure_script_path}" ]; then
+    if [ -z "${configure_script_path-}" ]; then
         configure_script_path="${source_dir}/configure"
     fi
 
@@ -154,7 +157,7 @@ autotools_configure_noflags() {
         ac_cv_func_realloc_0_nonnull=yes \
     ${configure_script_path} \
         --host=${OS_TRIPLET} \
-        --with-sysroot=${sysroot_dir} \
+        --with-sysroot=${sysroot} \
         --prefix=${prefix} \
         --sysconfdir=/etc \
         --localstatedir=/var \
@@ -175,13 +178,13 @@ meson_configure() {
 }
 
 meson_configure_noflags() {
-    if [ -z "${meson_source_dir}" ]; then
+    if [ -z "${meson_source_dir-}" ]; then
         meson_source_dir="${source_dir}"
     fi
 
         JINX_ARCH=${JINX_ARCH} \
         OS_TRIPLET=${OS_TRIPLET} \
-        sysroot_dir=${sysroot_dir} \
+        sysroot=${sysroot} \
     envsubst < "${base_dir}/support/meson.cross-file" > ./cross-file.txt
 
     meson setup "${meson_source_dir}" \
@@ -229,14 +232,14 @@ cmake_configure() {
 }
 
 cmake_configure_noflags() {
-    if [ -z "${cmake_source_dir}" ]; then
+    if [ -z "${cmake_source_dir-}" ]; then
         cmake_source_dir="${source_dir}"
     fi
 
         OS_TRIPLET=${OS_TRIPLET} \
         JINX_ARCH=${JINX_ARCH} \
-        sysroot_dir=${sysroot_dir} \
-    envsubst '$OS_TRIPLET $JINX_ARCH $sysroot_dir' < "${base_dir}/support/CMakeToolchain.txt" > $(pwd -P)/cross-file.txt
+        sysroot=${sysroot} \
+    envsubst '$OS_TRIPLET $JINX_ARCH $sysroot' < "${base_dir}/support/CMakeToolchain.txt" > $(pwd -P)/cross-file.txt
 
     PKG_CONFIG="/usr/local/bin/$OS_TRIPLET-pkg-config" \
     cmake "${cmake_source_dir}"  \
@@ -322,7 +325,7 @@ cargo_zinnia_build_env() {
     export CARGO_HOME="$(pwd -P)/.cargo"
     mkdir -p "${CARGO_HOME}"
 
-    fork_root="${sysroot_dir}/usr/src/rust"
+    fork_root="${sysroot}/usr/src/rust"
     zinnia_rust_forks patch-table --forks "${fork_root}" > "${CARGO_HOME}/config.toml"
 
     if [ -f Cargo.lock ]; then
@@ -339,7 +342,7 @@ cargo_zinnia_build_env() {
 }
 
 cargo_zinnia_relock() {
-    zinnia_rust_forks relock --forks "${sysroot_dir}/usr/src/rust" "$1"
+    zinnia_rust_forks relock --forks "${sysroot}/usr/src/rust" "$1"
 }
 
 cargo_zinnia_patch_rust_workspace() {
