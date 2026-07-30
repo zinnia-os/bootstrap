@@ -55,13 +55,24 @@ post_package_strip() {
     fi
 
     for f in $(find "${dest_dir}"); do
-        if file "$f" | grep 'not stripped' >/dev/null; then
-            echo "* stripping '$f'..."
-            stripped_file="$(mktemp)"
-            ${strip_command} "$f" -o "$stripped_file"
-            chmod --reference="$f" "$stripped_file"
-            mv -f "$stripped_file" "$f"
-        fi
+        file_info="$(file -b "$f")"
+
+        case "$file_info" in
+            *'not stripped'*) ;;
+            *) continue ;;
+        esac
+
+        # Relocatable objects must keep their symbol table and relocations
+        strip_flags=""
+        case "$file_info" in
+            *relocatable*) strip_flags="--strip-debug" ;;
+        esac
+
+        echo "* stripping '$f'..."
+        stripped_file="$(mktemp)"
+        ${strip_command} ${strip_flags} "$f" -o "$stripped_file"
+        chmod --reference="$f" "$stripped_file"
+        mv -f "$stripped_file" "$f"
     done
 }
 
