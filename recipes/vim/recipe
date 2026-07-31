@@ -1,0 +1,29 @@
+#! /bin/sh
+
+version=9.2
+revision=1
+tarball_url="https://www.vim.org/downloads/vim-${version}.tar.bz2"
+tarball_blake2b="38ba128e9d6549974d5ba042908ac93ae28c7774397b07d43153d1b74985f9481ae9b7a0821846566fd79a25add76430ded051c92a282387d66039cdafec0495"
+hostdeps="gcc pkg-config"
+deps="core-libs ncurses"
+
+prepare() {
+    autotools_recursive_regen
+}
+
+configure() {
+    TARGET_CFLAGS="${TARGET_CFLAGS} -D_XOPEN_SOURCE -D_GNU_SOURCE"
+
+    cp -rp "${source_dir}"/. ./
+    
+    autotools_configure
+}
+
+build() {
+    make -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" make install
+    post_package_strip
+}
