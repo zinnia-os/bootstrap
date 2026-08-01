@@ -1,28 +1,16 @@
 #! /bin/sh
 
-version=0.25.5
+version=0.26.4
 revision=1
 tarball_url="https://github.com/p11-glue/p11-kit/releases/download/${version}/p11-kit-${version}.tar.xz"
-tarball_blake2b="96d6a9c2807586abafae4da4df89f566672733963997d6a83e00aaf83a7a0c0e2995638f505e98fb87a90c60bde28814f1e8b7d5071bf0af96bb0467105a1ddc"
-imagedeps="build-essential"
+tarball_blake2b="91a8ff7679e34dbc9d3143c957ec2bba211da85f74c2aa3d150f3078de9387e1f04b4bbec56040e0c12249c1866e7ca191844c1dcdd6c1de29bec04e6d72ea96"
 hostdeps="gcc pkg-config"
-deps="core-libs libtasn1"
-
-prepare() {
-    sed '20,$ d' -i ${source_dir}/trust/trust-extract-compat
-
-    cat >> ${source_dir}/trust/trust-extract-compat << EOF
-# Copy existing anchor modifications to /etc/ssl/local
-${prefix}/libexec/make-ca/copy-trust-modifications
-
-# Update trust stores
-${prefix}/bin/make-ca -r
-EOF
-}
+deps="core-libs libffi libtasn1"
 
 configure() {
     meson_configure \
-        -Dtrust_paths=/etc/pki/anchors
+        -Dtrust_paths=/etc/pki/anchors \
+        -Dbashcompdir=${prefix}/share/bash-completion/completions
 }
 
 build() {
@@ -31,8 +19,6 @@ build() {
 
 package() {
     DESTDIR="${dest_dir}" meson install --no-rebuild
-
-    ln -svf "../libexec/p11-kit/trust-extract-compat" "${dest_dir}${prefix}/bin/update-ca-certificates"
 
     post_package_strip
 }
