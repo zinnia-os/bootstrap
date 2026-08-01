@@ -8,8 +8,8 @@ deps="core-libs"
 
 build() {
     _src="${base_dir}/extras/${name}"
-    ${OS_TRIPLET}-gcc ${CFLAGS} -o insertmod "${_src}/insertmod.c"
-    ${OS_TRIPLET}-gcc ${CFLAGS} -o mount     "${_src}/mount.c"
+    ${OS_TRIPLET}-gcc ${TARGET_CFLAGS} -o insertmod "${_src}/insertmod.c"
+    ${OS_TRIPLET}-gcc ${TARGET_CFLAGS} -o mount     "${_src}/mount.c"
 }
 
 package() {
