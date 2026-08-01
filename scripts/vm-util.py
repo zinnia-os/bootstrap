@@ -55,17 +55,22 @@ def build_command(args: argparse.Namespace) -> list[str]:
         )
     cmd += ["-drive", f"if=pflash,unit=0,format=raw,file={ovmf},readonly=on"]
 
-    if args.headless or args.display == "none":
+    headless = args.headless or args.display == "none"
+    if args.gl and headless:
+        sys.exit("vm-util: --gl requires a graphical display backend")
+
+    if headless:
         cmd += ["-display", "none"]
     else:
-        cmd += ["-display", f"{args.display},zoom-to-fit=off"]
+        gl = ",gl=on" if args.gl else ""
+        cmd += ["-display", f"{args.display},zoom-to-fit=off{gl}"]
     if args.serial != "none":
         cmd += ["-serial", args.serial]
 
     if arch == "x86_64":
         cmd += ["-machine", "q35,smm=off", "-rtc", "base=localtime,clock=host"]
-        if not (args.headless or args.display == "none"):
-            cmd += ["-device", "virtio-vga"]
+        if not headless:
+            cmd += ["-device", "virtio-vga-gl" if args.gl else "virtio-vga"]
     elif arch == "riscv64" or arch == "aarch64":
         machine = "virt,acpi=off" + (",gic-version=3" if arch == "aarch64" else "")
         cmd += [
@@ -74,7 +79,7 @@ def build_command(args: argparse.Namespace) -> list[str]:
             "-device",
             "ramfb",
             "-device",
-            "virtio-gpu-pci",
+            "virtio-gpu-gl-pci" if args.gl else "virtio-gpu-pci",
         ]
 
     if not args.no_usb_input:
@@ -100,17 +105,16 @@ def build_command(args: argparse.Namespace) -> list[str]:
             f"(build it per the README) or pass --iso"
         )
     if image.exists():
-        cmd += [
-            "-drive",
-            f"format=raw,file={image},if=none,id=disk",
-            "-device",
-            "nvme,serial=FAKE_SERIAL_ID,drive=disk,bootindex=1",
-        ]
+        cmd += ["-drive", f"format=raw,file={image},if=none,id=disk"]
+        if args.disk == "virtio-blk":
+            cmd += ["-device", "virtio-blk-pci,drive=disk,bootindex=1"]
+        else:
+            cmd += ["-device", "nvme,serial=FAKE_SERIAL_ID,drive=disk,bootindex=1"]
 
     if args.nic != "none":
         cmd += [
             "-netdev",
-            "user,id=net0",
+            "user,id=net0,hostfwd=tcp::10022-:22",
             "-device",
             f"{args.nic},netdev=net0",
         ]
@@ -142,6 +146,12 @@ def main() -> int:
     )
     run.add_argument("--image", help="disk image (default build-<arch>/zinnia.img)")
     run.add_argument("--iso", help="boot from this ISO (added as a CD-ROM)")
+    run.add_argument(
+        "--disk",
+        choices=["nvme", "virtio-blk"],
+        default="nvme",
+        help="disk controller model (default nvme)",
+    )
     run.add_argument("--smp", type=int, default=4, help="vCPU count (default 4)")
     run.add_argument("--mem", default="2G", help="guest memory (default 2G)")
     run.add_argument(
@@ -155,6 +165,11 @@ def main() -> int:
     )
     run.add_argument(
         "--headless", action="store_true", help="shorthand for --display none"
+    )
+    run.add_argument(
+        "--gl",
+        action="store_true",
+        help="use the virglrenderer-backed virtio-gpu and enable host GL",
     )
     run.add_argument(
         "--serial",
