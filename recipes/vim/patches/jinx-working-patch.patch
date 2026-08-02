@@ -1,0 +1,13 @@
+diff --git vim-clean/src/feature.h vim-workdir/src/feature.h
+index 376e409..1177fb4 100644
+--- vim-clean/src/feature.h
++++ vim-workdir/src/feature.h
+@@ -270,7 +270,7 @@
+ 	&& ((defined(HAVE_GETTIMEOFDAY) && defined(HAVE_SYS_TIME_H) \
+ 		&& (!defined(MACOS_X) || defined(HAVE_DISPATCH_DISPATCH_H))) \
+ 	    || defined(MSWIN))
+-# define FEAT_RELTIME
++// # define FEAT_RELTIME
+ #endif
+ 
+ /*
