@@ -2,7 +2,7 @@
 
 version=0.23.1
 revision=1
-tarball_url="https://ftpmirror.gnu.org/gnu/gettext/gettext-${version}.tar.xz"
+tarball_url="https://ftp.fau.de/gnu/gettext/gettext-${version}.tar.xz"
 tarball_blake2b="08d10340f3d855a87a96594c6f2dcf72925394f02e86235090f8d272e0a27ce32e57a0fbaed61aaf61d7328ff30be076dccaecaa13832d8db3ec0a51786780b9"
 repology_id=gettext
 hostdeps="gcc automake autoconf libtool pkg-config"

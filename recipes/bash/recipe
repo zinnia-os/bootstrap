@@ -4,7 +4,7 @@ _base_patch=03
 _patch=03
 version=5.3.p${_patch}
 revision=1
-tarball_url="https://ftpmirror.gnu.org/gnu/bash/bash-5.3.tar.gz"
+tarball_url="https://ftp.fau.de/gnu/bash/bash-5.3.tar.gz"
 tarball_blake2b="82d1b54322bbd1e8c2a93380f1b2888a42a1d7186e504f41cee705a0fdd41463d8f20baa1755051e1396192f8ebd089524767d933a9e0b5fb76f2588601539bb"
 source_allow_network=yes
 imagedeps="build-essential"
@@ -14,7 +14,7 @@ deps="core-libs ncurses readline"
 prepare() {
     if ! [ "${_base_patch}" = "${_patch}" ]; then
         for p in $(seq -w ${_base_patch} ${_patch}); do
-            curl -L https://ftpmirror.gnu.org/gnu/bash/bash-5.3-patches/bash53-0$p | patch -p0
+            curl -L https://ftp.fau.de/gnu/bash/bash-5.3-patches/bash53-0$p | patch -p0
         done
     fi
 
