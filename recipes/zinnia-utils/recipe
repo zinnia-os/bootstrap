@@ -1,7 +1,7 @@
 #! /bin/sh
 
 version=0.1
-revision=1
+revision=2
 hostdeps="gcc pkg-config"
 deps="core-libs"
 
@@ -10,6 +10,8 @@ build() {
     _src="${base_dir}/extras/${name}"
     ${OS_TRIPLET}-gcc ${TARGET_CFLAGS} -o insertmod "${_src}/insertmod.c"
     ${OS_TRIPLET}-gcc ${TARGET_CFLAGS} -o mount     "${_src}/mount.c"
+    ${OS_TRIPLET}-gcc ${TARGET_CFLAGS} -o umount    "${_src}/umount.c"
+    ${OS_TRIPLET}-gcc ${TARGET_CFLAGS} -o console   "${_src}/console.c"
 }
 
 package() {
@@ -17,4 +19,6 @@ package() {
 
     cp insertmod "${dest_dir}/usr/bin/insertmod"
     cp mount     "${dest_dir}/usr/bin/mount"
+    cp umount    "${dest_dir}/usr/bin/umount"
+    cp console   "${dest_dir}/usr/bin/console"
 }
