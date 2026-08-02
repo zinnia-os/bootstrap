@@ -1,0 +1,29 @@
+#! /bin/sh
+
+version=1.0.10
+revision=1
+tarball_url="https://downloads.sourceforge.net/gptfdisk/gptfdisk-${version}.tar.gz"
+tarball_blake2b="9047bf68a2c5c254bda9b2815488963dc19a9415c90fbf4a127268a37fe8a545b7d45a333e356bd9da22e37ef649d9f60896ffedfdc35b60c7642a48e4ed2e5a"
+hostdeps="gcc pkg-config"
+deps="core-libs ncurses popt"
+
+build() {
+    cp -rp "${source_dir}"/. ./
+
+    make -j${parallelism} \
+        CXX="${OS_TRIPLET}-g++" \
+        CXXFLAGS="${TARGET_CXXFLAGS} -D_FILE_OFFSET_BITS=64" \
+        LDFLAGS="${TARGET_LDFLAGS}" \
+        LDLIBS=
+}
+
+package() {
+    mkdir -p "${dest_dir}${prefix}/bin"
+    install -m755 gdisk cgdisk sgdisk fixparts "${dest_dir}${prefix}/bin"
+
+    mkdir -p "${dest_dir}${prefix}/share/man/man8"
+    install -m644 gdisk.8 cgdisk.8 sgdisk.8 fixparts.8 \
+        "${dest_dir}${prefix}/share/man/man8"
+
+    post_package_strip
+}
