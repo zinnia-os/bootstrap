@@ -8,6 +8,10 @@ tarball_blake2b="43f56630d106cb972453e915180a4e2ffb0b9ff57b6699e20daf391545653c8
 hostdeps="gcc pkg-config"
 deps="core-libs ncurses"
 
+prepare() {
+    autotools_recursive_regen
+}
+
 configure() {
     autotools_configure \
         --with-ncursesw \
