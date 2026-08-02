@@ -1,0 +1,16 @@
+#! /bin/sh
+
+version=0.1
+revision=1
+deps="base-system zinnia-installer"
+skip_pkg_check=yes
+
+package() {
+    install -Dm755 "${base_dir}/extras/zinnia-live/zinnia-live-session" \
+        "${dest_dir}/usr/bin/zinnia-live-session"
+
+    install -Dm644 "${base_dir}/extras/zinnia-live/dinit.d/installer" \
+        "${dest_dir}/etc/dinit.d/installer"
+    install -d "${dest_dir}/etc/dinit.d/boot.d"
+    touch "${dest_dir}/etc/dinit.d/boot.d/installer"
+}

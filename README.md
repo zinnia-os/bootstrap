@@ -60,6 +60,19 @@ The built package will be located in the `pkgs` directory.
 > [!WARNING]
 > If you want a build of the **ENTIRE** distribution, you will need a lot of free disk space (>50GB) and some patience.
 
+### Live installation medium
+
+```sh
+$ make live
+```
+
+builds `zinnia-live.img`, a bootable GPT image containing the graphical text
+installer. Write it to a USB stick with `dd`:
+
+```sh
+$ sudo dd if=build-x86_64/zinnia-live.img of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
 ### Using pre-built packages
 
 You can pull pre-built packages and host packages from our Buildbot workers into the build directory.
@@ -82,7 +95,7 @@ $ ../jinx/jinx download 'host:*'      # Every host package (toolchain etc.)
 Downloads are checksum-verified against the repository index.
 Afterwards, `make` will only build what is still missing.
 
-## Running the ISO/image
+## Running the image
 
 Download the UEFI firmware once per architecture:
 
@@ -90,12 +103,15 @@ Download the UEFI firmware once per architecture:
 $ ./tasks/get-ovmf.sh x86_64
 ```
 
-To run the ISO/image in QEMU, use `scripts/vm-util.py`:
+To run the image in QEMU, use `scripts/vm-util.py`:
 
 ```sh
-$ ./scripts/vm-util.py run                                # For zinnia.img
-$ ./scripts/vm-util.py run --iso build-x86_64/zinnia.iso  # For zinnia.iso
+$ ./scripts/vm-util.py run                # For zinnia.img
+$ ./scripts/vm-util.py run --live         # For the live installation medium
 ```
+
+`--live` attaches `build-x86_64/zinnia-live.img` as a USB disk and creates a
+blank `zinnia.img` next to it to install onto.
 
 This will run the image using QEMU with the appropriate options for the
 target architecture. If you want to pass your own QEMU flags, you can do so

@@ -97,19 +97,45 @@ def build_command(args: argparse.Namespace) -> list[str]:
             f"{pointer},bus=input-xhci.0,port=2.1",
         ]
 
-    if args.iso:
-        cmd += ["-cdrom", str(args.iso)]
-    if not image.exists() and not args.iso:
+    live = None
+    if args.live is not None:
+        live = Path(args.live) if args.live else build_dir / "zinnia-live.img"
+        if not live.exists():
+            sys.exit(
+                f"vm-util: missing live image {root_relative(live)} (run 'make live')"
+            )
+        cmd += [
+            "-device",
+            "qemu-xhci,id=live-xhci",
+            "-drive",
+            f"format=raw,file={live},if=none,id=live",
+            "-device",
+            "usb-storage,bus=live-xhci.0,drive=live,bootindex=1",
+        ]
+        if not image.exists():
+            image.parent.mkdir(parents=True, exist_ok=True)
+            with open(image, "wb") as f:
+                f.truncate(args.target_size)
+            print(
+                f"vm-util: created blank install target {root_relative(image)}",
+                file=sys.stderr,
+            )
+
+    if not image.exists() and live is None:
         sys.exit(
             f"vm-util: missing disk image {root_relative(image)} "
-            f"(build it per the README) or pass --iso"
+            f"(build it per the README) or pass --live"
         )
     if image.exists():
+        bootindex = "2" if live is not None else "1"
         cmd += ["-drive", f"format=raw,file={image},if=none,id=disk"]
         if args.disk == "virtio-blk":
-            cmd += ["-device", "virtio-blk-pci,drive=disk,bootindex=1"]
+            cmd += ["-device", f"virtio-blk-pci,drive=disk,bootindex={bootindex}"]
         else:
-            cmd += ["-device", "nvme,serial=FAKE_SERIAL_ID,drive=disk,bootindex=1"]
+            cmd += [
+                "-device",
+                f"nvme,serial=FAKE_SERIAL_ID,drive=disk,bootindex={bootindex}",
+            ]
 
     if args.nic != "none":
         cmd += [
@@ -145,12 +171,26 @@ def main() -> int:
         "--arch", default="x86_64", choices=["x86_64", "riscv64", "aarch64"]
     )
     run.add_argument("--image", help="disk image (default build-<arch>/zinnia.img)")
-    run.add_argument("--iso", help="boot from this ISO (added as a CD-ROM)")
     run.add_argument(
         "--disk",
         choices=["nvme", "virtio-blk"],
         default="nvme",
         help="disk controller model (default nvme)",
+    )
+    run.add_argument(
+        "--live",
+        nargs="?",
+        const="",
+        help="boot the live installation medium as a USB disk "
+        "(default build-<arch>/zinnia-live.img); the regular image "
+        "becomes a blank install target",
+    )
+    run.add_argument(
+        "--target-size",
+        type=lambda v: int(v) * 1024 * 1024,
+        default=4096 * 1024 * 1024,
+        metavar="MIB",
+        help="size of the install target created for --live (default 4096)",
     )
     run.add_argument("--smp", type=int, default=4, help="vCPU count (default 4)")
     run.add_argument("--mem", default="2G", help="guest memory (default 2G)")

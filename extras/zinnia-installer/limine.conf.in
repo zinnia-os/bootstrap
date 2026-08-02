@@ -5,18 +5,11 @@ timeout: 5
 	protocol: limine
 	path: boot():/zinnia
 	module_path: boot():/initramfs.tar
-	cmdline:
+	cmdline: root=@ROOT@
 
 /Zinnia (Shell)
 	kaslr: no
 	protocol: limine
 	path: boot():/zinnia
 	module_path: boot():/initramfs.tar
-	cmdline: rd.init=/usr/bin/bash
-
-/Debugging
-	kaslr: no
-	protocol: limine
-	path: boot():/zinnia
-	module_path: boot():/initramfs.tar
-	cmdline: rd.init=/usr/bin/bash
+	cmdline: root=@ROOT@ rd.init=/usr/bin/bash

@@ -1,0 +1,36 @@
+#!/bin/bash
+
+set -e
+
+ROOT="${1:-/}"
+OUTPUT="${2:-/boot/initramfs.tar}"
+
+STAGE="$(mktemp -d)"
+
+cleanup() {
+    rm -rf "$STAGE"
+}
+
+trap cleanup EXIT
+
+mkdir -p "$STAGE/realfs"
+mkdir -p "$STAGE/usr/bin"
+mkdir -p "$STAGE/usr/share/zinnia/modules"
+
+cp "$ROOT/usr/bin/zinnia-init" "$STAGE/usr/bin/zinnia-init"
+cp "$ROOT"/usr/share/zinnia/modules/*.kso "$STAGE/usr/share/zinnia/modules/"
+
+ln -fs usr/bin/zinnia-init "$STAGE/init"
+
+cd "$STAGE"
+
+FILES=(
+    realfs
+    usr/share/zinnia/modules/*
+    init
+    usr/bin/zinnia-init
+)
+
+mkdir -p "$(dirname "$OUTPUT")"
+rm -f "$OUTPUT"
+tar --format=ustar --owner 0 --group 0 -cf "$OUTPUT" "${FILES[@]}"

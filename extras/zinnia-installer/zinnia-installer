@@ -1,0 +1,295 @@
+#!/bin/bash
+
+set -u
+
+TITLE="Zinnia Installer"
+LOG=/tmp/zinnia-install.log
+TARGET=/mnt
+ESP_SIZE=256M
+DEFAULT_REPO="https://download.zinnia-os.org"
+LIMINE_CONFIG=/usr/share/zinnia/limine.conf.in
+
+export MTOOLS_SKIP_CHECK=1
+
+: >"$LOG"
+
+log() {
+    echo "== $*" >>"$LOG"
+}
+
+run() {
+    log "$*"
+    "$@" >>"$LOG" 2>&1
+}
+
+die() {
+    dialog --backtitle "$TITLE" --title "Installation failed" \
+        --msgbox "$1\n\nLast lines of $LOG:\n\n$(tail -n 12 "$LOG")" 22 74
+    exit 1
+}
+
+need_root() {
+    if [ "$(id -u)" != "0" ]; then
+        echo "zinnia-installer must be run as root" >&2
+        exit 1
+    fi
+}
+
+arch() {
+    uname -m
+}
+
+boot_disk() {
+    local cmdline root uuid part
+    cmdline=$(cat /dev/cmdline 2>/dev/null || true)
+    root=$(printf '%s' "$cmdline" | tr ' ' '\n' | sed -n 's/^root=//p' | head -n1)
+    case "$root" in
+        PARTUUID=*)
+            uuid="${root#PARTUUID=}"
+            part=$(readlink "/dev/block/partuuid-$uuid" 2>/dev/null || true)
+            ;;
+        /dev/block/*)
+            part="${root#/dev/block/}"
+            ;;
+        *)
+            part=""
+            ;;
+    esac
+    printf '%s' "${part%p[0-9]*}"
+}
+
+list_disks() {
+    local booted name
+    booted=$(boot_disk)
+    for name in $(ls /dev/block 2>/dev/null); do
+        case "$name" in
+            parttype-*|partuuid-*|ram[0-9]*) continue ;;
+            *p[0-9]) continue ;;
+            *p[0-9][0-9]) continue ;;
+        esac
+        [ -b "/dev/block/$name" ] || continue
+        [ "$name" = "$booted" ] && continue
+        printf '%s\n' "$name"
+    done
+}
+
+disk_size() {
+    sgdisk -p "/dev/block/$1" 2>/dev/null |
+        sed -n 's/^Disk .*: \([0-9]*\) sectors.*/\1/p' | head -n1
+}
+
+pick_disk() {
+    local items=() name sectors mib
+    for name in $(list_disks); do
+        sectors=$(disk_size "$name")
+        if [ -n "$sectors" ]; then
+            mib=$((sectors / 2048))
+            items+=("$name" "${mib} MiB")
+        else
+            items+=("$name" "unknown size")
+        fi
+    done
+
+    if [ ${#items[@]} -eq 0 ]; then
+        dialog --backtitle "$TITLE" --title "No disks" \
+            --msgbox "No installable disks were found." 10 62
+        exit 1
+    fi
+
+    dialog --backtitle "$TITLE" --title "Target disk" --stdout \
+        --menu "Select the disk to install Zinnia on.\nEverything on it will be erased!" \
+        16 62 8 "${items[@]}"
+}
+
+ask() {
+    dialog --backtitle "$TITLE" --title "$1" --stdout \
+        --inputbox "$2" 9 62 "$3"
+}
+
+ask_password() {
+    local first second
+    while true; do
+        first=$(dialog --backtitle "$TITLE" --title "$1" --stdout \
+            --insecure --passwordbox "Enter the password:" 9 62) || return 1
+        second=$(dialog --backtitle "$TITLE" --title "$1" --stdout \
+            --insecure --passwordbox "Repeat the password:" 9 62) || return 1
+        if [ "$first" = "$second" ] && [ -n "$first" ]; then
+            printf '%s' "$first"
+            return 0
+        fi
+        dialog --backtitle "$TITLE" --title "$1" \
+            --msgbox "The passwords did not match, or were empty." 7 52
+    done
+}
+
+wait_for_node() {
+    local i
+    for i in $(seq 1 50); do
+        [ -e "$1" ] && return 0
+        sleep 0.1
+    done
+    return 1
+}
+
+partition_disk() {
+    local disk="$1" dev="/dev/block/$1"
+
+    run sgdisk --zap-all "$dev" || die "Could not clear the partition table on $disk."
+    run sgdisk "$dev" \
+        --new=1:1M:+${ESP_SIZE} --typecode=1:ef00 --change-name=1:"EFI System" \
+        --new=2:0:0 --typecode=2:8300 --change-name=2:"Zinnia" ||
+        die "Could not create partitions on $disk."
+
+    wait_for_node "${dev}p1" || die "Partition ${disk}p1 never appeared."
+    wait_for_node "${dev}p2" || die "Partition ${disk}p2 never appeared."
+}
+
+partition_uuid() {
+    sgdisk -i "$2" "/dev/block/$1" 2>/dev/null |
+        sed -n 's/^Partition unique GUID: //p' | head -n1 | tr 'A-Z' 'a-z'
+}
+
+format_partitions() {
+    local disk="$1"
+
+    run mkfs.fat -F 32 -n ZINNIAESP "/dev/block/${disk}p1" ||
+        die "Could not create the FAT32 file system on ${disk}p1."
+    run mkfs.ext2 -F -L zinnia "/dev/block/${disk}p2" ||
+        die "Could not create the ext2 file system on ${disk}p2."
+}
+
+install_base() {
+    local disk="$1" repo="$2"
+
+    mkdir -p "$TARGET"
+    run mount ext2 "$TARGET" "/dev/block/${disk}p2" ||
+        die "Could not mount ${disk}p2 on $TARGET."
+
+    run env XBPS_ARCH="$(arch)" xbps-install -S -y \
+        -r "$TARGET" -R "${repo}/$(arch)" base-system ||
+        die "Could not install the base system from ${repo}."
+}
+
+configure_system() {
+    local hostname="$1" root_hash="$2" user="$3" user_hash="$4" timezone="$5"
+
+    printf '%s\n' "$hostname" >"$TARGET/etc/hostname"
+
+    sed -i "s|^root:[^:]*:|root:${root_hash}:|" "$TARGET/etc/passwd" ||
+        die "Could not set the root password."
+
+    if [ -n "$user" ]; then
+        sed -i "/^zinnia:/d" "$TARGET/etc/passwd"
+        sed -i "/^zinnia:/d" "$TARGET/etc/group"
+        printf '%s:%s:1000:1000:%s:/home/%s:/bin/bash\n' \
+            "$user" "$user_hash" "$user" "$user" >>"$TARGET/etc/passwd"
+        printf '%s:!:1000:\n' "$user" >>"$TARGET/etc/group"
+        mkdir -p "$TARGET/home/$user"
+        chown 1000:1000 "$TARGET/home/$user"
+    fi
+
+    if [ -n "$timezone" ] && [ -e "$TARGET/usr/share/zoneinfo/$timezone" ]; then
+        ln -sf "/usr/share/zoneinfo/$timezone" "$TARGET/etc/localtime"
+    fi
+}
+
+install_bootloader() {
+    local disk="$1" esp="/dev/block/${disk}p1" root_uuid efi
+
+    root_uuid=$(partition_uuid "$disk" 2)
+    [ -n "$root_uuid" ] || die "Could not read the root partition GUID."
+
+    case "$(arch)" in
+        x86_64) efi=BOOTX64.EFI ;;
+        aarch64) efi=BOOTAA64.EFI ;;
+        riscv64) efi=BOOTRISCV64.EFI ;;
+        loongarch64) efi=BOOTLOONGARCH64.EFI ;;
+        *) die "Unsupported architecture $(arch)." ;;
+    esac
+
+    run zinnia-mkinitramfs "$TARGET" /tmp/initramfs.tar ||
+        die "Could not build the initramfs."
+
+    sed -e "s|@ROOT@|PARTUUID=${root_uuid}|g" \
+        "$LIMINE_CONFIG" >/tmp/limine.conf ||
+        die "Could not generate limine.conf."
+
+    run mmd -i "$esp" ::/EFI ::/EFI/BOOT || die "Could not create ESP directories."
+    run mcopy -i "$esp" "$TARGET/usr/share/limine/${efi}" "::/EFI/BOOT/${efi}" ||
+        die "Could not copy the bootloader to the ESP."
+    run mcopy -i "$esp" "$TARGET/usr/share/zinnia/zinnia" ::/zinnia ||
+        die "Could not copy the kernel to the ESP."
+    run mcopy -i "$esp" /tmp/initramfs.tar ::/initramfs.tar ||
+        die "Could not copy the initramfs to the ESP."
+    run mcopy -i "$esp" /tmp/limine.conf ::/limine.conf ||
+        die "Could not copy limine.conf to the ESP."
+}
+
+finish() {
+    run sync
+    run umount "$TARGET"
+
+    if dialog --backtitle "$TITLE" --title "Done" \
+        --yes-label "Reboot" --no-label "Shell" \
+        --yesno "Zinnia has been installed.\n\nRemove the installation medium before rebooting." 9 62; then
+        reboot
+    fi
+}
+
+main() {
+    need_root
+
+    dialog --backtitle "$TITLE" --title "Welcome" \
+        --msgbox "This will install Zinnia onto a disk in this machine.\n\nA network connection is required: packages are downloaded\nfrom the Zinnia repository." 11 64
+
+    local disk hostname root_password user user_password timezone repo
+    local root_hash user_hash=""
+
+    disk=$(pick_disk) || exit 1
+
+    dialog --backtitle "$TITLE" --title "Confirm" \
+        --defaultno --yesno "Everything on $disk will be destroyed.\n\nContinue?" 8 62 || exit 1
+
+    hostname=$(ask "Hostname" "Host name for the new system:" "zinnia") || exit 1
+    root_password=$(ask_password "Root password") || exit 1
+    user=$(ask "User" "Name of an ordinary user (empty for none):" "zinnia") || exit 1
+    if [ -n "$user" ]; then
+        user_password=$(ask_password "Password for $user") || exit 1
+    fi
+    timezone=$(ask "Time zone" "Time zone, for example Europe/Berlin:" "UTC") || exit 1
+    repo=$(ask "Repository" "xbps repository to install from:" "$DEFAULT_REPO") || exit 1
+
+    dialog --backtitle "$TITLE" --title "Ready" \
+        --defaultno --yesno "Install Zinnia with these settings?\n\nDisk:      $disk\nHost name: $hostname\nUser:      ${user:-none}\nTime zone: $timezone\nRepository: $repo" 14 66 || exit 1
+
+    root_hash=$(printf '%s' "$root_password" | openssl passwd -6 -stdin) ||
+        die "Could not hash the root password."
+    if [ -n "$user" ]; then
+        user_hash=$(printf '%s' "$user_password" | openssl passwd -6 -stdin) ||
+            die "Could not hash the user password."
+    fi
+
+    dialog --backtitle "$TITLE" --title "Installing" \
+        --infobox "Partitioning $disk..." 5 52
+    partition_disk "$disk"
+
+    dialog --backtitle "$TITLE" --title "Installing" \
+        --infobox "Creating file systems..." 5 52
+    format_partitions "$disk"
+
+    dialog --backtitle "$TITLE" --title "Installing" \
+        --infobox "Downloading and installing the base system.\nThis takes a while." 6 52
+    install_base "$disk" "$repo"
+
+    dialog --backtitle "$TITLE" --title "Installing" \
+        --infobox "Configuring the new system..." 5 52
+    configure_system "$hostname" "$root_hash" "$user" "$user_hash" "$timezone"
+
+    dialog --backtitle "$TITLE" --title "Installing" \
+        --infobox "Installing the bootloader..." 5 52
+    install_bootloader "$disk"
+
+    finish
+}
+
+main "$@"

@@ -1,0 +1,4 @@
+type = process
+command = /usr/bin/console /dev/tty1 /usr/bin/zinnia-live-session
+depends-on = devd
+restart = yes

@@ -42,7 +42,7 @@ sudo mkdir -p "$tmpdir/root/boot/EFI/BOOT"
 sudo rsync -avr --checksum "$SYSTEM_ROOT/" "$tmpdir/root"
 
 # Install kernel
-sudo cp "$BUILD_DIR/sysroot/usr/share/zinnia/zinnia" "$tmpdir/root/boot/zinnia"
+sudo cp "$SYSTEM_ROOT/usr/share/zinnia/zinnia" "$tmpdir/root/boot/zinnia"
 
 # Install initrd
 sudo cp $INITRAMFS_PATH "$tmpdir/root/boot/initramfs.tar"
@@ -60,5 +60,14 @@ case "${ARCH}" in
         ;;
 esac
 
-sudo cp "$BUILD_DIR/sysroot/usr/share/limine/${efi_filename}" "$tmpdir/root/boot/EFI/BOOT/"
-sudo cp "$ROOT_DIR/support/limine.conf" "$tmpdir/root/boot/"
+sudo cp "$SYSTEM_ROOT/usr/share/limine/${efi_filename}" "$tmpdir/root/boot/EFI/BOOT/"
+
+ROOT_GUID=$(sudo sgdisk -i 2 "$LOOPDEV" | sed -n 's/^Partition unique GUID: //p' | tr 'A-Z' 'a-z')
+if [ -z "$ROOT_GUID" ]; then
+    echo "Could not determine the root partition GUID"
+    exit 1
+fi
+
+sed -e "s|@ROOT@|PARTUUID=${ROOT_GUID}|g" \
+    "$ROOT_DIR/extras/zinnia-installer/limine.conf.in" |
+    sudo tee "$tmpdir/root/boot/limine.conf" >/dev/null

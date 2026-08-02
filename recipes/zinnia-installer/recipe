@@ -1,0 +1,15 @@
+#! /bin/sh
+
+version=0.1
+revision=2
+deps="base-system dialog gptfdisk e2fsprogs dosfstools mtools openssl tar"
+skip_pkg_check=yes
+
+package() {
+    install -Dm755 "${base_dir}/extras/zinnia-installer/zinnia-installer" \
+        "${dest_dir}/usr/bin/zinnia-installer"
+    install -Dm755 "${base_dir}/extras/zinnia-installer/zinnia-mkinitramfs" \
+        "${dest_dir}/usr/bin/zinnia-mkinitramfs"
+    install -Dm644 "${base_dir}/extras/zinnia-installer/limine.conf.in" \
+        "${dest_dir}${prefix}/share/zinnia/limine.conf.in"
+}

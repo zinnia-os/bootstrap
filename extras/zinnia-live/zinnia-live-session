@@ -1,0 +1,5 @@
+#!/bin/bash
+
+/usr/bin/zinnia-installer
+
+exec /bin/bash -l
