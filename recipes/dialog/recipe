@@ -1,0 +1,27 @@
+#! /bin/sh
+
+_snapshot=20240619
+version=1.3.${_snapshot}
+revision=1
+tarball_url="https://invisible-island.net/archives/dialog/dialog-1.3-${_snapshot}.tgz"
+tarball_blake2b="43f56630d106cb972453e915180a4e2ffb0b9ff57b6699e20daf391545653c82f7c971368a08a81616fd96d18b688e380b0ba486e2aab76e4b25892bb7239c91"
+hostdeps="gcc pkg-config"
+deps="core-libs ncurses"
+
+configure() {
+    autotools_configure \
+        --with-ncursesw \
+        --with-curses-dir="${sysroot}${prefix}" \
+        --disable-nls \
+        --disable-rpath-hack
+}
+
+build() {
+    make -j${parallelism}
+}
+
+package() {
+    make install DESTDIR="${dest_dir}"
+
+    post_package_strip
+}
