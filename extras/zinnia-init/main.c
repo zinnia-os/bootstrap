@@ -73,6 +73,28 @@ static void load_modules(const char *cmdline) {
   closedir(dir);
 }
 
+static const char *cmdline_option(const char *cmdline, const char *key,
+                                  char *out, size_t size) {
+  size_t key_len = strlen(key);
+
+  const char *p = cmdline;
+  while (*p) {
+    if (strncmp(p, key, key_len) == 0) {
+      const char *val = p + key_len;
+      size_t i = 0;
+      while (*val && *val != ' ' && *val != '\n' && i < size - 1)
+        out[i++] = *val++;
+      out[i] = '\0';
+      return out;
+    }
+    while (*p && *p != ' ')
+      p++;
+    while (*p == ' ')
+      p++;
+  }
+  return NULL;
+}
+
 static int wait_for_path(const char *path, int timeout_ms) {
   const int interval_ms = 50;
   int waited = 0;
@@ -104,17 +126,37 @@ int main(int argc, char **argv, char **envp) {
 
   load_modules(line_buf);
 
-  printf("init: Mounting ext2 root partition on /realfs\n");
+  static char root_buf[256];
+  static char root_path[320];
+  static char fstype_buf[64];
 
-  // Mount the root partition
-  // TODO: Don't use a fixed uuid for this.
   const char *root_dev =
       "/dev/block/parttype-0fc63daf-8483-4772-8e79-3d69d8477de4";
+  const char *root_spec =
+      cmdline_option(line_buf, "root=", root_buf, sizeof(root_buf));
+  if (root_spec) {
+    if (strncmp(root_spec, "PARTUUID=", 9) == 0) {
+      snprintf(root_path, sizeof(root_path), "/dev/block/partuuid-%s",
+               root_spec + 9);
+      root_dev = root_path;
+    } else {
+      root_dev = root_spec;
+    }
+  }
+
+  const char *root_fstype =
+      cmdline_option(line_buf, "rootfstype=", fstype_buf, sizeof(fstype_buf));
+  if (!root_fstype)
+    root_fstype = "ext2";
+
+  printf("init: Mounting %s root %s on /realfs\n", root_fstype, root_dev);
+
+  // Mount the root partition
   if (wait_for_path(root_dev, 10000) != 0) {
     fprintf(stderr, "init: timed out waiting for root device %s\n", root_dev);
     return 1;
   }
-  e = mount("ext2", "/realfs", 0, root_dev);
+  e = mount(root_fstype, "/realfs", 0, root_dev);
   if (e)
     return e;
 
@@ -146,36 +188,17 @@ int main(int argc, char **argv, char **envp) {
 
   printf("init: Mounting tmpfs on /dev/shm\n");
 
-  // POSIX shared memory (shm_open(3)) is backed by files under /dev/shm.
-  // Multiprocess apps such as WebKitGTK (UI/Web/Network processes share render
-  // buffers and out-of-line IPC via shm_open + mmap(MAP_SHARED)) require it.
   mkdir("/dev/shm", 01777);
   e = mount("tmpfs", "/dev/shm", 0, NULL);
   if (e)
     return e;
 
   // Parse rd.init= from kernel command line
-  const char *init_path = "/usr/bin/dinit";
-  const char *prefix = "rd.init=";
-  size_t prefix_len = strlen(prefix);
   static char init_buf[256];
-
-  char *p = line_buf;
-  while (*p) {
-    if (strncmp(p, prefix, prefix_len) == 0) {
-      p += prefix_len;
-      size_t i = 0;
-      while (*p && *p != ' ' && i < sizeof(init_buf) - 1)
-        init_buf[i++] = *p++;
-      init_buf[i] = '\0';
-      init_path = init_buf;
-      break;
-    }
-    while (*p && *p != ' ')
-      p++;
-    while (*p == ' ')
-      p++;
-  }
+  const char *init_path =
+      cmdline_option(line_buf, "rd.init=", init_buf, sizeof(init_buf));
+  if (!init_path)
+    init_path = "/usr/bin/dinit";
 
   printf("init: Running init from disk: %s\n", init_path);
 
