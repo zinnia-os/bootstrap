@@ -1,9 +1,10 @@
 #! /bin/sh
 
 version=1.47.3
-revision=1
+revision=2
 tarball_url="https://www.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v${version}/e2fsprogs-${version}.tar.xz"
 tarball_blake2b="5d83a47d24f28fb4e0a6e8a145b146e6ff0de4463a16720790041f6fe750e595d749e730016bc3a9255c9ed3172b15e37f0fa8af4e8463f724f6bd221a9fa161"
+imagedeps="build-essential"
 hostdeps="gcc pkg-config"
 deps="core-libs"
 
