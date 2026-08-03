@@ -82,3 +82,16 @@ index 515a75d..75cc25d 100644
  #else // Not Windows
  #include <uuid/uuid.h>
  typedef uuid_t my_uuid_t;
+diff --git gptfdisk-clean/gptcurses.cc gptfdisk-workdir/gptcurses.cc
+index b476700..35d64b2 100644
+--- gptfdisk-clean/gptcurses.cc
++++ gptfdisk-workdir/gptcurses.cc
+@@ -23,7 +23,7 @@
+ #include <iostream>
+ #include <string>
+ #include <sstream>
+-#if defined (__APPLE__) || (__FreeBSD__)
++#if defined (__APPLE__) || defined (__FreeBSD__) || defined (__zinnia__)
+ #include <ncurses.h>
+ #else
+ #include <ncursesw/ncurses.h>
