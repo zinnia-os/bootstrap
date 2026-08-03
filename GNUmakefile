@@ -25,7 +25,7 @@ build-$(ARCH)/.jinx-parameters:
 	@cd build-$(ARCH) && ../jinx/jinx init .. ARCH=$(ARCH)
 
 MINIMAL_PKGS = base-system
-LIVE_PKGS = zinnia-live
+LIVE_PKGS = zinnia-installer zinnia-live
 
 # Build only a minimal selection of packages
 .PHONY: minimal-install

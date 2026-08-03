@@ -8,7 +8,18 @@ OUTPUT="${2:-/boot/initramfs.tar}"
 STAGE="$(mktemp -d)"
 
 cleanup() {
-    rm -rf "$STAGE"
+    rm -f -- \
+        "$STAGE/init" \
+        "$STAGE/usr/bin/zinnia-init" \
+        "$STAGE/usr/share/zinnia/modules/"*.kso
+    rmdir -- \
+        "$STAGE/realfs" \
+        "$STAGE/usr/bin" \
+        "$STAGE/usr/share/zinnia/modules" \
+        "$STAGE/usr/share/zinnia" \
+        "$STAGE/usr/share" \
+        "$STAGE/usr" \
+        "$STAGE" 2>/dev/null || true
 }
 
 trap cleanup EXIT

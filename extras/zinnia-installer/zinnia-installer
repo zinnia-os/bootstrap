@@ -13,9 +13,52 @@ export MTOOLS_SKIP_CHECK=1
 
 : >"$LOG"
 
+progress_stop() {
+    if [ -n "${PROGRESS_STATE:-}" ]; then
+        printf 'done\n' >"$PROGRESS_STATE"
+    fi
+    if [ -n "${PROGRESS_PID:-}" ]; then
+        wait "$PROGRESS_PID" 2>/dev/null || true
+        unset PROGRESS_PID
+    fi
+    if [ -n "${PROGRESS_STATE:-}" ]; then
+        rm -f -- "$PROGRESS_STATE"
+        unset PROGRESS_STATE
+    fi
+}
+
+progress() {
+    local message="$1" status
+    shift
+
+    PROGRESS_STATE=$(mktemp) || die "Could not create progress state file."
+    while [ ! -s "$PROGRESS_STATE" ]; do
+        current=$(tail -c 512 "$LOG" 2>/dev/null | tr '\r' '\n' | tail -n 1)
+        current=${current//XXX/}
+        percent=0
+        if [[ "$current" =~ ([0-9]{1,3})% ]]; then
+            percent=${BASH_REMATCH[1]}
+        fi
+        if [ "$percent" -gt 100 ]; then
+            percent=0
+        fi
+        printf 'XXX\n%s\n%s\n\n%s\nXXX\n' "$percent" "$message" "$current"
+        sleep 0.2
+    done | dialog --backtitle "$TITLE" --title "Installing" \
+        --gauge "$message" 9 74 0 &
+    PROGRESS_PID=$!
+
+    "$@"
+    status=$?
+    progress_stop
+    return "$status"
+}
+
 log() {
     echo "== $*" >>"$LOG"
 }
+
+trap progress_stop EXIT
 
 run() {
     log "$*"
@@ -23,6 +66,7 @@ run() {
 }
 
 die() {
+    progress_stop
     dialog --backtitle "$TITLE" --title "Installation failed" \
         --msgbox "$1\n\nLast lines of $LOG:\n\n$(tail -n 12 "$LOG")" 22 74
     exit 1
@@ -165,7 +209,7 @@ install_base() {
     run mount ext2 "$TARGET" "/dev/block/${disk}p2" ||
         die "Could not mount ${disk}p2 on $TARGET."
 
-    run env XBPS_ARCH="$(arch)" xbps-install -S -y \
+    printf 'y\n' | run env XBPS_ARCH="$(arch)" xbps-install -S -y \
         -r "$TARGET" -R "${repo}/$(arch)" base-system ||
         die "Could not install the base system from ${repo}."
 }
@@ -234,6 +278,8 @@ finish() {
         --yesno "Zinnia has been installed.\n\nRemove the installation medium before rebooting." 9 62; then
         reboot
     fi
+
+    exec /bin/bash -l
 }
 
 main() {
@@ -269,25 +315,13 @@ main() {
             die "Could not hash the user password."
     fi
 
-    dialog --backtitle "$TITLE" --title "Installing" \
-        --infobox "Partitioning $disk..." 5 52
-    partition_disk "$disk"
-
-    dialog --backtitle "$TITLE" --title "Installing" \
-        --infobox "Creating file systems..." 5 52
-    format_partitions "$disk"
-
-    dialog --backtitle "$TITLE" --title "Installing" \
-        --infobox "Downloading and installing the base system.\nThis takes a while." 6 52
-    install_base "$disk" "$repo"
-
-    dialog --backtitle "$TITLE" --title "Installing" \
-        --infobox "Configuring the new system..." 5 52
-    configure_system "$hostname" "$root_hash" "$user" "$user_hash" "$timezone"
-
-    dialog --backtitle "$TITLE" --title "Installing" \
-        --infobox "Installing the bootloader..." 5 52
-    install_bootloader "$disk"
+    progress "Partitioning $disk..." partition_disk "$disk"
+    progress "Creating file systems..." format_partitions "$disk"
+    progress "Downloading and installing the base system.\nThis takes a while." \
+        install_base "$disk" "$repo"
+    progress "Configuring the new system..." \
+        configure_system "$hostname" "$root_hash" "$user" "$user_hash" "$timezone"
+    progress "Installing the bootloader..." install_bootloader "$disk"
 
     finish
 }

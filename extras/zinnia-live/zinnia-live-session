@@ -1,5 +1,13 @@
 #!/bin/bash
 
-/usr/bin/zinnia-installer
+while true; do
+    /usr/bin/zinnia-installer
 
-exec /bin/bash -l
+    if dialog --backtitle "Zinnia Installer" --title "Installer exited" \
+        --yes-label "Retry" --no-label "Shell" \
+        --yesno "The installer exited before installation completed.\n\nRetry the installer or open a recovery shell?" 10 62; then
+        continue
+    fi
+
+    exec /bin/bash -l
+done
