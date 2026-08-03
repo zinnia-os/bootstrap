@@ -1,7 +1,7 @@
 #! /bin/sh
 
 version=4.0.49
-revision=1
+revision=2
 tarball_url="https://ftp.gnu.org/gnu/mtools/mtools-${version}.tar.gz"
 tarball_blake2b="8377ff81b5a5f8fe25b76fbe5544077373878e0dda41fdecff65441d251241e925814dcc60c10acb9716fe72572600d6a31922950fc9d34269f9333ed3745604"
 hostdeps="gcc pkg-config"
@@ -12,6 +12,7 @@ prepare() {
 }
 
 configure() {
+        LIBS="-liconv" \
     autotools_configure \
         --without-x \
         --disable-floppyd
