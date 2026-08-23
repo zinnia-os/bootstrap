@@ -36,7 +36,7 @@ def build_command(args: argparse.Namespace) -> list[str]:
     image = Path(args.image) if args.image else build_dir / "zinnia.img"
     ovmf = ROOT / "ovmf" / f"ovmf-code-{arch}.fd"
 
-    cmd = [qemu, "-m", args.mem, "-smp", str(args.smp), "-no-reboot", "-no-shutdown"]
+    cmd = [qemu, "-m", args.mem, "-smp", str(args.smp)]
 
     if want_kvm(arch, args.kvm):
         cmd += ["-cpu", "host,migratable=off", "-accel", "kvm"]
