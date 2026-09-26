@@ -1,9 +1,9 @@
 #! /bin/sh
 
-version=12.5.2
+version=12.9.0
 revision=1
 tarball_url="https://github.com/Limine-Bootloader/Limine/releases/download/v${version}/limine-${version}.tar.gz"
-tarball_blake2b="c6ed1c1f5d14aae35f029e34e23c61bfd62c8d019a380b1b610235e3240837fd19fe4252c5fcdc9c61874b0c7fb5eb4e58c6a7fbf5da30e43f6c9a20e21710b3"
+tarball_blake2b="82bd8848dcfbf2982014d655a109810e8df2cc6a50d29dad97da9aa4d85b3609ec7d97481092fa214f306efc54fe4897dcd3fee5422f32c52bc9cc19b5cc346a"
 imagedeps="clang build-essential lld llvm mtools nasm"
 hostdeps="gcc binutils autoconf automake"
 deps="core-libs"
