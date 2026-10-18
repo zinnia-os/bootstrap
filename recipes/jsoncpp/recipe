@@ -1,0 +1,28 @@
+#! /bin/sh
+
+version=1.9.5
+revision=1
+git_url="https://github.com/open-source-parsers/jsoncpp.git"
+commit=5defb4ed1a4293b8e2bf641e16b156fb9de498cc
+imagedeps="build-essential"
+hostdeps="gcc cmake"
+deps="core-libs"
+
+configure() {
+    cmake_configure \
+        -DBUILD_SHARED_LIBS=ON \
+        -DJSONCPP_WITH_POST_BUILD_UNITTEST=OFF \
+        -DJSONCPP_WITH_TESTS=OFF \
+        -DJSONCPP_WITH_CMAKE_PACKAGE=ON \
+        -DJSONCPP_WITH_EXAMPLE=OFF
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}
