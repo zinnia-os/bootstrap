@@ -69,5 +69,5 @@ if [ -z "$ROOT_GUID" ]; then
 fi
 
 sed -e "s|@ROOT@|PARTUUID=${ROOT_GUID}|g" \
-    "$ROOT_DIR/extras/zinnia-installer/limine.conf.in" |
+    "$ROOT_DIR/support/limine.conf.in" |
     sudo tee "$tmpdir/root/boot/limine.conf" >/dev/null
