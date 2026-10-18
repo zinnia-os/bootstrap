@@ -1,3 +1,160 @@
+diff --git rust-rustix-clean/src/backend/libc/conv.rs rust-rustix-workdir/src/backend/libc/conv.rs
+index 1cb1fc9..49fb0f2 100644
+--- rust-rustix-clean/src/backend/libc/conv.rs
++++ rust-rustix-workdir/src/backend/libc/conv.rs
+@@ -78,5 +78,6 @@ pub(super) fn ret_c_int(raw: c::c_int) -> io::Result<c::c_int> {
+ #[cfg(any(
+     linux_kernel,
++    target_os = "zinnia",
+     all(target_os = "illumos", feature = "event"),
+     all(target_os = "redox", feature = "event")
+ ))]
+diff --git rust-rustix-clean/src/backend/libc/event/mod.rs rust-rustix-workdir/src/backend/libc/event/mod.rs
+index ff826fc..3748ad2 100644
+--- rust-rustix-clean/src/backend/libc/event/mod.rs
++++ rust-rustix-workdir/src/backend/libc/event/mod.rs
+@@ -5,5 +5,5 @@ pub(crate) mod types;
+ #[cfg_attr(windows, path = "windows_syscalls.rs")]
+ pub(crate) mod syscalls;
+ 
+-#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox"))]
++#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox", target_os = "zinnia"))]
+ pub mod epoll;
+diff --git rust-rustix-clean/src/backend/libc/event/syscalls.rs rust-rustix-workdir/src/backend/libc/event/syscalls.rs
+index 3827a2f..3f7893e 100644
+--- rust-rustix-clean/src/backend/libc/event/syscalls.rs
++++ rust-rustix-workdir/src/backend/libc/event/syscalls.rs
+@@ -1,10 +1,10 @@
+ //! libc syscalls supporting `rustix::event`.
+ 
+ use crate::backend::c;
+-#[cfg(any(linux_kernel, solarish, target_os = "redox"))]
++#[cfg(any(linux_kernel, solarish, target_os = "redox", target_os = "zinnia"))]
+ use crate::backend::conv::ret;
+ use crate::backend::conv::ret_c_int;
+-#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox"))]
++#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox", target_os = "zinnia"))]
+ use crate::backend::conv::ret_u32;
+ #[cfg(bsd)]
+ use crate::event::kqueue::Event;
+@@ -14,14 +14,20 @@ use crate::event::port::Event;
+     linux_kernel,
+     target_os = "freebsd",
+     target_os = "illumos",
+-    target_os = "espidf"
++    target_os = "espidf", target_os = "zinnia"
+ ))]
+ use crate::event::EventfdFlags;
+ #[cfg(any(bsd, linux_kernel, target_os = "wasi"))]
+ use crate::event::FdSetElement;
++#[cfg(target_os = "zinnia")]
++ use crate::backend::conv::borrowed_fd;
++#[cfg(target_os = "zinnia")]
++ use crate::fd::BorrowedFd;
++#[cfg(target_os = "zinnia")]
++ use core::ptr::{null, null_mut};
+ use crate::event::{PollFd, Timespec};
+ use crate::io;
+-#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox"))]
++#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox", target_os = "zinnia"))]
+ use crate::utils::as_ptr;
+ #[cfg(solarish)]
+ use core::mem::MaybeUninit;
+@@ -45,7 +51,7 @@ use {crate::backend::conv::borrowed_fd, crate::fd::BorrowedFd};
+     solarish,
+     target_os = "freebsd",
+     target_os = "illumos",
+-    target_os = "espidf",
++    target_os = "espidf", target_os = "zinnia",
+     target_os = "redox"
+ ))]
+ use {crate::backend::conv::ret_owned_fd, crate::fd::OwnedFd};
+@@ -54,7 +60,7 @@ use {crate::backend::conv::ret_owned_fd, crate::fd::OwnedFd};
+     linux_kernel,
+     target_os = "freebsd",
+     target_os = "illumos",
+-    target_os = "espidf"
++    target_os = "espidf", target_os = "zinnia"
+ ))]
+ pub(crate) fn eventfd(initval: u32, flags: EventfdFlags) -> io::Result<OwnedFd> {
+     #[cfg(linux_kernel)]
+@@ -80,7 +86,7 @@ pub(crate) fn eventfd(initval: u32, flags: EventfdFlags) -> io::Result<OwnedFd>
+         ret_owned_fd(eventfd(initval, bitflags_bits!(flags)))
+     }
+ 
+-    #[cfg(any(target_os = "illumos", target_os = "espidf"))]
++    #[cfg(any(target_os = "illumos", target_os = "espidf", target_os = "zinnia"))]
+     unsafe {
+         ret_owned_fd(c::eventfd(initval, bitflags_bits!(flags)))
+     }
+@@ -494,13 +500,13 @@ pub(crate) fn pause() {
+ }
+ 
+ #[inline]
+-#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox"))]
++#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox", target_os = "zinnia"))]
+ pub(crate) fn epoll_create(flags: super::epoll::CreateFlags) -> io::Result<OwnedFd> {
+     unsafe { ret_owned_fd(c::epoll_create1(bitflags_bits!(flags))) }
+ }
+ 
+ #[inline]
+-#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox"))]
++#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox", target_os = "zinnia"))]
+ pub(crate) fn epoll_add(
+     epoll: BorrowedFd<'_>,
+     source: BorrowedFd<'_>,
+@@ -521,7 +527,7 @@ pub(crate) fn epoll_add(
+ }
+ 
+ #[inline]
+-#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox"))]
++#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox", target_os = "zinnia"))]
+ pub(crate) fn epoll_mod(
+     epoll: BorrowedFd<'_>,
+     source: BorrowedFd<'_>,
+@@ -539,7 +545,7 @@ pub(crate) fn epoll_mod(
+ }
+ 
+ #[inline]
+-#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox"))]
++#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox", target_os = "zinnia"))]
+ pub(crate) fn epoll_del(epoll: BorrowedFd<'_>, source: BorrowedFd<'_>) -> io::Result<()> {
+     unsafe {
+         ret(c::epoll_ctl(
+@@ -552,7 +558,7 @@ pub(crate) fn epoll_del(epoll: BorrowedFd<'_>, source: BorrowedFd<'_>) -> io::Re
+ }
+ 
+ #[inline]
+-#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox"))]
++#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox", target_os = "zinnia"))]
+ pub(crate) unsafe fn epoll_wait(
+     epoll: BorrowedFd<'_>,
+     events: (*mut crate::event::epoll::Event, usize),
+diff --git rust-rustix-clean/src/backend/libc/event/types.rs rust-rustix-workdir/src/backend/libc/event/types.rs
+index a04d7e6..b55eecc 100644
+--- rust-rustix-clean/src/backend/libc/event/types.rs
++++ rust-rustix-workdir/src/backend/libc/event/types.rs
+@@ -1,9 +1,9 @@
+-#[cfg(any(linux_kernel, target_os = "freebsd", target_os = "illumos"))]
++#[cfg(any(linux_kernel, target_os = "freebsd", target_os = "illumos", target_os = "zinnia"))]
+ use crate::backend::c;
+ #[cfg(any(
+     linux_kernel,
+     target_os = "freebsd",
+     target_os = "illumos",
+-    target_os = "espidf"
++    target_os = "espidf", target_os = "zinnia"
+ ))]
+ use bitflags::bitflags;
+@@ -12,7 +12,7 @@ use bitflags::bitflags;
+     linux_kernel,
+     target_os = "freebsd",
+     target_os = "illumos",
+-    target_os = "espidf"
++    target_os = "espidf", target_os = "zinnia"
+ ))]
+ bitflags! {
+     /// `EFD_*` flags for use with [`eventfd`].
 diff --git rust-rustix-clean/src/backend/libc/fs/dir.rs rust-rustix-workdir/src/backend/libc/fs/dir.rs
 index 3c4c389..aeaba1c 100644
 --- rust-rustix-clean/src/backend/libc/fs/dir.rs
@@ -19,7 +176,7 @@ index 3c4c389..aeaba1c 100644
      #[inline]
      pub fn statfs(&self) -> io::Result<StatFs> {
 diff --git rust-rustix-clean/src/backend/libc/fs/syscalls.rs rust-rustix-workdir/src/backend/libc/fs/syscalls.rs
-index 8cbd3a2..886b30a 100644
+index 71bc8b0..e47c471 100644
 --- rust-rustix-clean/src/backend/libc/fs/syscalls.rs
 +++ rust-rustix-workdir/src/backend/libc/fs/syscalls.rs
 @@ -47,6 +47,7 @@ use crate::fs::SealFlags;
@@ -38,7 +195,7 @@ index 8cbd3a2..886b30a 100644
  )))]
  #[inline]
  pub(crate) fn statfs(filename: &CStr) -> io::Result<StatFs> {
-@@ -1582,6 +1584,7 @@ fn fstat_old(fd: BorrowedFd<'_>) -> io::Result<Stat> {
+@@ -1600,6 +1602,7 @@ fn fstat_old(fd: BorrowedFd<'_>) -> io::Result<Stat> {
      target_os = "redox",
      target_os = "vita",
      target_os = "wasi",
@@ -47,10 +204,10 @@ index 8cbd3a2..886b30a 100644
  pub(crate) fn fstatfs(fd: BorrowedFd<'_>) -> io::Result<StatFs> {
      let mut statfs = MaybeUninit::<StatFs>::uninit();
 diff --git rust-rustix-clean/src/backend/libc/fs/types.rs rust-rustix-workdir/src/backend/libc/fs/types.rs
-index d570c5b..a55bf36 100644
+index b8944ad..ce47f21 100644
 --- rust-rustix-clean/src/backend/libc/fs/types.rs
 +++ rust-rustix-workdir/src/backend/libc/fs/types.rs
-@@ -768,6 +768,7 @@ bitflags! {
+@@ -784,6 +784,7 @@ bitflags! {
              target_os = "haiku",
              target_os = "hurd",
              target_os = "wasi",
@@ -58,7 +215,7 @@ index d570c5b..a55bf36 100644
          )))]
          const KEEP_SIZE = bitcast!(c::FALLOC_FL_KEEP_SIZE);
          /// `FALLOC_FL_PUNCH_HOLE`
-@@ -778,6 +779,7 @@ bitflags! {
+@@ -794,6 +795,7 @@ bitflags! {
              target_os = "haiku",
              target_os = "hurd",
              target_os = "wasi",
@@ -66,7 +223,7 @@ index d570c5b..a55bf36 100644
          )))]
          const PUNCH_HOLE = bitcast!(c::FALLOC_FL_PUNCH_HOLE);
          /// `FALLOC_FL_NO_HIDE_STALE`
-@@ -793,6 +795,7 @@ bitflags! {
+@@ -809,6 +811,7 @@ bitflags! {
              target_os = "l4re",
              target_os = "linux",
              target_os = "wasi",
@@ -74,7 +231,7 @@ index d570c5b..a55bf36 100644
          )))]
          const NO_HIDE_STALE = bitcast!(c::FALLOC_FL_NO_HIDE_STALE);
          /// `FALLOC_FL_COLLAPSE_RANGE`
-@@ -804,6 +807,7 @@ bitflags! {
+@@ -820,6 +823,7 @@ bitflags! {
              target_os = "hurd",
              target_os = "emscripten",
              target_os = "wasi",
@@ -82,7 +239,7 @@ index d570c5b..a55bf36 100644
          )))]
          const COLLAPSE_RANGE = bitcast!(c::FALLOC_FL_COLLAPSE_RANGE);
          /// `FALLOC_FL_ZERO_RANGE`
-@@ -815,6 +819,7 @@ bitflags! {
+@@ -831,6 +835,7 @@ bitflags! {
              target_os = "hurd",
              target_os = "emscripten",
              target_os = "wasi",
@@ -90,7 +247,7 @@ index d570c5b..a55bf36 100644
          )))]
          const ZERO_RANGE = bitcast!(c::FALLOC_FL_ZERO_RANGE);
          /// `FALLOC_FL_INSERT_RANGE`
-@@ -826,6 +831,7 @@ bitflags! {
+@@ -842,6 +847,7 @@ bitflags! {
              target_os = "hurd",
              target_os = "emscripten",
              target_os = "wasi",
@@ -98,15 +255,14 @@ index d570c5b..a55bf36 100644
          )))]
          const INSERT_RANGE = bitcast!(c::FALLOC_FL_INSERT_RANGE);
          /// `FALLOC_FL_UNSHARE_RANGE`
-@@ -837,6 +843,7 @@ bitflags! {
+@@ -853,5 +859,6 @@ bitflags! {
              target_os = "hurd",
              target_os = "emscripten",
              target_os = "wasi",
 +            target_os = "zinnia",
          )))]
          const UNSHARE_RANGE = bitcast!(c::FALLOC_FL_UNSHARE_RANGE);
- 
-@@ -1048,6 +1055,7 @@ pub struct Stat {
+@@ -1064,6 +1071,7 @@ pub struct Stat {
      target_os = "redox",
      target_os = "vita",
      target_os = "wasi",
@@ -114,14 +270,405 @@ index d570c5b..a55bf36 100644
  )))]
  #[allow(clippy::module_name_repetitions)]
  pub type StatFs = c::statfs;
-@@ -1070,6 +1078,7 @@ pub type StatFs = c::statfs64;
+@@ -1086,5 +1094,6 @@ pub type StatFs = c::statfs64;
      target_os = "redox",
      target_os = "vita",
      target_os = "wasi",
 +    target_os = "zinnia",
  )))]
  pub type Fsid = c::fsid_t;
+diff --git rust-rustix-clean/src/backend/libc/mm/types.rs rust-rustix-workdir/src/backend/libc/mm/types.rs
+index 6f7d24f..3822f13 100644
+--- rust-rustix-clean/src/backend/libc/mm/types.rs
++++ rust-rustix-workdir/src/backend/libc/mm/types.rs
+@@ -42,6 +42,7 @@ bitflags! {
+         const GROWSUP = bitcast!(c::PROT_GROWSUP);
+         /// `PROT_GROWSDOWN`
+         #[cfg(linux_kernel)]
++#[cfg(not(target_os = "zinnia"))]
+         const GROWSDOWN = bitcast!(c::PROT_GROWSDOWN);
+         /// `PROT_SEM`
+         #[cfg(linux_raw_dep)]
+@@ -90,6 +91,7 @@ bitflags! {
+             target_os = "nto",
+             target_os = "redox",
+         )))]
++#[cfg(not(target_os = "zinnia"))]
+         const SHARED_VALIDATE = bitcast!(c::MAP_SHARED_VALIDATE);
+         /// `MAP_PRIVATE`
+         const PRIVATE = bitcast!(c::MAP_PRIVATE);
+@@ -104,6 +106,7 @@ bitflags! {
+             target_os = "nto",
+             target_os = "redox",
+         )))]
++#[cfg(not(target_os = "zinnia"))]
+         const DENYWRITE = bitcast!(c::MAP_DENYWRITE);
+         /// `MAP_FIXED`
+         const FIXED = bitcast!(c::MAP_FIXED);
+@@ -121,6 +124,7 @@ bitflags! {
+             target_os = "nto",
+             target_os = "redox",
+         )))]
++#[cfg(not(target_os = "zinnia"))]
+         const FIXED_NOREPLACE = bitcast!(c::MAP_FIXED_NOREPLACE);
+         /// `MAP_GROWSDOWN`
+         #[cfg(not(any(
+@@ -133,6 +137,7 @@ bitflags! {
+             target_os = "nto",
+             target_os = "redox",
+         )))]
++#[cfg(not(target_os = "zinnia"))]
+         const GROWSDOWN = bitcast!(c::MAP_GROWSDOWN);
+         /// `MAP_HUGETLB`
+         #[cfg(not(any(
+@@ -145,6 +150,7 @@ bitflags! {
+             target_os = "nto",
+             target_os = "redox",
+         )))]
++#[cfg(not(target_os = "zinnia"))]
+         const HUGETLB = bitcast!(c::MAP_HUGETLB);
+         /// `MAP_HUGE_2MB`
+         #[cfg(not(any(
+@@ -160,6 +166,7 @@ bitflags! {
+             target_os = "nto",
+             target_os = "redox",
+         )))]
++#[cfg(not(target_os = "zinnia"))]
+         const HUGE_2MB = bitcast!(c::MAP_HUGE_2MB);
+         /// `MAP_HUGE_1GB`
+         #[cfg(not(any(
+@@ -175,6 +182,7 @@ bitflags! {
+             target_os = "nto",
+             target_os = "redox",
+         )))]
++#[cfg(not(target_os = "zinnia"))]
+         const HUGE_1GB = bitcast!(c::MAP_HUGE_1GB);
+         /// `MAP_LOCKED`
+         #[cfg(not(any(
+@@ -187,6 +195,7 @@ bitflags! {
+             target_os = "nto",
+             target_os = "redox",
+         )))]
++#[cfg(not(target_os = "zinnia"))]
+         const LOCKED = bitcast!(c::MAP_LOCKED);
+         /// `MAP_NOCORE`
+         #[cfg(freebsdlike)]
+@@ -199,6 +208,7 @@ bitflags! {
+             target_os = "nto",
+             target_os = "redox",
+         )))]
++#[cfg(not(target_os = "zinnia"))]
+         const NORESERVE = bitcast!(c::MAP_NORESERVE);
+         /// `MAP_NOSYNC`
+         #[cfg(freebsdlike)]
+@@ -214,6 +224,7 @@ bitflags! {
+             target_os = "nto",
+             target_os = "redox",
+         )))]
++#[cfg(not(target_os = "zinnia"))]
+         const POPULATE = bitcast!(c::MAP_POPULATE);
+         /// `MAP_STACK`
+         #[cfg(not(any(
+@@ -225,6 +236,7 @@ bitflags! {
+             target_os = "hurd",
+             target_os = "redox",
+         )))]
++#[cfg(not(target_os = "zinnia"))]
+         const STACK = bitcast!(c::MAP_STACK);
+         /// `MAP_PREFAULT_READ`
+         #[cfg(target_os = "freebsd")]
+@@ -247,6 +259,7 @@ bitflags! {
+                 any(target_arch = "mips", target_arch = "mips32r6", target_arch = "mips64", target_arch = "mips64r6"),
+             ),
+         )))]
++#[cfg(not(target_os = "zinnia"))]
+         const SYNC = bitcast!(c::MAP_SYNC);
+         /// `MAP_UNINITIALIZED`
+         #[cfg(any())]
+@@ -287,6 +300,7 @@ bitflags! {
+     #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+     pub struct MsyncFlags: u32 {
+         /// `MS_SYNC`—Requests an update and waits for it to complete.
++#[cfg(not(target_os = "zinnia"))]
+         const SYNC = bitcast!(c::MS_SYNC);
+         /// `MS_ASYNC`—Specifies that an update be scheduled, but the call
+         /// returns immediately.
+diff --git rust-rustix-clean/src/backend/libc/net/msghdr.rs rust-rustix-workdir/src/backend/libc/net/msghdr.rs
+index f46ac7e..8fc2c11 100644
+--- rust-rustix-clean/src/backend/libc/net/msghdr.rs
++++ rust-rustix-workdir/src/backend/libc/net/msghdr.rs
+@@ -59,6 +59,7 @@ fn msg_iov_len(len: usize) -> c::c_int {
+     target_os = "haiku",
+     target_os = "hurd",
+     target_os = "nto",
++    target_os = "zinnia",
+ ))]
+ #[inline]
+ fn msg_control_len(len: usize) -> c::socklen_t {
+@@ -81,6 +82,7 @@ fn msg_control_len(len: usize) -> c::socklen_t {
+     target_os = "nto",
+     target_os = "vita",
+     target_os = "wasi",
++    target_os = "zinnia",
+ )))]
+ #[inline]
+ fn msg_control_len(len: usize) -> c::size_t {
+diff --git rust-rustix-clean/src/backend/libc/net/send_recv.rs rust-rustix-workdir/src/backend/libc/net/send_recv.rs
+index 4b67f2c..b408280 100644
+--- rust-rustix-clean/src/backend/libc/net/send_recv.rs
++++ rust-rustix-workdir/src/backend/libc/net/send_recv.rs
+@@ -100,6 +100,7 @@ bitflags! {
+             target_os = "redox",
+             target_os = "vita",
+         )))]
++        #[cfg(not(target_os = "zinnia"))]
+         const ERRQUEUE = bitcast!(c::MSG_ERRQUEUE);
+         /// `MSG_OOB`
+         const OOB = bitcast!(c::MSG_OOB);
+diff --git rust-rustix-clean/src/backend/libc/process/syscalls.rs rust-rustix-workdir/src/backend/libc/process/syscalls.rs
+index 3c67f2c..57b214b 100644
+--- rust-rustix-clean/src/backend/libc/process/syscalls.rs
++++ rust-rustix-workdir/src/backend/libc/process/syscalls.rs
+@@ -164,6 +164,7 @@ pub(crate) fn nice(inc: i32) -> io::Result<i32> {
+     target_os = "wasi"
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ pub(crate) fn getpriority_user(uid: Uid) -> io::Result<i32> {
+     libc_errno::set_errno(libc_errno::Errno(0));
+     let r = unsafe { c::getpriority(c::PRIO_USER, uid.as_raw() as _) };
+@@ -182,6 +183,7 @@ pub(crate) fn getpriority_user(uid: Uid) -> io::Result<i32> {
+     target_os = "wasi"
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ pub(crate) fn getpriority_pgrp(pgid: Option<Pid>) -> io::Result<i32> {
+     libc_errno::set_errno(libc_errno::Errno(0));
+     let r = unsafe { c::getpriority(c::PRIO_PGRP, Pid::as_raw(pgid) as _) };
+@@ -200,6 +202,7 @@ pub(crate) fn getpriority_pgrp(pgid: Option<Pid>) -> io::Result<i32> {
+     target_os = "wasi"
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ pub(crate) fn getpriority_process(pid: Option<Pid>) -> io::Result<i32> {
+     libc_errno::set_errno(libc_errno::Errno(0));
+     let r = unsafe { c::getpriority(c::PRIO_PROCESS, Pid::as_raw(pid) as _) };
+@@ -218,6 +221,7 @@ pub(crate) fn getpriority_process(pid: Option<Pid>) -> io::Result<i32> {
+     target_os = "wasi"
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ pub(crate) fn setpriority_user(uid: Uid, priority: i32) -> io::Result<()> {
+     unsafe { ret(c::setpriority(c::PRIO_USER, uid.as_raw() as _, priority)) }
+ }
+@@ -230,6 +234,7 @@ pub(crate) fn setpriority_user(uid: Uid, priority: i32) -> io::Result<()> {
+     target_os = "wasi"
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ pub(crate) fn setpriority_pgrp(pgid: Option<Pid>, priority: i32) -> io::Result<()> {
+     unsafe {
+         ret(c::setpriority(
+@@ -248,6 +253,7 @@ pub(crate) fn setpriority_pgrp(pgid: Option<Pid>, priority: i32) -> io::Result<(
+     target_os = "wasi"
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ pub(crate) fn setpriority_process(pid: Option<Pid>, priority: i32) -> io::Result<()> {
+     unsafe {
+         ret(c::setpriority(
+@@ -394,6 +400,7 @@ pub(crate) fn _waitpid(
+     target_os = "wasi",
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ pub(crate) fn waitid(id: WaitId<'_>, options: WaitIdOptions) -> io::Result<Option<WaitIdStatus>> {
+     // Get the id to wait on.
+     match id {
+@@ -417,6 +424,7 @@ pub(crate) fn waitid(id: WaitId<'_>, options: WaitIdOptions) -> io::Result<Optio
+     target_os = "wasi",
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ fn _waitid_all(options: WaitIdOptions) -> io::Result<Option<WaitIdStatus>> {
+     // `waitid` can return successfully without initializing the struct (no
+     // children found when using `WNOHANG`)
+@@ -443,6 +451,7 @@ fn _waitid_all(options: WaitIdOptions) -> io::Result<Option<WaitIdStatus>> {
+     target_os = "wasi",
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ fn _waitid_pid(pid: Pid, options: WaitIdOptions) -> io::Result<Option<WaitIdStatus>> {
+     // `waitid` can return successfully without initializing the struct (no
+     // children found when using `WNOHANG`)
+@@ -469,6 +478,7 @@ fn _waitid_pid(pid: Pid, options: WaitIdOptions) -> io::Result<Option<WaitIdStat
+     target_os = "wasi",
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ fn _waitid_pgid(pgid: Option<Pid>, options: WaitIdOptions) -> io::Result<Option<WaitIdStatus>> {
+     // `waitid` can return successfully without initializing the struct (no
+     // children found when using `WNOHANG`)
+@@ -487,5 +497,6 @@ fn _waitid_pgid(pgid: Option<Pid>, options: WaitIdOptions) -> io::Result<Option<
+ #[cfg(target_os = "linux")]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ fn _waitid_pidfd(fd: BorrowedFd<'_>, options: WaitIdOptions) -> io::Result<Option<WaitIdStatus>> {
+     // `waitid` can return successfully without initializing the struct (no
+     // children found when using `WNOHANG`)
+diff --git rust-rustix-clean/src/backend/libc/process/types.rs rust-rustix-workdir/src/backend/libc/process/types.rs
+index 4771dda..e900623 100644
+--- rust-rustix-clean/src/backend/libc/process/types.rs
++++ rust-rustix-workdir/src/backend/libc/process/types.rs
+@@ -68,6 +68,7 @@ pub enum Resource {
+         target_os = "hurd",
+         target_os = "nto",
+     )))]
++#[cfg(not(target_os = "zinnia"))]
+     Locks = bitcast!(c::RLIMIT_LOCKS),
+     /// `RLIMIT_SIGPENDING`
+     #[cfg(not(any(
+@@ -79,6 +80,7 @@ pub enum Resource {
+         target_os = "hurd",
+         target_os = "nto",
+     )))]
++#[cfg(not(target_os = "zinnia"))]
+     Sigpending = bitcast!(c::RLIMIT_SIGPENDING),
+     /// `RLIMIT_MSGQUEUE`
+     #[cfg(not(any(
+@@ -90,6 +92,7 @@ pub enum Resource {
+         target_os = "hurd",
+         target_os = "nto",
+     )))]
++#[cfg(not(target_os = "zinnia"))]
+     Msgqueue = bitcast!(c::RLIMIT_MSGQUEUE),
+     /// `RLIMIT_NICE`
+     #[cfg(not(any(
+@@ -101,6 +104,7 @@ pub enum Resource {
+         target_os = "hurd",
+         target_os = "nto",
+     )))]
++#[cfg(not(target_os = "zinnia"))]
+     Nice = bitcast!(c::RLIMIT_NICE),
+     /// `RLIMIT_RTPRIO`
+     #[cfg(not(any(
+@@ -112,6 +116,7 @@ pub enum Resource {
+         target_os = "hurd",
+         target_os = "nto",
+     )))]
++#[cfg(not(target_os = "zinnia"))]
+     Rtprio = bitcast!(c::RLIMIT_RTPRIO),
+     /// `RLIMIT_RTTIME`
+     #[cfg(not(any(
+@@ -125,5 +130,6 @@ pub enum Resource {
+         target_os = "hurd",
+         target_os = "nto",
+     )))]
++#[cfg(not(target_os = "zinnia"))]
+     Rttime = bitcast!(c::RLIMIT_RTTIME),
+ }
+diff --git rust-rustix-clean/src/backend/libc/system/syscalls.rs rust-rustix-workdir/src/backend/libc/system/syscalls.rs
+index 0e8a7b3..60ae70f 100644
+--- rust-rustix-clean/src/backend/libc/system/syscalls.rs
++++ rust-rustix-workdir/src/backend/libc/system/syscalls.rs
+@@ -55,6 +55,7 @@ pub(crate) fn sysinfo() -> Sysinfo {
+     target_os = "vita",
+     target_os = "wasi"
+ )))]
++#[cfg(not(target_os = "zinnia"))]
+ pub(crate) fn sethostname(name: &[u8]) -> io::Result<()> {
+     unsafe {
+         ret(c::sethostname(
+@@ -77,6 +78,7 @@ pub(crate) fn sethostname(name: &[u8]) -> io::Result<()> {
+     target_os = "vita",
+     target_os = "wasi",
+ )))]
++#[cfg(not(target_os = "zinnia"))]
+ pub(crate) fn setdomainname(name: &[u8]) -> io::Result<()> {
+     unsafe {
+         ret(c::setdomainname(
+@@ -88,5 +90,6 @@ pub(crate) fn setdomainname(name: &[u8]) -> io::Result<()> {
+ // <https://github.com/rust-lang/libc/pull/4212>
+ #[cfg(target_os = "android")]
++#[cfg(not(target_os = "zinnia"))]
+ pub(crate) fn setdomainname(name: &[u8]) -> io::Result<()> {
+     syscall! {
+         fn setdomainname(
+diff --git rust-rustix-clean/src/backend/libc/thread/syscalls.rs rust-rustix-workdir/src/backend/libc/thread/syscalls.rs
+index 84356fe..22a28d2 100644
+--- rust-rustix-clean/src/backend/libc/thread/syscalls.rs
++++ rust-rustix-workdir/src/backend/libc/thread/syscalls.rs
+@@ -59,6 +59,7 @@ weak!(fn __nanosleep64(*const LibcTimespec, *mut LibcTimespec) -> c::c_int);
+     target_os = "wasi",
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ pub(crate) fn clock_nanosleep_relative(id: ClockId, request: &Timespec) -> NanosleepRelativeResult {
+     // Old 32-bit version: libc has `clock_nanosleep` but it is not y2038 safe
+     // by default. But there may be a `__clock_nanosleep_time64` we can use.
+@@ -119,6 +120,7 @@ pub(crate) fn clock_nanosleep_relative(id: ClockId, request: &Timespec) -> Nanos
+         target_os = "vita"
+     ))
+ ))]
++#[cfg(not(target_os = "zinnia"))]
+ fn clock_nanosleep_relative_old(
+     id: crate::clockid::ClockId,
+     request: &Timespec,
+@@ -170,6 +172,7 @@ fn clock_nanosleep_relative_old(
+     target_os = "wasi",
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ pub(crate) fn clock_nanosleep_absolute(id: ClockId, request: &Timespec) -> io::Result<()> {
+     // Old 32-bit version: libc has `clock_nanosleep` but it is not y2038 safe
+     // by default. But there may be a `__clock_nanosleep_time64` we can use.
+@@ -223,5 +226,6 @@ pub(crate) fn clock_nanosleep_absolute(id: ClockId, request: &Timespec) -> io::R
+         target_os = "vita"
+     ))
+ ))]
++#[cfg(not(target_os = "zinnia"))]
+ fn clock_nanosleep_absolute_old(id: crate::clockid::ClockId, request: &Timespec) -> io::Result<()> {
+     let flags = c::TIMER_ABSTIME;
+diff --git rust-rustix-clean/src/backend/libc/time/syscalls.rs rust-rustix-workdir/src/backend/libc/time/syscalls.rs
+index 8c730ce..3a096d9 100644
+--- rust-rustix-clean/src/backend/libc/time/syscalls.rs
++++ rust-rustix-workdir/src/backend/libc/time/syscalls.rs
+@@ -264,6 +264,7 @@ fn clock_gettime_dynamic_old(id: c::clockid_t) -> io::Result<Timespec> {
+     all(apple, not(target_os = "macos"))
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ pub(crate) fn clock_settime(id: ClockId, timespec: Timespec) -> io::Result<()> {
+     // Old 32-bit version: libc has `clock_gettime` but it is not y2038 safe by
+     // default. But there may be a `__clock_settime64` we can use.
+diff --git rust-rustix-clean/src/event/mod.rs rust-rustix-workdir/src/event/mod.rs
+index 29dfc22..43b4474 100644
+--- rust-rustix-clean/src/event/mod.rs
++++ rust-rustix-workdir/src/event/mod.rs
+@@ -1,12 +1,12 @@
+ //! Event operations.
  
+-#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox"))]
++#[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox", target_os = "zinnia"))]
+ pub mod epoll;
+ #[cfg(any(
+     linux_kernel,
+     target_os = "freebsd",
+     target_os = "illumos",
+-    target_os = "espidf"
++    target_os = "espidf", target_os = "zinnia"
+ ))]
+ mod eventfd;
+ #[cfg(bsd)]
+@@ -24,7 +24,7 @@ pub use crate::timespec::{Nsecs, Secs, Timespec};
+     linux_kernel,
+     target_os = "freebsd",
+     target_os = "illumos",
+-    target_os = "espidf"
++    target_os = "espidf", target_os = "zinnia"
+ ))]
+ pub use eventfd::{eventfd, EventfdFlags};
+ #[cfg(not(any(windows, target_os = "redox", target_os = "wasi")))]
 diff --git rust-rustix-clean/src/fs/abs.rs rust-rustix-workdir/src/fs/abs.rs
 index 6642fee..3ccc24b 100644
 --- rust-rustix-clean/src/fs/abs.rs
@@ -163,10 +710,42 @@ index 61cd3f4..31ad783 100644
  #[inline]
  pub fn fstatfs<Fd: AsFd>(fd: Fd) -> io::Result<StatFs> {
 diff --git rust-rustix-clean/src/ioctl/mod.rs rust-rustix-workdir/src/ioctl/mod.rs
-index 70c6905..fdd54b6 100644
+index 70c6905..9d9a3d9 100644
 --- rust-rustix-clean/src/ioctl/mod.rs
 +++ rust-rustix-workdir/src/ioctl/mod.rs
-@@ -320,7 +320,8 @@ type _Opcode = c::c_int;
+@@ -18,20 +18,20 @@ use crate::fd::{AsFd, BorrowedFd};
+ use crate::ffi as c;
+ use crate::io::Result;
+ 
+-#[cfg(any(linux_kernel, bsd, target_os = "redox"))]
++#[cfg(any(linux_kernel, bsd, target_os = "redox", target_os = "zinnia"))]
+ use core::mem;
+ 
+ pub use patterns::*;
+ 
+ mod patterns;
+ 
+-#[cfg(any(linux_kernel, target_os = "redox"))]
++#[cfg(any(linux_kernel, target_os = "redox", target_os = "zinnia"))]
+ mod linux;
+ 
+ #[cfg(bsd)]
+ mod bsd;
+ 
+-#[cfg(any(linux_kernel, target_os = "redox"))]
++#[cfg(any(linux_kernel, target_os = "redox", target_os = "zinnia"))]
+ use linux as platform;
+ 
+ #[cfg(bsd)]
+@@ -198,6 +198,6 @@ pub unsafe trait Ioctl {
+ ///
+ /// If you're writing a driver and defining your own ioctl numbers, it's
+ /// recommended to use these functions to compute them.
+-#[cfg(any(linux_kernel, bsd, target_os = "redox"))]
++#[cfg(any(linux_kernel, bsd, target_os = "redox", target_os = "zinnia"))]
+ pub mod opcode {
+     use super::*;
+@@ -320,6 +320,7 @@ type _Opcode = c::c_int;
      target_os = "haiku",
      target_os = "horizon",
      target_os = "hurd",
@@ -175,4 +754,415 @@ index 70c6905..fdd54b6 100644
 +    target_os = "zinnia"
  ))]
  type _Opcode = c::c_ulong;
+diff --git rust-rustix-clean/src/net/types.rs rust-rustix-workdir/src/net/types.rs
+index 370f246..9da2b87 100644
+--- rust-rustix-clean/src/net/types.rs
++++ rust-rustix-workdir/src/net/types.rs
+@@ -35,6 +35,7 @@ impl SocketType {
+         target_os = "espidf",
+         target_os = "haiku",
+         target_os = "horizon",
+-        target_os = "redox"
++        target_os = "redox",
++        target_os = "zinnia"
+     )))]
+     pub const RDM: Self = Self(c::SOCK_RDM as _);
+@@ -104,6 +105,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const NETLINK: Self = Self(c::AF_NETLINK as _);
+     /// `AF_UNIX`, aka `AF_LOCAL`
+     #[doc(alias = "LOCAL")]
+@@ -189,6 +191,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const ATMPVC: Self = Self(c::AF_ATMPVC as _);
+     /// `AF_X25`
+     #[cfg(not(any(
+@@ -204,6 +207,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const X25: Self = Self(c::AF_X25 as _);
+     /// `AF_ROSE`
+     #[cfg(not(any(
+@@ -245,6 +249,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const NETBEUI: Self = Self(c::AF_NETBEUI as _);
+     /// `AF_SECURITY`
+     #[cfg(not(any(
+@@ -261,6 +266,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const SECURITY: Self = Self(c::AF_SECURITY as _);
+     /// `AF_KEY`
+     #[cfg(not(any(
+@@ -276,6 +282,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const KEY: Self = Self(c::AF_KEY as _);
+     /// `AF_PACKET`
+     ///
+@@ -312,6 +319,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const ASH: Self = Self(c::AF_ASH as _);
+     /// `AF_ECONET`
+     #[cfg(not(any(
+@@ -328,6 +336,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const ECONET: Self = Self(c::AF_ECONET as _);
+     /// `AF_ATMSVC`
+     #[cfg(not(any(
+@@ -344,6 +353,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const ATMSVC: Self = Self(c::AF_ATMSVC as _);
+     /// `AF_RDS`
+     #[cfg(not(any(
+@@ -360,6 +370,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const RDS: Self = Self(c::AF_RDS as _);
+     /// `AF_SNA`
+     #[cfg(not(any(
+@@ -384,6 +395,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const IRDA: Self = Self(c::AF_IRDA as _);
+     /// `AF_PPPOX`
+     #[cfg(not(any(
+@@ -400,6 +412,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const PPPOX: Self = Self(c::AF_PPPOX as _);
+     /// `AF_WANPIPE`
+     #[cfg(not(any(
+@@ -416,6 +429,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const WANPIPE: Self = Self(c::AF_WANPIPE as _);
+     /// `AF_LLC`
+     #[cfg(not(any(
+@@ -432,6 +446,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const LLC: Self = Self(c::AF_LLC as _);
+     /// `AF_CAN`
+     #[cfg(not(any(
+@@ -448,6 +463,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const CAN: Self = Self(c::AF_CAN as _);
+     /// `AF_TIPC`
+     #[cfg(not(any(
+@@ -494,6 +510,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const IUCV: Self = Self(c::AF_IUCV as _);
+     /// `AF_RXRPC`
+     #[cfg(not(any(
+@@ -510,6 +527,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const RXRPC: Self = Self(c::AF_RXRPC as _);
+     /// `AF_ISDN`
+     #[cfg(not(any(
+@@ -540,6 +558,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const PHONET: Self = Self(c::AF_PHONET as _);
+     /// `AF_IEEE802154`
+     #[cfg(not(any(
+@@ -556,6 +575,7 @@ impl AddressFamily {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const IEEE802154: Self = Self(c::AF_IEEE802154 as _);
+     /// `AF_802`
+     #[cfg(solarish)]
+@@ -1074,6 +1094,7 @@ pub mod ipproto {
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub const MPTCP: Protocol = Protocol(new_raw_protocol(c::IPPROTO_MPTCP as _));
+     /// `IPPROTO_FRAGMENT`
+     #[cfg(not(any(
+diff --git rust-rustix-clean/src/pipe.rs rust-rustix-workdir/src/pipe.rs
+index 267c99d..b83b360 100644
+--- rust-rustix-clean/src/pipe.rs
++++ rust-rustix-workdir/src/pipe.rs
+@@ -42,6 +42,7 @@ pub use backend::pipe::types::{IoSliceRaw, SpliceFlags};
+     target_os = "vita",
+     target_os = "wasi",
+ )))]
++#[cfg(not(target_os = "zinnia"))]
+ pub const PIPE_BUF: usize = c::PIPE_BUF;
  
+ /// `pipe()`—Creates a pipe.
+diff --git rust-rustix-clean/src/process/ioctl.rs rust-rustix-workdir/src/process/ioctl.rs
+index 5362504..ca0a3c8 100644
+--- rust-rustix-clean/src/process/ioctl.rs
++++ rust-rustix-workdir/src/process/ioctl.rs
+@@ -31,7 +31,8 @@ use backend::fd::AsFd;
+ )))]
+ #[inline]
+ #[doc(alias = "TIOCSCTTY")]
++#[cfg(not(target_os = "zinnia"))]
+ pub fn ioctl_tiocsctty<Fd: AsFd>(fd: Fd) -> io::Result<()> {
+     unsafe { ioctl::ioctl(fd, Tiocsctty) }
+ }
+ 
+@@ -42,6 +43,7 @@ pub fn ioctl_tiocsctty<Fd: AsFd>(fd: Fd) -> io::Result<()> {
+     target_os = "redox",
+     target_os = "wasi"
+ )))]
++#[cfg(not(target_os = "zinnia"))]
+ struct Tiocsctty;
+ 
+ #[cfg(not(any(
+@@ -51,5 +53,6 @@ struct Tiocsctty;
+     target_os = "redox",
+     target_os = "wasi"
+ )))]
++#[cfg(not(target_os = "zinnia"))]
+ unsafe impl ioctl::Ioctl for Tiocsctty {
+     type Output = ();
+diff --git rust-rustix-clean/src/process/priority.rs rust-rustix-workdir/src/process/priority.rs
+index 0051b06..499e4b7 100644
+--- rust-rustix-clean/src/process/priority.rs
++++ rust-rustix-workdir/src/process/priority.rs
+@@ -29,6 +29,7 @@ pub fn nice(inc: i32) -> io::Result<i32> {
+ #[cfg(not(any(target_os = "espidf", target_os = "horizon")))]
+ #[inline]
+ #[doc(alias = "getpriority")]
++#[cfg(not(target_os = "zinnia"))]
+ pub fn getpriority_user(uid: Uid) -> io::Result<i32> {
+     backend::process::syscalls::getpriority_user(uid)
+ }
+@@ -49,6 +50,7 @@ pub fn getpriority_user(uid: Uid) -> io::Result<i32> {
+ #[cfg(not(any(target_os = "espidf", target_os = "horizon")))]
+ #[inline]
+ #[doc(alias = "getpriority")]
++#[cfg(not(target_os = "zinnia"))]
+ pub fn getpriority_pgrp(pgid: Option<Pid>) -> io::Result<i32> {
+     backend::process::syscalls::getpriority_pgrp(pgid)
+ }
+@@ -69,6 +71,7 @@ pub fn getpriority_pgrp(pgid: Option<Pid>) -> io::Result<i32> {
+ #[cfg(not(any(target_os = "espidf", target_os = "horizon")))]
+ #[inline]
+ #[doc(alias = "getpriority")]
++#[cfg(not(target_os = "zinnia"))]
+ pub fn getpriority_process(pid: Option<Pid>) -> io::Result<i32> {
+     backend::process::syscalls::getpriority_process(pid)
+ }
+@@ -87,6 +90,7 @@ pub fn getpriority_process(pid: Option<Pid>) -> io::Result<i32> {
+ #[cfg(not(any(target_os = "espidf", target_os = "horizon")))]
+ #[inline]
+ #[doc(alias = "setpriority")]
++#[cfg(not(target_os = "zinnia"))]
+ pub fn setpriority_user(uid: Uid, priority: i32) -> io::Result<()> {
+     backend::process::syscalls::setpriority_user(uid, priority)
+ }
+@@ -107,6 +111,7 @@ pub fn setpriority_user(uid: Uid, priority: i32) -> io::Result<()> {
+ #[cfg(not(any(target_os = "espidf", target_os = "horizon")))]
+ #[inline]
+ #[doc(alias = "setpriority")]
++#[cfg(not(target_os = "zinnia"))]
+ pub fn setpriority_pgrp(pgid: Option<Pid>, priority: i32) -> io::Result<()> {
+     backend::process::syscalls::setpriority_pgrp(pgid, priority)
+ }
+@@ -127,6 +132,7 @@ pub fn setpriority_pgrp(pgid: Option<Pid>, priority: i32) -> io::Result<()> {
+ #[cfg(not(any(target_os = "espidf", target_os = "horizon")))]
+ #[inline]
+ #[doc(alias = "setpriority")]
++#[cfg(not(target_os = "zinnia"))]
+ pub fn setpriority_process(pid: Option<Pid>, priority: i32) -> io::Result<()> {
+     backend::process::syscalls::setpriority_process(pid, priority)
+ }
+diff --git rust-rustix-clean/src/process/wait.rs rust-rustix-workdir/src/process/wait.rs
+index 0e004f3..8214a8f 100644
+--- rust-rustix-clean/src/process/wait.rs
++++ rust-rustix-workdir/src/process/wait.rs
+@@ -337,6 +337,6 @@ impl WaitIdStatus {
+         // `waitid` call always has a valid `si_status` value.
+         //
+         // [specifies]: https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/signal.h.html
+-        unsafe { self.0.si_status() }
++        unsafe { self.0.si_status }
+     }
+ }
+@@ -485,6 +485,7 @@ pub fn wait(waitopts: WaitOptions) -> io::Result<Option<(Pid, WaitStatus)>> {
+     target_os = "wasi",
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ pub fn waitid<'a, Id: Into<WaitId<'a>>>(
+     id: Id,
+     options: WaitIdOptions,
+diff --git rust-rustix-clean/src/shm.rs rust-rustix-workdir/src/shm.rs
+index f279250..5386069 100644
+--- rust-rustix-clean/src/shm.rs
++++ rust-rustix-workdir/src/shm.rs
+@@ -59,6 +59,9 @@ use crate::{backend, io, path};
+ use super::shm;
+ pub use crate::backend::fs::types::Mode;
+ pub use crate::backend::shm::types::ShmOFlags as OFlags;
++pub use crate::backend::shm::types::ShmOFlags;
++pub use open as shm_open;
++pub use unlink as shm_unlink;
+ 
+ /// `shm_open(name, oflags, mode)`—Opens a shared memory object.
+ ///
+diff --git rust-rustix-clean/src/signal.rs rust-rustix-workdir/src/signal.rs
+index e69c64b..c5b2302 100644
+--- rust-rustix-clean/src/signal.rs
++++ rust-rustix-workdir/src/signal.rs
+@@ -108,6 +108,7 @@ impl Signal {
+             ),
+         ),
+     )))]
++#[cfg(not(target_os = "zinnia"))]
+     pub const STKFLT: Self = Self(unsafe { NonZeroI32::new_unchecked(c::SIGSTKFLT) });
+     /// `SIGCHLD`
+     #[cfg(not(target_os = "vita"))]
+@@ -329,6 +330,7 @@ impl Signal {
+                     ),
+                 )
+             )))]
++#[cfg(not(target_os = "zinnia"))]
+             c::SIGSTKFLT => Some(Self::STKFLT),
+             #[cfg(not(target_os = "vita"))]
+             c::SIGCHLD => Some(Self::CHILD),
+@@ -437,6 +439,7 @@ impl fmt::Debug for Signal {
+                     ),
+                 ),
+             )))]
++#[cfg(not(target_os = "zinnia"))]
+             Self::STKFLT => "Signal::STKFLT".fmt(f),
+             #[cfg(not(target_os = "vita"))]
+             Self::CHILD => "Signal::CHILD".fmt(f),
+diff --git rust-rustix-clean/src/system.rs rust-rustix-workdir/src/system.rs
+index 70204ae..5101514 100644
+--- rust-rustix-clean/src/system.rs
++++ rust-rustix-workdir/src/system.rs
+@@ -161,6 +161,7 @@ pub fn sysinfo() -> Sysinfo {
+     target_os = "wasi"
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ pub fn sethostname(name: &[u8]) -> io::Result<()> {
+     backend::system::syscalls::sethostname(name)
+ }
+@@ -186,6 +187,7 @@ pub fn sethostname(name: &[u8]) -> io::Result<()> {
+     target_os = "wasi",
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ pub fn setdomainname(name: &[u8]) -> io::Result<()> {
+     backend::system::syscalls::setdomainname(name)
+ }
+diff --git rust-rustix-clean/src/termios/types.rs rust-rustix-workdir/src/termios/types.rs
+index 899fa74..98fb13d 100644
+--- rust-rustix-clean/src/termios/types.rs
++++ rust-rustix-workdir/src/termios/types.rs
+@@ -36,6 +36,7 @@ pub struct Termios {
+         target_env = "newlib",
+         target_os = "fuchsia",
+         target_os = "haiku",
+-        target_os = "redox"
++        target_os = "redox",
++        target_os = "zinnia",
+     ))]
+     pub line_discipline: u8,
+@@ -230,7 +231,8 @@ impl core::fmt::Debug for Termios {
+             target_env = "newlib",
+             target_os = "fuchsia",
+             target_os = "haiku",
+-            target_os = "redox"
++            target_os = "redox",
++            target_os = "zinnia",
+         ))]
+         {
+             d.field("line_discipline", &SpecialCode(self.line_discipline));
+@@ -1536,7 +1538,8 @@ mod tests {
+                 target_env = "newlib",
+                 target_os = "fuchsia",
+                 target_os = "haiku",
+-                target_os = "redox"
++                target_os = "redox",
++                target_os = "zinnia",
+             ))]
+             check_renamed_struct_renamed_field!(Termios, termios, line_discipline, c_line);
+             check_renamed_struct_renamed_field!(Termios, termios, special_codes, c_cc);
+diff --git rust-rustix-clean/src/thread/clock.rs rust-rustix-workdir/src/thread/clock.rs
+index d6be40e..e448715 100644
+--- rust-rustix-clean/src/thread/clock.rs
++++ rust-rustix-workdir/src/thread/clock.rs
+@@ -41,6 +41,7 @@ pub use crate::clockid::ClockId;
+     target_os = "wasi",
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ pub fn clock_nanosleep_relative(id: ClockId, request: &Timespec) -> NanosleepRelativeResult {
+     backend::thread::syscalls::clock_nanosleep_relative(id, request)
+ }
+@@ -71,6 +72,7 @@ pub fn clock_nanosleep_relative(id: ClockId, request: &Timespec) -> NanosleepRel
+     target_os = "wasi",
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ pub fn clock_nanosleep_absolute(id: ClockId, request: &Timespec) -> io::Result<()> {
+     backend::thread::syscalls::clock_nanosleep_absolute(id, request)
+ }
+diff --git rust-rustix-clean/src/time/clock.rs rust-rustix-workdir/src/time/clock.rs
+index bdc2b11..b2bdfc6 100644
+--- rust-rustix-clean/src/time/clock.rs
++++ rust-rustix-workdir/src/time/clock.rs
+@@ -103,6 +103,7 @@ pub fn clock_gettime_dynamic(id: DynamicClockId<'_>) -> io::Result<Timespec> {
+     all(apple, not(target_os = "macos"))
+ )))]
+ #[inline]
++#[cfg(not(target_os = "zinnia"))]
+ pub fn clock_settime(id: ClockId, timespec: Timespec) -> io::Result<()> {
+     backend::time::syscalls::clock_settime(id, timespec)
+ }

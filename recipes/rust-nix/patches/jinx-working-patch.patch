@@ -1,16 +1,7 @@
 diff --git rust-nix-clean/build.rs rust-nix-workdir/build.rs
-index eb27943..8da57d7 100644
+index eb27943..9946ae6 100644
 --- rust-nix-clean/build.rs
 +++ rust-nix-workdir/build.rs
-@@ -21,7 +21,7 @@ fn main() {
-         apple_targets: { any(ios, macos, watchos, tvos, visionos) },
-         bsd: { any(freebsd, dragonfly, netbsd, openbsd, apple_targets) },
-         bsd_without_apple: { any(freebsd, dragonfly, netbsd, openbsd) },
--        linux_android: { any(android, linux) },
-+        linux_android: { any(android, linux, target_os = "zinnia") },
-         freebsdlike: { any(dragonfly, freebsd) },
-         netbsdlike: { any(netbsd, openbsd) },
-         solarish: { any(illumos, solaris) },
 @@ -32,4 +32,5 @@ fn main() {
      println!("cargo:rustc-check-cfg=cfg(qemu)");
      // Cygwin target, added in 1.86
@@ -18,7 +9,7 @@ index eb27943..8da57d7 100644
 +    println!("cargo:rustc-check-cfg=cfg(target_os, values(\"zinnia\"))");
  }
 diff --git rust-nix-clean/src/errno.rs rust-nix-workdir/src/errno.rs
-index 497e33d..06a02e1 100644
+index 497e33d..5fd703d 100644
 --- rust-nix-clean/src/errno.rs
 +++ rust-nix-workdir/src/errno.rs
 @@ -33,6 +33,7 @@ cfg_if! {
@@ -29,23 +20,25 @@ index 497e33d..06a02e1 100644
                          target_os = "emscripten"))] {
          unsafe fn errno_location() -> *mut c_int {
              unsafe { libc::__errno_location() }
-@@ -829,6 +830,7 @@ fn desc(errno: Errno) -> &'static str {
+@@ -829,5 +830,6 @@ fn desc(errno: Errno) -> &'static str {
              all(target_os = "linux", not(target_arch = "mips")),
              target_os = "fuchsia",
              target_os = "emscripten",
 +            target_os = "zinnia",
          ))]
          ERFKILL => "Operation not possible due to RF-kill",
- 
-@@ -836,6 +838,7 @@ fn desc(errno: Errno) -> &'static str {
+@@ -836,5 +838,6 @@ fn desc(errno: Errno) -> &'static str {
              all(target_os = "linux", not(target_arch = "mips")),
              target_os = "fuchsia",
              target_os = "emscripten",
 +            target_os = "zinnia",
          ))]
          EHWPOISON => "Memory page has hardware error",
- 
-@@ -1087,7 +1090,7 @@ fn desc(errno: Errno) -> &'static str {
+@@ -1084,10 +1087,12 @@ fn desc(errno: Errno) -> &'static str {
+         #[cfg(target_os = "hurd")]
+         EGRATUITOUS => "Gratuitous error",
++        #[cfg(target_os = "zinnia")]
++        _ => "Unknown errno",
      }
  }
  
@@ -54,6 +47,7 @@ index 497e33d..06a02e1 100644
  mod consts {
      #[derive(Clone, Copy, Debug, Eq, PartialEq)]
      #[repr(i32)]
+     #[non_exhaustive]
 diff --git rust-nix-clean/src/fcntl.rs rust-nix-workdir/src/fcntl.rs
 index 13ee191..c2f95c3 100644
 --- rust-nix-clean/src/fcntl.rs
@@ -67,12 +61,24 @@ index 13ee191..c2f95c3 100644
          AT_NO_AUTOMOUNT;
          /// If the provided path is an empty string, operate on the provided directory file
          /// descriptor instead.
+diff --git rust-nix-clean/src/features.rs rust-nix-workdir/src/features.rs
+index b472f80..de76c5b 100644
+--- rust-nix-clean/src/features.rs
++++ rust-nix-workdir/src/features.rs
+@@ -1,7 +1,7 @@
+ //! Feature tests for OS functionality
+ pub use self::os::*;
+ 
+-#[cfg(any(linux_android, target_os = "emscripten"))]
++#[cfg(any(linux_android, target_os = "emscripten", target_os = "zinnia"))]
+ mod os {
+     use crate::sys::utsname::uname;
+     use crate::Result;
 diff --git rust-nix-clean/src/sys/mod.rs rust-nix-workdir/src/sys/mod.rs
 index c17c7be..3088eb7 100644
 --- rust-nix-clean/src/sys/mod.rs
 +++ rust-nix-workdir/src/sys/mod.rs
-@@ -117,7 +117,7 @@ feature! {
- 
+@@ -117,6 +117,6 @@ feature! {
  pub mod signal;
  
 -#[cfg(linux_android)]
@@ -80,7 +86,7 @@ index c17c7be..3088eb7 100644
  feature! {
      #![feature = "signal"]
      #[allow(missing_docs)]
-@@ -153,7 +153,7 @@ feature! {
+@@ -153,6 +153,6 @@ feature! {
      pub mod statvfs;
  }
  
@@ -88,9 +94,8 @@ index c17c7be..3088eb7 100644
 +#[cfg(all(linux_android, not(target_os = "zinnia")))]
  #[allow(missing_docs)]
  pub mod sysinfo;
- 
 diff --git rust-nix-clean/src/sys/signal.rs rust-nix-workdir/src/sys/signal.rs
-index 2b0c779..3476831 100644
+index 2b0c779..1da443a 100644
 --- rust-nix-clean/src/sys/signal.rs
 +++ rust-nix-workdir/src/sys/signal.rs
 @@ -68,7 +68,7 @@ libc_enum! {
@@ -102,6 +107,37 @@ index 2b0c779..3476831 100644
          SIGSTKFLT,
          /// To parent on child stop or exit
          SIGCHLD,
+@@ -98,18 +98,18 @@ libc_enum! {
+         #[cfg(not(target_os = "haiku"))]
+         SIGIO,
+         #[cfg(any(linux_android, target_os = "emscripten",
+-                  target_os = "fuchsia", target_os = "aix"))]
++                  target_os = "fuchsia", target_os = "zinnia", target_os = "aix"))]
+         /// Power failure imminent.
+         SIGPWR,
+         /// Bad system call
+         SIGSYS,
+         #[cfg(not(any(linux_android, target_os = "emscripten",
+                       target_os = "fuchsia",
+-                      target_os = "redox", target_os = "haiku")))]
++                      target_os = "redox", target_os = "zinnia", target_os = "haiku")))]
+         /// Emulator trap
+         SIGEMT,
+         #[cfg(not(any(linux_android, target_os = "emscripten",
+-                      target_os = "fuchsia", target_os = "redox",
++                      target_os = "fuchsia", target_os = "redox", target_os = "zinnia",
+                       target_os = "haiku", target_os = "aix",
+                       target_os = "solaris", target_os = "cygwin")))]
+         /// Information request
+@@ -142,7 +142,7 @@ impl FromStr for Signal {
+                 any(
+                     linux_android,
+                     target_os = "emscripten",
+-                    target_os = "fuchsia",
++                    target_os = "fuchsia", target_os = "zinnia",
+                 ),
+                 not(any(
+                     target_arch = "mips",
 @@ -150,7 +150,7 @@ impl FromStr for Signal {
                      target_arch = "mips64",
                      target_arch = "mips64r6",
@@ -111,6 +147,44 @@ index 2b0c779..3476831 100644
                  ))
              ))]
              "SIGSTKFLT" => Signal::SIGSTKFLT,
+@@ -171,23 +171,23 @@ impl FromStr for Signal {
+             #[cfg(any(
+                 linux_android,
+                 target_os = "emscripten",
+-                target_os = "fuchsia",
++                target_os = "fuchsia", target_os = "zinnia",
+             ))]
+             "SIGPWR" => Signal::SIGPWR,
+             "SIGSYS" => Signal::SIGSYS,
+             #[cfg(not(any(
+                 linux_android,
+                 target_os = "emscripten",
+-                target_os = "fuchsia",
+-                target_os = "redox",
++                target_os = "fuchsia", target_os = "zinnia",
++                target_os = "redox", target_os = "zinnia",
+                 target_os = "haiku"
+             )))]
+             "SIGEMT" => Signal::SIGEMT,
+             #[cfg(not(any(
+                 linux_android,
+                 target_os = "emscripten",
+-                target_os = "fuchsia",
+-                target_os = "redox",
++                target_os = "fuchsia", target_os = "zinnia",
++                target_os = "redox", target_os = "zinnia",
+                 target_os = "aix",
+                 target_os = "haiku",
+                 target_os = "solaris",
+@@ -227,7 +227,7 @@ impl Signal {
+                 any(
+                     linux_android,
+                     target_os = "emscripten",
+-                    target_os = "fuchsia",
++                    target_os = "fuchsia", target_os = "zinnia",
+                 ),
+                 not(any(
+                     target_arch = "mips",
 @@ -235,7 +235,7 @@ impl Signal {
                      target_arch = "mips64",
                      target_arch = "mips64r6",
@@ -120,7 +194,45 @@ index 2b0c779..3476831 100644
                  ))
              ))]
              Signal::SIGSTKFLT => "SIGSTKFLT",
-@@ -325,7 +325,7 @@ const SIGNALS: [Signal; 28] = [
+@@ -256,7 +256,7 @@ impl Signal {
+             #[cfg(any(
+                 linux_android,
+                 target_os = "emscripten",
+-                target_os = "fuchsia",
++                target_os = "fuchsia", target_os = "zinnia",
+                 target_os = "aix",
+             ))]
+             Signal::SIGPWR => "SIGPWR",
+@@ -264,16 +264,16 @@ impl Signal {
+             #[cfg(not(any(
+                 linux_android,
+                 target_os = "emscripten",
+-                target_os = "fuchsia",
+-                target_os = "redox",
++                target_os = "fuchsia", target_os = "zinnia",
++                target_os = "redox", target_os = "zinnia",
+                 target_os = "haiku"
+             )))]
+             Signal::SIGEMT => "SIGEMT",
+             #[cfg(not(any(
+                 linux_android,
+                 target_os = "emscripten",
+-                target_os = "fuchsia",
+-                target_os = "redox",
++                target_os = "fuchsia", target_os = "zinnia",
++                target_os = "redox", target_os = "zinnia",
+                 target_os = "aix",
+                 target_os = "haiku",
+                 target_os = "solaris",
+@@ -318,14 +318,14 @@ const SIGNALS: [Signal; 28] = [
+     SIGPROF, SIGWINCH, SIGSYS,
+ ];
+ #[cfg(all(
+-    any(linux_android, target_os = "emscripten", target_os = "fuchsia"),
++    any(linux_android, target_os = "emscripten", target_os = "fuchsia", target_os = "zinnia"),
+     not(any(
+         target_arch = "mips",
+         target_arch = "mips32r6",
          target_arch = "mips64",
          target_arch = "mips64r6",
          target_arch = "sparc",
@@ -129,7 +241,15 @@ index 2b0c779..3476831 100644
      ))
  ))]
  #[cfg(feature = "signal")]
-@@ -343,7 +343,7 @@ const SIGNALS: [Signal; 31] = [
+@@ -336,14 +336,14 @@ const SIGNALS: [Signal; 31] = [
+     SIGVTALRM, SIGPROF, SIGWINCH, SIGIO, SIGPWR, SIGSYS,
+ ];
+ #[cfg(all(
+-    any(linux_android, target_os = "emscripten", target_os = "fuchsia"),
++    any(linux_android, target_os = "emscripten", target_os = "fuchsia", target_os = "zinnia"),
+     any(
+         target_arch = "mips",
+         target_arch = "mips32r6",
          target_arch = "mips64",
          target_arch = "mips64r6",
          target_arch = "sparc",
@@ -138,6 +258,15 @@ index 2b0c779..3476831 100644
      )
  ))]
  #[cfg(feature = "signal")]
+@@ -374,7 +374,7 @@ const SIGNALS: [Signal; 30] = [
+     target_os = "fuchsia",
+     target_os = "emscripten",
+     target_os = "aix",
+-    target_os = "redox",
++    target_os = "redox", target_os = "zinnia",
+     target_os = "haiku",
+     target_os = "solaris",
+     target_os = "cygwin"
 @@ -430,6 +430,8 @@ cfg_if! {
          type SaFlags_t = libc::c_ulong;
      } else if #[cfg(target_env = "uclibc")] {
@@ -147,6 +276,175 @@ index 2b0c779..3476831 100644
      } else {
          type SaFlags_t = libc::c_int;
      }
+diff --git rust-nix-clean/src/sys/socket/addr.rs rust-nix-workdir/src/sys/socket/addr.rs
+index 09be1d6..80c6bea 100644
+--- rust-nix-clean/src/sys/socket/addr.rs
++++ rust-nix-workdir/src/sys/socket/addr.rs
+@@ -67,6 +67,7 @@ pub enum AddressFamily {
+     Netlink = libc::AF_NETLINK,
+     /// Kernel interface for interacting with the routing table
+     #[cfg(not(any(linux_android, target_os = "redox", target_os = "cygwin")))]
++    #[cfg(not(target_os = "zinnia"))]
+     Route = libc::PF_ROUTE,
+     /// Low level packet interface (see [`packet(7)`](https://man7.org/linux/man-pages/man7/packet.7.html))
+     #[cfg(any(linux_android, solarish, target_os = "fuchsia"))]
+@@ -165,6 +166,7 @@ pub enum AddressFamily {
+         target_os = "hurd",
+         target_os = "redox",
+         target_os = "cygwin",
++                         target_os = "zinnia",
+     )))]
+     Bluetooth = libc::AF_BLUETOOTH,
+     /// IUCV (inter-user communication vehicle) z/VM protocol for
+@@ -182,6 +184,7 @@ pub enum AddressFamily {
+         target_os = "hurd",
+         target_os = "redox",
+         target_os = "cygwin",
++                         target_os = "zinnia",
+     )))]
+     Isdn = libc::AF_ISDN,
+     /// Nokia cellular modem IPC/RPC interface
+@@ -266,6 +269,7 @@ impl AddressFamily {
+             #[cfg(apple_targets)]
+             libc::AF_SYSTEM => Some(AddressFamily::System),
+             #[cfg(not(any(linux_android, target_os = "redox", target_os = "cygwin")))]
++    #[cfg(not(target_os = "zinnia"))]
+             libc::PF_ROUTE => Some(AddressFamily::Route),
+             #[cfg(linux_android)]
+             libc::AF_PACKET => Some(AddressFamily::Packet),
+@@ -449,6 +453,7 @@ impl UnixAddr {
+                      solarish,
+                      target_os = "redox",
+                      target_os = "cygwin",
++                         target_os = "zinnia",
+                 ))]
+             {
+                 UnixAddr { sun, sun_len }
+@@ -514,6 +519,7 @@ impl UnixAddr {
+                      solarish,
+                      target_os = "redox",
+                      target_os = "cygwin",
++                         target_os = "zinnia",
+                 ))]
+             {
+                 self.sun_len
+@@ -532,6 +538,7 @@ impl SockaddrLike for UnixAddr {
+         solarish,
+         target_os = "redox",
+         target_os = "cygwin",
++                         target_os = "zinnia",
+     ))]
+     fn len(&self) -> libc::socklen_t {
+         self.sun_len.into()
+@@ -562,6 +569,7 @@ impl SockaddrLike for UnixAddr {
+                          solarish,
+                          target_os = "redox",
+                          target_os = "cygwin",
++                         target_os = "zinnia",
+                 ))] {
+                 let su_len = len.unwrap_or(
+                     mem::size_of::<libc::sockaddr_un>() as libc::socklen_t
+@@ -1173,6 +1181,7 @@ impl SockaddrLike for SockaddrStorage {
+                     target_os = "fuchsia",
+                     solarish,
+                     target_os = "cygwin",
++                         target_os = "zinnia",
+                 ))]
+                 if i32::from(ss.ss_family) == libc::AF_UNIX {
+                     // Safe because we UnixAddr is strictly smaller than
+@@ -1292,6 +1301,7 @@ impl SockaddrStorage {
+                      target_os = "fuchsia",
+                      solarish,
+                      target_os = "cygwin",
++                         target_os = "zinnia",
+                 ))]
+             {
+                 let p = unsafe{ &self.ss as *const libc::sockaddr_storage };
+@@ -1322,6 +1332,7 @@ impl SockaddrStorage {
+                      target_os = "fuchsia",
+                      solarish,
+                      target_os = "cygwin",
++                         target_os = "zinnia",
+                 ))]
+             {
+                 let p = unsafe{ &self.ss as *const libc::sockaddr_storage };
+diff --git rust-nix-clean/src/sys/socket/mod.rs rust-nix-workdir/src/sys/socket/mod.rs
+index 1b38646..6979489 100644
+--- rust-nix-clean/src/sys/socket/mod.rs
++++ rust-nix-workdir/src/sys/socket/mod.rs
+@@ -101,6 +101,7 @@ pub enum SockType {
+     /// Provides a reliable datagram layer that does not
+     /// guarantee ordering.
+     #[cfg(not(any(target_os = "haiku", target_os = "redox")))]
++    #[cfg(not(target_os = "zinnia"))]
+     Rdm = libc::SOCK_RDM,
+ }
+ // The TryFrom impl could've been derived using libc_enum!.  But for
+@@ -117,6 +118,7 @@ impl TryFrom<i32> for SockType {
+             #[cfg(not(target_os = "redox"))]
+             libc::SOCK_RAW => Ok(Self::Raw),
+             #[cfg(not(any(target_os = "haiku", target_os = "redox")))]
++            #[cfg(not(target_os = "zinnia"))]
+             libc::SOCK_RDM => Ok(Self::Rdm),
+             _ => Err(Errno::EINVAL),
+         }
+@@ -680,7 +682,7 @@ macro_rules! cmsg_space {
+ #[doc(hidden)]
+ pub const fn cmsg_space<T>() -> usize {
+     // SAFETY: CMSG_SPACE is always safe
+-    unsafe { libc::CMSG_SPACE(mem::size_of::<T>() as libc::c_uint) as usize }
++    libc::CMSG_SPACE(mem::size_of::<T>() as libc::c_uint) as usize
+ }
+ 
+ #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+@@ -1026,6 +1028,7 @@ impl ControlMessageOwned {
+                 ControlMessageOwned::ScmCreds(cred.into())
+             }
+             #[cfg(not(any(target_os = "aix", target_os = "haiku", target_os = "cygwin")))]
++            #[cfg(not(target_os = "zinnia"))]
+             (libc::SOL_SOCKET, libc::SCM_TIMESTAMP) => {
+                 let tv: libc::timeval = unsafe { ptr::read_unaligned(p as *const _) };
+                 ControlMessageOwned::ScmTimestamp(TimeVal::from(tv))
+@@ -1368,7 +1371,7 @@ impl ControlMessage<'_> {
+     /// The value of CMSG_SPACE on this message.
+     /// Safe because CMSG_SPACE is always safe
+     fn space(&self) -> usize {
+-        unsafe{CMSG_SPACE(self.len() as libc::c_uint) as usize}
++        CMSG_SPACE(self.len() as libc::c_uint) as usize
+     }
+ 
+     /// The value of CMSG_LEN on this message.
+@@ -1377,14 +1380,14 @@ impl ControlMessage<'_> {
+               all(target_os = "linux", not(any(target_env = "musl", target_env = "ohos"))),
+               target_os = "cygwin"))]
+     fn cmsg_len(&self) -> usize {
+-        unsafe{CMSG_LEN(self.len() as libc::c_uint) as usize}
++        CMSG_LEN(self.len() as libc::c_uint) as usize
+     }
+ 
+     #[cfg(not(any(target_os = "android",
+               all(target_os = "linux", not(any(target_env = "musl", target_env = "ohos"))),
+               target_os = "cygwin")))]
+     fn cmsg_len(&self) -> libc::c_uint {
+-        unsafe{CMSG_LEN(self.len() as libc::c_uint)}
++        CMSG_LEN(self.len() as libc::c_uint)
+     }
+ 
+     /// Return a reference to the payload data as a byte pointer
+diff --git rust-nix-clean/src/sys/socket/sockopt.rs rust-nix-workdir/src/sys/socket/sockopt.rs
+index a821f5c..1b05e79 100644
+--- rust-nix-clean/src/sys/socket/sockopt.rs
++++ rust-nix-workdir/src/sys/socket/sockopt.rs
+@@ -911,7 +911,8 @@ sockopt_impl!(
+     target_os = "haiku",
+     target_os = "hurd",
+     target_os = "redox",
+-    target_os = "cygwin"
++    target_os = "cygwin",
++    target_os = "zinnia"
+ )))]
+ sockopt_impl!(
+     /// Enable or disable the receiving of the `SO_TIMESTAMP` control message.
 diff --git rust-nix-clean/src/sys/wait.rs rust-nix-workdir/src/sys/wait.rs
 index 844e165..ba647d3 100644
 --- rust-nix-clean/src/sys/wait.rs
@@ -169,10 +467,18 @@ index 844e165..ba647d3 100644
      }
  );
 diff --git rust-nix-clean/src/unistd.rs rust-nix-workdir/src/unistd.rs
-index 8995fbe..318289a 100644
+index 8995fbe..70d76b0 100644
 --- rust-nix-clean/src/unistd.rs
 +++ rust-nix-workdir/src/unistd.rs
-@@ -398,7 +398,7 @@ pub fn getpgrp() -> Pid {
+@@ -17,6 +17,7 @@ use crate::fcntl::AtFlags;
+     target_os = "hurd",
+     target_os = "redox",
+     target_os = "cygwin",
++                    target_os = "zinnia",
+ ))]
+ use crate::fcntl::OFlag;
+ #[cfg(all(feature = "fs", bsd))]
+@@ -398,7 +399,7 @@ pub fn getpgrp() -> Pid {
  ///
  /// No error handling is required as a thread id should always exist for any
  /// process, even if threads are not being used.
@@ -181,7 +487,7 @@ index 8995fbe..318289a 100644
  #[inline]
  pub fn gettid() -> Pid {
      Pid(unsafe { libc::syscall(libc::SYS_gettid) as pid_t })
-@@ -1209,7 +1209,7 @@ pub fn fexecve<Fd: std::os::fd::AsFd, SA: AsRef<CStr>, SE: AsRef<CStr>>(
+@@ -1209,7 +1210,7 @@ pub fn fexecve<Fd: std::os::fd::AsFd, SA: AsRef<CStr>, SE: AsRef<CStr>>(
  ///
  /// This function is similar to `execve`, except that the program to be executed
  /// is referenced as a file descriptor to the base directory plus a path.
@@ -190,3 +496,212 @@ index 8995fbe..318289a 100644
  #[inline]
  pub fn execveat<Fd: std::os::fd::AsFd, SA: AsRef<CStr>, SE: AsRef<CStr>>(
      dirfd: Fd,
+@@ -1496,6 +1497,7 @@ feature! {
+     target_os = "redox",
+     netbsdlike,
+     target_os = "cygwin",
++                    target_os = "zinnia",
+ ))]
+ pub fn pipe2(flags: OFlag) -> Result<(std::os::fd::OwnedFd, std::os::fd::OwnedFd)> {
+     let mut fds = mem::MaybeUninit::<[std::os::fd::OwnedFd; 2]>::uninit();
+@@ -1992,6 +1994,7 @@ pub fn setgroups(groups: &[Gid]) -> Result<()> {
+     target_os = "redox",
+     target_os = "emscripten",
+ )))]
++#[cfg(not(target_os = "zinnia"))]
+ pub fn getgrouplist(user: &CStr, group: Gid) -> Result<Vec<Gid>> {
+     let ngroups_max = match sysconf(SysconfVar::NGROUPS_MAX) {
+         Ok(Some(n)) => n as c_int,
+@@ -2077,6 +2080,7 @@ pub fn getgrouplist(user: &CStr, group: Gid) -> Result<Vec<Gid>> {
+     target_os = "haiku",
+     target_os = "emscripten",
+ )))]
++#[cfg(not(target_os = "zinnia"))]
+ pub fn initgroups(user: &CStr, group: Gid) -> Result<()> {
+     cfg_if! {
+         if #[cfg(apple_targets)] {
+@@ -2332,6 +2336,7 @@ pub fn mkdtemp<P: ?Sized + NixPath>(template: &P) -> Result<PathBuf> {
+ /// - [pathconf(2)](https://pubs.opengroup.org/onlinepubs/9699919799/functions/pathconf.html)
+ /// - [limits.h](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/limits.h.html)
+ /// - [unistd.h](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/unistd.h.html)
++#[cfg(not(target_os = "zinnia"))]
+ #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+ #[repr(i32)]
+ #[non_exhaustive]
+@@ -2575,6 +2580,7 @@ feature! {
+ /// - [sysconf(3)](https://pubs.opengroup.org/onlinepubs/9699919799/functions/sysconf.html)
+ /// - [unistd.h](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/unistd.h.html)
+ /// - [limits.h](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/limits.h.html)
++#[cfg(not(target_os = "zinnia"))]
+ #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+ #[repr(i32)]
+ #[non_exhaustive]
+@@ -2597,6 +2603,7 @@ pub enum SysconfVar {
+     /// priority level from its own scheduling priority.
+     AIO_PRIO_DELTA_MAX = libc::_SC_AIO_PRIO_DELTA_MAX,
+     /// Maximum length of argument to the exec functions including environment data.
++    #[cfg(not(target_os = "zinnia"))]
+     ARG_MAX = libc::_SC_ARG_MAX,
+     /// Maximum number of functions that may be registered with `atexit`.
+     #[cfg(not(target_os = "redox"))]
+@@ -2616,6 +2623,7 @@ pub enum SysconfVar {
+     /// Maximum number of simultaneous processes per real user ID.
+     CHILD_MAX = libc::_SC_CHILD_MAX,
+     /// The frequency of the statistics clock in ticks per second.
++    #[cfg(not(target_os = "zinnia"))]
+     CLK_TCK = libc::_SC_CLK_TCK,
+     /// Maximum number of weights that can be assigned to an entry of the
+     /// LC_COLLATE order keyword in the locale definition file
+@@ -2628,7 +2636,7 @@ pub enum SysconfVar {
+     /// the expr utility.
+     #[cfg(not(any(target_os = "redox", target_os = "haiku")))]
+     EXPR_NEST_MAX = libc::_SC_EXPR_NEST_MAX,
+-    #[cfg(any(bsd, solarish, target_os = "linux"))]
++    #[cfg(any(bsd, solarish, target_os = "linux", target_os = "zinnia"))]
+     /// Maximum length of a host name (not including the terminating null) as
+     /// returned from the `gethostname` function
+     HOST_NAME_MAX = libc::_SC_HOST_NAME_MAX,
+@@ -2646,12 +2654,15 @@ pub enum SysconfVar {
+     #[cfg(not(target_os = "haiku"))]
+     LOGIN_NAME_MAX = libc::_SC_LOGIN_NAME_MAX,
+     /// Maximum number of simultaneous supplementary group IDs per process.
++    #[cfg(not(target_os = "zinnia"))]
+     NGROUPS_MAX = libc::_SC_NGROUPS_MAX,
+     /// Initial size of `getgrgid_r` and `getgrnam_r` data buffers
+     #[cfg(not(target_os = "redox"))]
++    #[cfg(not(target_os = "zinnia"))]
+     GETGR_R_SIZE_MAX = libc::_SC_GETGR_R_SIZE_MAX,
+     /// Initial size of `getpwuid_r` and `getpwnam_r` data buffers
+     #[cfg(not(target_os = "redox"))]
++    #[cfg(not(target_os = "zinnia"))]
+     GETPW_R_SIZE_MAX = libc::_SC_GETPW_R_SIZE_MAX,
+     /// The maximum number of open message queue descriptors a process may hold.
+     #[cfg(not(any(target_os = "redox", target_os = "haiku")))]
+@@ -3501,6 +3539,7 @@ pub struct User {
+         target_os = "hurd",
+         target_os = "emscripten",
+         target_os = "cygwin",
++                    target_os = "zinnia",
+     )))]
+     pub class: CString,
+     /// Last password change
+@@ -3513,6 +3552,7 @@ pub struct User {
+         target_os = "hurd",
+         target_os = "emscripten",
+         target_os = "cygwin",
++                    target_os = "zinnia",
+     )))]
+     pub change: libc::time_t,
+     /// Expiration time of account
+@@ -3525,6 +3565,7 @@ pub struct User {
+         target_os = "hurd",
+         target_os = "emscripten",
+         target_os = "cygwin",
++                    target_os = "zinnia",
+     )))]
+     pub expire: libc::time_t,
+ }
+@@ -3580,6 +3621,7 @@ impl From<&libc::passwd> for User {
+                     target_os = "hurd",
+                     target_os = "emscripten",
+                     target_os = "cygwin",
++                    target_os = "zinnia",
+                 )))]
+                 class: CString::new(CStr::from_ptr(pw.pw_class).to_bytes())
+                     .unwrap(),
+@@ -3592,6 +3634,7 @@ impl From<&libc::passwd> for User {
+                     target_os = "hurd",
+                     target_os = "emscripten",
+                     target_os = "cygwin",
++                    target_os = "zinnia",
+                 )))]
+                 change: pw.pw_change,
+                 #[cfg(not(any(
+@@ -3603,6 +3646,7 @@ impl From<&libc::passwd> for User {
+                     target_os = "hurd",
+                     target_os = "emscripten",
+                     target_os = "cygwin",
++                    target_os = "zinnia",
+                 )))]
+                 expire: pw.pw_expire,
+             }
+@@ -3646,6 +3690,7 @@ impl From<User> for libc::passwd {
+                 target_os = "hurd",
+                 target_os = "emscripten",
+                 target_os = "cygwin",
++                    target_os = "zinnia",
+             )))]
+             pw_class: u.class.into_raw(),
+             #[cfg(not(any(
+@@ -3657,6 +3702,7 @@ impl From<User> for libc::passwd {
+                 target_os = "hurd",
+                 target_os = "emscripten",
+                 target_os = "cygwin",
++                    target_os = "zinnia",
+             )))]
+             pw_change: u.change,
+             #[cfg(not(any(
+@@ -3668,6 +3714,7 @@ impl From<User> for libc::passwd {
+                 target_os = "hurd",
+                 target_os = "emscripten",
+                 target_os = "cygwin",
++                    target_os = "zinnia",
+             )))]
+             pw_expire: u.expire,
+             #[cfg(solarish)]
+@@ -3687,6 +3734,7 @@ impl User {
+     /// If `f` writes to its `*mut *mut libc::passwd` parameter, then it must
+     /// also initialize the value pointed to by its `*mut libc::group`
+     /// parameter.
++    #[cfg(not(target_os = "zinnia"))]
+     unsafe fn from_anything<F>(f: F) -> Result<Option<Self>>
+     where
+         F: Fn(
+@@ -3745,6 +3793,7 @@ impl User {
+     /// assert_eq!(res.name, "root");
+     /// ```
+     #[doc(alias("getpwuid", "getpwuid_r"))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub fn from_uid(uid: Uid) -> Result<Option<Self>> {
+         // SAFETY: `getpwuid_r` will write to `res` if it initializes the value
+         // at `pwd`.
+@@ -3769,6 +3818,7 @@ impl User {
+     /// assert_eq!(res.name, "root");
+     /// ```
+     #[doc(alias("getpwnam", "getpwnam_r"))]
++    #[cfg(not(target_os = "zinnia"))]
+     pub fn from_name(name: &str) -> Result<Option<Self>> {
+         let name = match CString::new(name) {
+             Ok(c_str) => c_str,
+@@ -3826,6 +3876,7 @@ impl From<&libc::group> for Group {
+ }
+ 
+ #[cfg(not(target_os = "redox"))] // RedoxFS does not support passwd
++#[allow(dead_code)]
+ impl Group {
+     unsafe fn members(mem: *mut *mut c_char) -> Vec<String> {
+         let mut ret = Vec::new();
+@@ -3847,6 +3898,7 @@ impl Group {
+     /// If `f` writes to its `*mut *mut libc::group` parameter, then it must
+     /// also initialize the value pointed to by its `*mut libc::group`
+     /// parameter.
++    #[cfg(not(target_os = "zinnia"))]
+     unsafe fn from_anything<F>(f: F) -> Result<Option<Self>>
+     where
+         F: Fn(
+@@ -3906,6 +3958,7 @@ impl Group {
+     /// let res = Group::from_gid(Gid::from_raw(0)).unwrap().unwrap();
+     /// assert!(res.name == "root");
+     /// ```
++    #[cfg(not(target_os = "zinnia"))]
+     pub fn from_gid(gid: Gid) -> Result<Option<Self>> {
+         // SAFETY: `getgrgid_r` will write to `res` if it initializes the value
+         // at `grp`.
+@@ -3931,6 +3984,7 @@ impl Group {
+     /// let res = Group::from_name("root").unwrap().unwrap();
+     /// assert!(res.name == "root");
+     /// ```
++    #[cfg(not(target_os = "zinnia"))]
+     pub fn from_name(name: &str) -> Result<Option<Self>> {
+         let name = match CString::new(name) {
+             Ok(c_str) => c_str,

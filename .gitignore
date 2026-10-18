@@ -8,6 +8,7 @@
 build-*/
 sources/
 host-sources/
+*/__pycache__
 
 # Other files
 ovmf/
@@ -18,3 +19,5 @@ zinnia.iso
 
 # Allow debug config
 !.vscode/launch.json
+
+kernel/

@@ -1,0 +1,51 @@
+diff --git rust-getrandom-03-clean/Cargo.toml rust-getrandom-03-workdir/Cargo.toml
+index f4f2f6c..926ed6f 100644
+--- rust-getrandom-03-clean/Cargo.toml
++++ rust-getrandom-03-workdir/Cargo.toml
+@@ -117,7 +117,7 @@ default-features = false
+ version = "0.2.154"
+ default-features = false
+ 
+-[target.'cfg(any(target_os = "macos", target_os = "openbsd", target_os = "vita", target_os = "emscripten"))'.dependencies.libc]
++[target.'cfg(any(target_os = "macos", target_os = "openbsd", target_os = "vita", target_os = "emscripten", target_os = "zinnia"))'.dependencies.libc]
+ version = "0.2.154"
+ default-features = false
+ 
+diff --git rust-getrandom-03-clean/Cargo.toml.orig rust-getrandom-03-workdir/Cargo.toml.orig
+index 371bc81..563e20f 100644
+--- rust-getrandom-03-clean/Cargo.toml.orig
++++ rust-getrandom-03-workdir/Cargo.toml.orig
+@@ -45,7 +45,7 @@ libc = { version = "0.2.154", default-features = false }
+ r-efi = { version = "5.1", default-features = false }
+ 
+ # getentropy
+-[target.'cfg(any(target_os = "macos", target_os = "openbsd", target_os = "vita", target_os = "emscripten"))'.dependencies]
++[target.'cfg(any(target_os = "macos", target_os = "openbsd", target_os = "vita", target_os = "emscripten", target_os = "zinnia"))'.dependencies]
+ libc = { version = "0.2.154", default-features = false }
+ 
+ # getrandom
+diff --git rust-getrandom-03-clean/src/backends.rs rust-getrandom-03-workdir/src/backends.rs
+index 2c539df..32f77b7 100644
+--- rust-getrandom-03-clean/src/backends.rs
++++ rust-getrandom-03-workdir/src/backends.rs
+@@ -57,6 +57,7 @@ cfg_if! {
+         target_os = "openbsd",
+         target_os = "vita",
+         target_os = "emscripten",
++        target_os = "zinnia",
+     ))] {
+         mod getentropy;
+         pub use getentropy::*;
+diff --git rust-getrandom-03-clean/src/util_libc.rs rust-getrandom-03-workdir/src/util_libc.rs
+index 24c53c0..617f145 100644
+--- rust-getrandom-03-clean/src/util_libc.rs
++++ rust-getrandom-03-workdir/src/util_libc.rs
+@@ -4,7 +4,7 @@ use core::mem::MaybeUninit;
+ cfg_if! {
+     if #[cfg(any(target_os = "netbsd", target_os = "openbsd", target_os = "android", target_os = "cygwin"))] {
+         use libc::__errno as errno_location;
+-    } else if #[cfg(any(target_os = "linux", target_os = "emscripten", target_os = "hurd", target_os = "redox", target_os = "dragonfly"))] {
++    } else if #[cfg(any(target_os = "linux", target_os = "emscripten", target_os = "hurd", target_os = "redox", target_os = "dragonfly", target_os = "zinnia"))] {
+         use libc::__errno_location as errno_location;
+     } else if #[cfg(any(target_os = "solaris", target_os = "illumos"))] {
+         use libc::___errno as errno_location;

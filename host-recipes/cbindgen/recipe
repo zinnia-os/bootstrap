@@ -1,0 +1,32 @@
+#! /bin/sh
+
+version=0.29.4
+revision=1
+tarball_url="https://static.crates.io/crates/cbindgen/cbindgen-${version}.crate"
+tarball_blake2b="24afbc06948ab8062c56283ab51e98b6439e687a95d56829d06f3ff917fd5e5ea66dcaba19e441cdfcb2b98233e57349f4c51f6fa4709f15337e6d49fffe25a9"
+imagedeps="build-essential"
+hostdeps="cargo rust"
+allow_network=yes
+
+build() {
+    cargo_target_dir="$(pwd -P)/target"
+    cargo_project_home "$(pwd -P)/.cargo"
+    CARGO_HOME="$(pwd -P)/.cargo" \
+    CARGO_TARGET_DIR="${cargo_target_dir}" \
+    cargo build \
+        --release \
+        --locked \
+        --target "${RUST_HOST_TRIPLET}" \
+        --manifest-path "${source_dir}/Cargo.toml" \
+        -j${parallelism}
+}
+
+package() {
+    install -v -m755 -d "${dest_dir}${prefix}/bin"
+    install -v -m755 \
+        "$(pwd -P)/target/${RUST_HOST_TRIPLET}/release/cbindgen" \
+        "${dest_dir}${prefix}/bin/cbindgen"
+
+    strip_command=strip \
+        post_package_strip
+}

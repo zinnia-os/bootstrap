@@ -287,14 +287,35 @@ KF6_HOST_TOOLING="/usr/local/lib/x86_64-linux-gnu/cmake"
 
 RUST_GETRANDOM_RUSTFLAG='--cfg getrandom_backend="rdrand"'
 
+cargo_project_home() {
+    project_home="$1"
+    shared_home="${build_dir}/.cargo"
+
+    mkdir -p "${project_home}"
+    if [ "${project_home}" = "${shared_home}" ]; then
+        return
+    fi
+
+    for cache in registry git; do
+        if [ -e "${shared_home}/${cache}" ] && [ ! -e "${project_home}/${cache}" ]; then
+            ln -s "${shared_home}/${cache}" "${project_home}/${cache}"
+        fi
+    done
+}
+
 cargo_build_nolock() {
     TARGET_DIR=$(pwd -P)
+    cargo_home="${CARGO_HOME:-${TARGET_DIR}/.cargo}"
     cd "${source_dir}"
 
+        rm -f "${build_dir}/.cargo/config.toml" "${build_dir}/.cargo/config"
+        cargo_project_home "${cargo_home}"
         RUSTUP_HOME="${build_dir}/.rustup" \
-        CARGO_HOME="${build_dir}/.cargo" \
+        CARGO_HOME="${cargo_home}" \
         CARGO_TARGET_DIR="${TARGET_DIR}" \
         CARGO_RESOLVER_LOCKFILE_PATH="${TARGET_DIR}/Cargo.lock" \
+        CARGO_PROFILE_RELEASE_DEBUG=2 \
+        CARGO_PROFILE_RELEASE_STRIP=none \
     cargo build \
         -Zunstable-options \
         -Zlockfile-path \
@@ -302,46 +323,77 @@ cargo_build_nolock() {
         "$@"
 }
 
-prepare_rust_toolchain_source() {
-    rust_src="$1"
-    fork_src="$2"
+cargo_package_field() {
+    awk -F '"' -v key="$2" '
+        /^\[package\]$/ { package = 1; next }
+        /^\[/ { package = 0 }
+        package && index($0, key " = ") == 1 { print $2; exit }
+    ' "$1"
+}
 
-    if ! [ -f "${rust_src}/x.py" ]; then
-        rm -rf "${rust_src}"
-        cp -a "${source_dir}/." "${rust_src}"
-        cp -a "${fork_src}"/rust-* "$(dirname "${rust_src}")"/
-        rm -rf "${rust_src}/vendor" "${rust_src}/.cargo/config.toml"
+cargo_patch_entries() {
+    local path_root="$1"
+    shift
+    local fork
+
+    for fork in "$@"; do
+        printf '"%s" = { package = "%s", path = "%s/%s" }\n' \
+            "${fork}" "$(cargo_package_field "${cargo_fork_root}/${fork}/Cargo.toml" name)" \
+            "${path_root}" "${fork}"
+    done
+}
+
+cargo_relock() {
+    local fork crate version series locked_version
+
+    for fork in "$@"; do
+        crate="$(cargo_package_field "${cargo_fork_root}/${fork}/Cargo.toml" name)"
+        version="$(cargo_package_field "${cargo_fork_root}/${fork}/Cargo.toml" version)"
+        case "${version}" in
+            0.*) series="${version%.*}" ;;
+            *) series="${version%%.*}" ;;
+        esac
+
+        for locked_version in $(awk -F '"' -v crate="${crate}" -v series="${series}." '
+            /^\[/ { name = version = "" }
+            /^name = / { name = $2 }
+            /^version = / { version = $2 }
+            /^source = "registry\+/ && name == crate && index(version, series) == 1 {
+                print version
+            }
+        ' Cargo.lock); do
+            "${CARGO:-cargo}" update -p "${crate}@${locked_version}" --precise "${version}"
+        done
+    done
+}
+
+cargo_configure_noflags() {
+    local fork
+
+    if [ -z "${cargo_fork_root-}" ]; then
+        cargo_fork_root="${sysroot}/usr/src/rust"
     fi
 
-    export RUSTUP_HOME="${build_dir}/.rustup"
-    export CARGO_HOME="$(pwd -P)/.cargo"
-}
+    for fork in "$@"; do
+        [ -f "${cargo_fork_root}/${fork}/Cargo.toml" ] \
+            || die "Missing Rust fork ${fork}; add it to the recipe dependencies"
+    done
 
-install_rust_toolchain_source() {
-    rust_src="$1"
-    src_root="$2"
-
-    mkdir -p "${src_root}"/rust/library/
-    cp -rp "${rust_src}"/library/. "${src_root}"/rust/library/
-
-    cp -rp "$(dirname "${rust_src}")"/rust-libc "${src_root}"/
-}
-
-zinnia_rust_forks() {
-    python3 "${base_dir}"/scripts/rust-forks.py "$@"
-}
-
-cargo_zinnia_build_env() {
-    export RUSTUP_HOME="${build_dir}/.rustup"
-    export CARGO_HOME="$(pwd -P)/.cargo"
-    mkdir -p "${CARGO_HOME}"
-
-    fork_root="${sysroot}/usr/src/rust"
-    zinnia_rust_forks patch-table --forks "${fork_root}" > "${CARGO_HOME}/config.toml"
+    rm -f "${build_dir}/.cargo/config.toml" "${build_dir}/.cargo/config"
+    cargo_project_home "${CARGO_HOME}"
+    {
+        printf '[patch.crates-io]\n'
+        cargo_patch_entries "${cargo_fork_root}" "$@"
+    } > "${CARGO_HOME}/config.toml"
 
     if [ -f Cargo.lock ]; then
-        cargo_zinnia_relock Cargo.lock
+        cargo_relock "$@"
     fi
+}
+
+cargo_configure() {
+    export RUSTUP_HOME="${build_dir}/.rustup"
+    export CARGO_HOME="$(pwd -P)/.cargo"
 
     cargo_linker_var="CARGO_TARGET_$(printf '%s' "${RUST_TRIPLET}" | tr '[:lower:]-' '[:upper:]_')_LINKER"
     export "${cargo_linker_var}=${OS_TRIPLET}-gcc"
@@ -350,14 +402,8 @@ cargo_zinnia_build_env() {
     export PKG_CONFIG="${OS_TRIPLET}-pkg-config"
     export PKG_CONFIG_ALLOW_CROSS=1
     export RUST_TARGET="${RUST_TRIPLET}"
-}
 
-cargo_zinnia_relock() {
-    zinnia_rust_forks relock --forks "${sysroot}/usr/src/rust" "$1"
-}
-
-cargo_zinnia_patch_rust_workspace() {
-    zinnia_rust_forks patch-workspace --forks "$3" --prefix "$2" "$1"
+    cargo_configure_noflags "$@"
 }
 
 rust_crate_recipe() {
@@ -373,7 +419,7 @@ rust_crate_recipe() {
 package_rust_crate() {
     package() {
         mkdir -p "${dest_dir}${prefix}"/src/rust/${name}
-        cp -r "${source_dir}"/* "${dest_dir}${prefix}"/src/rust/${name}/
+        cp -a "${source_dir}/." "${dest_dir}${prefix}"/src/rust/${name}/
         post_package_strip
     }
 }

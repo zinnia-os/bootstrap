@@ -1,0 +1,7 @@
+#! /bin/sh
+
+version=0.3.3
+revision=1
+
+rust_crate_recipe getrandom \
+    17bf881c1ec8e70b263dad11fbb307484d7ff6a7bb6c0ed217730c0a766adb3a19e6633b28cff9eb7c1f9deea55a647ad53636533c392a5c39ac82e26623a18c

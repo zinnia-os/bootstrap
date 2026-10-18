@@ -1,47 +1,56 @@
 #! /bin/sh
 
-version=1.95.0
-revision=1
-tarball_url="https://static.rust-lang.org/dist/rustc-${version}-src.tar.xz"
-tarball_blake2b="0f255678231df79c9910cf5d9efbd762d1955ad78512194e3e06b3cec327f346bc98c526d2a8468ea53f57132c9765a134fe203267c1f6696e6719db820f342a"
+version=1.100.0
+revision=5
+tarball_url="https://static.rust-lang.org/dist/2026-09-26/rustc-nightly-src.tar.xz"
+tarball_blake2b="feeb0cc3c08a2e7e8f687c1dfe81f9803bb3db28ada6682070370d690d1305d4b7d6c863d4ef76034ac68b2024121ea953edb933f05381198cc3e8100ac26ae5"
 source_imagedeps="build-essential cmake ninja-build python3 curl git"
 imagedeps="build-essential cmake ninja-build python3 curl git"
 hostdeps="gcc pkg-config llvm cargo rust"
-deps="core-libs llvm zlib zstd libffi ncurses openssl curl nghttp2 rust-crates"
+rust_crates="rust-libc rust-rustix rust-getrandom rust-getrandom-03 rust-nix rust-errno rust-socket2 rust-system-deps rust-libloading rust-libloading-09"
+deps="core-libs libstdc++ llvm zlib zstd libffi ncurses openssl curl nghttp2 ${rust_crates}"
 builddeps="mlibc"
 allow_network=yes
 
 prepare_rust_source() {
     rust_src="$(pwd -P)/rust-src"
-    prepare_rust_toolchain_source "${rust_src}" "${sysroot}/usr/src/rust"
-    cargo_zinnia_patch_rust_workspace "${rust_src}" \
-        ".." "$(dirname "${rust_src}")"
-    cargo_zinnia_patch_rust_workspace "${rust_src}/src/tools/cargo" \
-        "../../../.." "$(dirname "${rust_src}")"
+
+    if [ -f "${rust_src}/x.py" ]; then
+        return
+    fi
+
+    rm -rf "${rust_src}"
+    cp -a "${source_dir}/." "${rust_src}"
+
+    cargo_fork_root="${rust_src}/library/zinnia-crates"
+    mkdir -p "${cargo_fork_root}"
+    for fork in ${rust_crates}; do
+        cp -a "${sysroot}/usr/src/rust/${fork}" "${cargo_fork_root}/"
+    done
+
+    export CARGO_HOME="$(pwd -P)/.cargo"
+    mkdir -p "${CARGO_HOME}"
+    {
+        printf '[patch.crates-io]\n'
+        cargo_patch_entries "${cargo_fork_root}" ${rust_crates}
+    } > "${CARGO_HOME}/config.toml"
+    cargo_patch_entries zinnia-crates ${rust_crates} >> "${rust_src}/library/Cargo.toml"
+
+    for workspace in . library src/bootstrap src/tools/cargo; do
+        (
+            cd "${rust_src}/${workspace}"
+            RUSTC_BOOTSTRAP=1 CARGO_NET_OFFLINE=true cargo_relock ${rust_crates}
+        )
+    done
 }
 
 configure() {
-    llvm_config_wrapper="$(pwd -P)/zinnia-llvm-config"
-    cat > "${llvm_config_wrapper}" << WRAP
-#! /bin/sh
-for arg in "\$@"; do
-    case "\$arg" in
-        --prefix)     echo "${sysroot}/usr"; exit 0 ;;
-        --libdir)     echo "${sysroot}/usr/lib"; exit 0 ;;
-        --bindir)     echo "${sysroot}/usr/bin"; exit 0 ;;
-        --includedir) echo "${sysroot}/usr/include"; exit 0 ;;
-        --ldflags)    echo "-L${sysroot}/usr/lib"; exit 0 ;;
-    esac
-done
-exec /usr/local/bin/llvm-config "\$@"
-WRAP
-    chmod +x "${llvm_config_wrapper}"
-
     cat > config.toml << EOF
 change-id = "ignore"
 
 [llvm]
 link-shared = true
+static-libstdcpp = false
 download-ci-llvm = false
 
 [build]
@@ -53,6 +62,7 @@ python = "python3"
 tools = ["cargo"]
 sanitizers = false
 profiler = false
+vendor = true
 
 [install]
 prefix = "${prefix}"
@@ -65,10 +75,10 @@ deny-warnings = false
 llvm-tools = false
 
 [target.${RUST_HOST_TRIPLET}]
-llvm-config = "/usr/local/bin/llvm-config"
+llvm-config = "${base_dir}/support/llvm-config"
 
 [target.${RUST_TRIPLET}]
-llvm-config = "${llvm_config_wrapper}"
+llvm-config = "${base_dir}/support/llvm-config"
 cc = "${OS_TRIPLET}-gcc"
 cxx = "${OS_TRIPLET}-g++"
 ar = "${OS_TRIPLET}-ar"
@@ -77,40 +87,37 @@ linker = "${OS_TRIPLET}-gcc"
 EOF
 }
 
-build() {
-    prepare_rust_source
-
+run_rust_toolchain() {
+    rust_action="$1"
+    shift
     pkgconf_var="PKG_CONFIG_$(printf '%s' "${RUST_TRIPLET}" | tr - _)"
     rustflags_var="CARGO_TARGET_$(printf '%s' "${RUST_TRIPLET}" | tr '[:lower:]-' '[:upper:]_')_RUSTFLAGS"
 
-        BOOTSTRAP_SKIP_TARGET_SANITY=1 \
+    env \
         CARGO_HOME="$(pwd -P)/.cargo" \
+        LLVM_CONFIG_SYSROOT="${sysroot}" \
         PKG_CONFIG_ALLOW_CROSS=1 \
         OPENSSL_NO_VENDOR=1 \
-        env "${pkgconf_var}=${OS_TRIPLET}-pkg-config" \
-            "${rustflags_var}=${RUST_GETRANDOM_RUSTFLAG}" \
-    python3 "${rust_src}"/x.py build rustc cargo std --stage 2 -j${parallelism}
+        "${pkgconf_var}=${OS_TRIPLET}-pkg-config" \
+        "${rustflags_var}=${RUST_GETRANDOM_RUSTFLAG}" \
+        "$@" \
+        python3 "${rust_src}/x.py" "${rust_action}" rustc cargo std --stage 2 -j"${parallelism}"
+}
+
+build() {
+    prepare_rust_source
+    run_rust_toolchain build
 }
 
 package() {
     prepare_rust_source
-
-    pkgconf_var="PKG_CONFIG_$(printf '%s' "${RUST_TRIPLET}" | tr - _)"
-    rustflags_var="CARGO_TARGET_$(printf '%s' "${RUST_TRIPLET}" | tr '[:lower:]-' '[:upper:]_')_RUSTFLAGS"
-
-        BOOTSTRAP_SKIP_TARGET_SANITY=1 \
-        CARGO_HOME="$(pwd -P)/.cargo" \
-        PKG_CONFIG_ALLOW_CROSS=1 \
-        OPENSSL_NO_VENDOR=1 \
-        DESTDIR="${dest_dir}" \
-        env "${pkgconf_var}=${OS_TRIPLET}-pkg-config" \
-            "${rustflags_var}=${RUST_GETRANDOM_RUSTFLAG}" \
-    python3 "${rust_src}"/x.py install rustc cargo std --stage 2 -j${parallelism}
+    run_rust_toolchain install "DESTDIR=${dest_dir}"
 
     rm -rf "${dest_dir}${prefix}"/share/doc
     rm -rf "${dest_dir}${prefix}"/share/man
 
     post_package_strip
 
-    install_rust_toolchain_source "${rust_src}" "${dest_dir}${prefix}"/lib/rustlib/src
+    mkdir -p "${dest_dir}${prefix}"/lib/rustlib/src/rust/library/
+    cp -rp "${rust_src}"/library/. "${dest_dir}${prefix}"/lib/rustlib/src/rust/library/
 }
