@@ -1,9 +1,9 @@
 #! /bin/sh
 
-version=1.6.48
+version=1.6.58
 revision=1
 tarball_url="https://download.sourceforge.net/libpng/libpng-${version}.tar.xz"
-tarball_blake2b="2aec3b237d8cf2109186518a1604d9d10e0ef6739730988e01b91f20d48dcd736a293d3c96bed719807778a68273d1bf5cc2467fc19852dbfffd39295fcbf515"
+tarball_blake2b="51042e8f2b56d469b516db9cbde6d4b6813a62d1b7117898ba32a9a5ac5cd73832c627d7377745e5d5154aade6ec6928fc6b9cd9b96885f64b7ca7df19ca40ec"
 hostdeps="gcc pkg-config cmake"
 deps="core-libs zlib"
 
