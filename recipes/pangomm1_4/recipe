@@ -1,0 +1,25 @@
+#! /bin/sh
+
+version=2.46.5
+revision=1
+tarball_url="https://download.gnome.org/sources/pangomm/2.46/pangomm-${version}.tar.xz"
+tarball_blake2b="3135008ce8f7a1f76d2649cfeeed2ad0aa788b3783cae65ad920c49637cea24f96110357fb950c78fd11121624ababd44588f7282b438f8fa81aea665e99f703"
+hostdeps="gcc pkg-config"
+deps="core-libs glibmm2 cairomm1_0 pango"
+
+configure() {
+    meson_configure \
+        -Dmaintainer-mode=false \
+        -Dbuild-documentation=false \
+        -Dbuild-deprecated-api=true
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}
