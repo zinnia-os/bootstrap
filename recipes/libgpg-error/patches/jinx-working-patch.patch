@@ -1,0 +1,12 @@
+diff --git libgpg-error-clean/configure.ac libgpg-error-workdir/configure.ac
+--- libgpg-error-clean/configure.ac
++++ libgpg-error-workdir/configure.ac
+@@ -636 +636 @@
+-    *-*-gnu* | *-*-linux-gnu* | *-*-linux-musl*)
++    *-*-gnu* | *-*-linux-gnu* | *-*-linux-musl* | *-*-*-mlibc*)
+diff --git libgpg-error-clean/configure libgpg-error-workdir/configure
+--- libgpg-error-clean/configure
++++ libgpg-error-workdir/configure
+@@ -19957 +19957 @@
+-    *-*-gnu* | *-*-linux-gnu* | *-*-linux-musl*)
++    *-*-gnu* | *-*-linux-gnu* | *-*-linux-musl* | *-*-*-mlibc*)

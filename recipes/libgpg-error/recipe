@@ -1,7 +1,7 @@
 #! /bin/sh
 
 version=1.55
-revision=1
+revision=2
 tarball_url="https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-${version}.tar.gz"
 tarball_blake2b="5d222849c48aba34257f8c402c51318bcdf66a2c485668b852b322763d090b90d0724e2a0d9857f615bb87227d36720b2595593f7727c54688f5ba08c3c8eafc"
 imagedeps="build-essential"
@@ -9,8 +9,6 @@ hostdeps="gcc pkg-config"
 deps="core-libs"
 
 prepare() {
-    cp -v src/syscfg/lock-obj-pub.$JINX_ARCH-unknown-linux-gnu.h src/syscfg/lock-obj-pub.zinnia-mlibc.h
-
     autotools_recursive_regen
 }
 
@@ -21,6 +19,18 @@ configure() {
 }
 
 build() {
+    # Check the generated public lock ABI against the target pthread ABI.
+    abi_check="${build_dir}/libgpg-error-lock-abi-check.c"
+    printf '%s\n' \
+        '#include <pthread.h>' \
+        '#include "lock-obj-pub.native.h.c-check"' \
+        '_Static_assert(sizeof(gpgrt_lock_t) >= sizeof(pthread_mutex_t), "gpgrt_lock_t is smaller than pthread_mutex_t");' \
+        'int main(void) { return 0; }' > "${abi_check}"
+    target_cc="$(find /usr/local/bin -maxdepth 1 -name '*-zinnia-mlibc-gcc' -print -quit)"
+    lock_header="$(find "${source_dir}" "${build_dir}" -name lock-obj-pub.native.h -print -quit)"
+    sed '/^##/d' "${lock_header}" > "${lock_header}.c-check"
+    lock_header_dir="$(dirname "${lock_header}")"
+    "${target_cc}" ${CFLAGS:-} -I"${lock_header_dir}" -c "${abi_check}" -o "${abi_check}.o"
     make -j${parallelism} \
         CFLAGS_FOR_BUILD="$HOST_CFLAGS" \
         CXXFLAGS_FOR_BUILD="$HOST_CXXFLAGS" \
