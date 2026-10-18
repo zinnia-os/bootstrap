@@ -1,7 +1,7 @@
 #! /bin/sh
 
 repology_id=mlibc
-version=e8d0281132bec0757f59a71691b7118ac1609972
+version=a1858073acd9c28b0b03bf43f8b2c8f872858c45
 revision=1
 git_url="https://github.com/zinnia-os/mlibc.git"
 commit=${version}
