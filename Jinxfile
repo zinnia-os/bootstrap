@@ -34,7 +34,7 @@ HOST_CPPFLAGS=""
 HOST_LDFLAGS="-Wl,-O1 -Wl,--sort-common -Wl,--as-needed -Wl,-z,now"
 
 TARGET_CFLAGS="$HOST_CFLAGS -g"
-TARGET_CXXFLAGS="$HOST_CXXFLAGS"
+TARGET_CXXFLAGS="$HOST_CXXFLAGS -g"
 TARGET_CPPFLAGS="$HOST_CPPFLAGS"
 TARGET_LDFLAGS="$HOST_LDFLAGS"
 
@@ -50,8 +50,10 @@ case "${JINX_ARCH}" in
 esac
 
 post_package_strip() {
+    keep_debug_symbols=no
     if [ -z "${strip_command-}" ]; then
         strip_command="${OS_TRIPLET}-strip"
+        keep_debug_symbols=yes
     fi
 
     for f in $(find "${dest_dir}"); do
@@ -68,9 +70,20 @@ post_package_strip() {
             *relocatable*) strip_flags="--strip-debug" ;;
         esac
 
+        if [ "$keep_debug_symbols" = yes ]; then
+            relative_path="${f#${dest_dir}}"
+            debug_file="${build_dir}/debug-symbols${relative_path}.debug"
+            mkdir -p "$(dirname "$debug_file")"
+            "${OS_TRIPLET}-objcopy" --only-keep-debug "$f" "$debug_file"
+        fi
+
         echo "* stripping '$f'..."
         stripped_file="$(mktemp)"
         ${strip_command} ${strip_flags} "$f" -o "$stripped_file"
+        if [ "$keep_debug_symbols" = yes ]; then
+            "${OS_TRIPLET}-objcopy" \
+                --add-gnu-debuglink="$debug_file" "$stripped_file"
+        fi
         chmod --reference="$f" "$stripped_file"
         mv -f "$stripped_file" "$f"
     done

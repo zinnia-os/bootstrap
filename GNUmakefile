@@ -25,19 +25,12 @@ build-$(ARCH)/.jinx-parameters:
 	@cd build-$(ARCH) && ../jinx/jinx init .. ARCH=$(ARCH)
 
 MINIMAL_PKGS = base-system
-LIVE_PKGS = zinnia-installer zinnia-live
 
 # Build only a minimal selection of packages
 .PHONY: minimal-install
 minimal-install: build-$(ARCH)/.jinx-parameters
 	@cd build-$(ARCH) && ../jinx/jinx update -b $(MINIMAL_PKGS)
 	@cd build-$(ARCH) && sudo ../jinx/jinx install sysroot $(MINIMAL_PKGS)
-
-# Build the package selection that goes onto the live installation medium
-.PHONY: live-install
-live-install: build-$(ARCH)/.jinx-parameters
-	@cd build-$(ARCH) && ../jinx/jinx update -b $(LIVE_PKGS)
-	@cd build-$(ARCH) && sudo ../jinx/jinx install live-sysroot $(LIVE_PKGS)
 
 # Build all packages
 .PHONY: full-install
@@ -67,16 +60,6 @@ image: build-$(ARCH)/.jinx-parameters build-$(ARCH)/zinnia.img build-$(ARCH)/ini
 		build-$(ARCH)/sysroot \
 		build-$(ARCH)/initramfs.tar \
 		build-$(ARCH)/zinnia.img \
-		$(ARCH)
-
-# Build a live installation medium
-.PHONY: live
-live: build-$(ARCH)/.jinx-parameters live-install build-$(ARCH)/initramfs.tar
-		@PATH=$$PATH:/usr/sbin:/sbin \
-	./tasks/make-live-image.sh \
-		build-$(ARCH)/live-sysroot \
-		build-$(ARCH)/initramfs.tar \
-		build-$(ARCH)/zinnia-live.img \
 		$(ARCH)
 
 # -----------
