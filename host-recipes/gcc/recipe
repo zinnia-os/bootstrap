@@ -45,7 +45,4 @@ package() {
         install-target-libgcc \
         install-target-libstdc++-v3 \
         install-target-libatomic
-
-        strip_command=strip \
-    post_package_strip
 }

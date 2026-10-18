@@ -27,6 +27,7 @@ configure() {
         --disable-multilib \
         --enable-initfini-array \
         --disable-shared \
+        --disable-libatomic \
         --disable-hosted-libstdcxx \
         --disable-fixincludes \
         --disable-wchar_t \
@@ -37,7 +38,8 @@ configure() {
 
 build() {
     cd build
-    make -j${parallelism} \
+    # Target libraries configure during make, before libc exists to link probes.
+    lt_cv_shlibpath_overrides_runpath=no make -j${parallelism} \
         all-gcc \
         all-target-libgcc \
         all-target-libstdc++-v3
@@ -49,7 +51,4 @@ package() {
         install-gcc \
         install-target-libgcc \
         install-target-libstdc++-v3
-
-        strip_command=strip \
-    post_package_strip
 }
