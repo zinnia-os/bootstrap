@@ -1,0 +1,45 @@
+#! /bin/sh
+
+version=0.9.0
+revision=1
+git_url="https://github.com/wmww/gtk-layer-shell.git"
+commit=984dbbfc1d64c763e15a56dff662af267b551f68
+hostdeps="gcc pkg-config wayland"
+deps="core-libs gtk3 wayland wayland-protocols"
+
+configure() {
+    native_pkg_config="$(pwd -P)/pkg-config-native"
+    cat >"${native_pkg_config}" <<'EOF'
+#!/bin/sh
+set -e
+native_pkg_config_path="/usr/local/lib/pkgconfig"
+for path in /usr/local/lib/*/pkgconfig; do
+    [ -d "${path}" ] || continue
+    native_pkg_config_path="${native_pkg_config_path}:${path}"
+done
+export PKG_CONFIG_PATH="${native_pkg_config_path}"
+exec /usr/local/bin/pkgconf "$@"
+EOF
+    chmod 0755 "${native_pkg_config}"
+    cat >native-file.txt <<EOF
+[binaries]
+pkg-config = '${native_pkg_config}'
+EOF
+
+    meson_configure \
+        --native-file=native-file.txt \
+        -Dexamples=false \
+        -Dtests=false \
+        -Dintrospection=false \
+        -Dvapi=false
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}
