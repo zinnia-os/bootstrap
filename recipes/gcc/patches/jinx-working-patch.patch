@@ -409,66 +409,119 @@ index ac10ccc..4435605 100644
  	tmake_file="${tmake_file} riscv/t-crtstuff riscv/t-softfp${host_address} t-softfp riscv/t-elf riscv/t-elf${host_address} t-slibgcc-libgcc"
  	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o crtendS.o crtbeginT.o"
 diff --git gcc-clean/libstdc++-v3/configure gcc-workdir/libstdc++-v3/configure
-index bc9dce5..7e69733 100755
+index bc9dce5..38f8de9 100755
 --- gcc-clean/libstdc++-v3/configure
 +++ gcc-workdir/libstdc++-v3/configure
-@@ -6999,7 +6999,7 @@ irix5* | irix6* | nonstopux*)
+@@ -6999,6 +6999,10 @@ irix5* | irix6* | nonstopux*)
    ;;
  
  # This must be Linux ELF.
--linux* | k*bsd*-gnu | kopensolaris*-gnu | uclinuxfdpiceabi)
-+linux* | zinnia* | k*bsd*-gnu | kopensolaris*-gnu | uclinuxfdpiceabi)
++zinnia*)
++  lt_cv_deplibs_check_method=pass_all
++  ;;
++
+ linux* | k*bsd*-gnu | kopensolaris*-gnu | uclinuxfdpiceabi)
    lt_cv_deplibs_check_method=pass_all
    ;;
-@@ -9776,7 +9776,7 @@ $as_echo_n "checking for $compiler option to produce PIC... " >&6; }
+@@ -9776,6 +9780,12 @@ $as_echo_n "checking for $compiler option to produce PIC... " >&6; }
        lt_prog_compiler_static='-non_shared'
        ;;
  
--    linux* | k*bsd*-gnu | kopensolaris*-gnu)
-+    linux* | zinnia* | k*bsd*-gnu | kopensolaris*-gnu)
++    zinnia*)
++      lt_prog_compiler_wl='-Wl,'
++      lt_prog_compiler_pic='-fPIC -DPIC'
++      lt_prog_compiler_static='-static'
++      ;;
++
+     linux* | k*bsd*-gnu | kopensolaris*-gnu)
        case $cc_basename in
        # old Intel for x86_64 which still supported -KPIC.
-@@ -10371,7 +10371,7 @@ _LT_EOF
+@@ -10371,6 +10381,14 @@ _LT_EOF
        archive_expsym_cmds='sed "s,^,_," $export_symbols >$output_objdir/$soname.expsym~$CC -shared $pic_flag $libobjs $deplibs $compiler_flags ${wl}-h,$soname ${wl}--retain-symbols-file,$output_objdir/$soname.expsym ${wl}--image-base,`expr ${RANDOM-$$} % 4096 / 2 \* 262144 + 1342177280` -o $lib'
        ;;
  
--    gnu* | linux* | tpf* | k*bsd*-gnu | kopensolaris*-gnu | uclinuxfdpiceabi)
-+    gnu* | linux* | zinnia* | tpf* | k*bsd*-gnu | kopensolaris*-gnu | uclinuxfdpiceabi)
++    zinnia*)
++      archive_cmds='$CC -shared $pic_flag $libobjs $deplibs $compiler_flags ${wl}-soname ${wl}$soname -o $lib'
++      archive_expsym_cmds='$CC -shared $pic_flag $libobjs $deplibs $compiler_flags ${wl}-soname ${wl}$soname ${wl}--retain-symbols-file ${wl}$export_symbols -o $lib'
++      hardcode_libdir_flag_spec='${wl}-rpath ${wl}$libdir'
++      export_dynamic_flag_spec='${wl}--export-dynamic'
++      whole_archive_flag_spec='${wl}--whole-archive$convenience ${wl}--no-whole-archive'
++      ;;
++
+     gnu* | linux* | tpf* | k*bsd*-gnu | kopensolaris*-gnu | uclinuxfdpiceabi)
        tmp_diet=no
        if test "$host_os" = linux-dietlibc; then
-@@ -11953,7 +11953,7 @@ linux*oldld* | linux*aout* | linux*coff*)
+@@ -11953,6 +11971,20 @@ linux*oldld* | linux*aout* | linux*coff*)
  # project, but have not yet been accepted: they are GCC-local changes
  # for the time being.  (See
  # https://lists.gnu.org/archive/html/libtool-patches/2018-05/msg00000.html)
--linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu* | uclinuxfdpiceabi)
-+linux* | zinnia* | k*bsd*-gnu | kopensolaris*-gnu | gnu* | uclinuxfdpiceabi)
++zinnia*)
++  version_type=linux
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
++  soname_spec='${libname}${release}${shared_ext}$major'
++  dynamic_linker='mlibc ld.so'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=no
++  sys_lib_search_path_spec='/lib /usr/lib'
++  sys_lib_dlsearch_path_spec='/lib /usr/lib'
++  hardcode_into_libs=yes
++  ;;
++
+ linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu* | uclinuxfdpiceabi)
    version_type=linux
    need_lib_prefix=no
-@@ -13948,7 +13948,7 @@ fi
+@@ -13948,6 +13980,14 @@ fi
          inherit_rpath_CXX=yes
          ;;
  
--      linux* | k*bsd*-gnu | kopensolaris*-gnu)
-+      linux* | zinnia* | k*bsd*-gnu | kopensolaris*-gnu)
++      zinnia*)
++        archive_cmds_CXX='$CC -shared $pic_flag $libobjs $deplibs $compiler_flags ${wl}-soname ${wl}$soname -o $lib'
++        archive_expsym_cmds_CXX='$CC -shared $pic_flag $libobjs $deplibs $compiler_flags ${wl}-soname ${wl}$soname ${wl}--retain-symbols-file ${wl}$export_symbols -o $lib'
++        hardcode_libdir_flag_spec_CXX='${wl}-rpath ${wl}$libdir'
++        export_dynamic_flag_spec_CXX='${wl}--export-dynamic'
++        whole_archive_flag_spec_CXX='${wl}--whole-archive$convenience ${wl}--no-whole-archive'
++        ;;
++
+       linux* | k*bsd*-gnu | kopensolaris*-gnu)
          case $cc_basename in
            KCC*)
-@@ -14787,7 +14787,7 @@ $as_echo_n "checking for $compiler option to produce PIC... " >&6; }
+@@ -14787,6 +14827,12 @@ $as_echo_n "checking for $compiler option to produce PIC... " >&6; }
  	    ;;
  	esac
  	;;
--      linux* | k*bsd*-gnu | kopensolaris*-gnu)
-+      linux* | zinnia* | k*bsd*-gnu | kopensolaris*-gnu)
++      zinnia*)
++        lt_prog_compiler_wl_CXX='-Wl,'
++        lt_prog_compiler_pic_CXX='-fPIC -DPIC'
++        lt_prog_compiler_static_CXX='-static'
++        ;;
++
+       linux* | k*bsd*-gnu | kopensolaris*-gnu)
  	case $cc_basename in
  	  KCC*)
-@@ -15703,7 +15703,7 @@ linux*oldld* | linux*aout* | linux*coff*)
+@@ -15703,6 +15749,20 @@ linux*oldld* | linux*aout* | linux*coff*)
  # project, but have not yet been accepted: they are GCC-local changes
  # for the time being.  (See
  # https://lists.gnu.org/archive/html/libtool-patches/2018-05/msg00000.html)
--linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu* | uclinuxfdpiceabi)
-+linux* | zinnia* | k*bsd*-gnu | kopensolaris*-gnu | gnu* | uclinuxfdpiceabi)
++zinnia*)
++  version_type=linux
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
++  soname_spec='${libname}${release}${shared_ext}$major'
++  dynamic_linker='mlibc ld.so'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=no
++  sys_lib_search_path_spec='/lib /usr/lib'
++  sys_lib_dlsearch_path_spec='/lib /usr/lib'
++  hardcode_into_libs=yes
++  ;;
++
+ linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu* | uclinuxfdpiceabi)
    version_type=linux
    need_lib_prefix=no
-@@ -39204,7 +39204,7 @@ $as_echo "#define HAVE_TLS 1" >>confdefs.h
+@@ -39204,7 +39264,7 @@ $as_echo "#define HAVE_TLS 1" >>confdefs.h
  
    fi
      ;;
@@ -477,3 +530,8 @@ index bc9dce5..7e69733 100755
  
    # All these tests are for C++; save the language and the compiler flags.
    # The CXXFLAGS thing is suspicious, but based on similar bits previously
+@@ -59359,4 +59419,3 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
+ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
+ fi
+-
