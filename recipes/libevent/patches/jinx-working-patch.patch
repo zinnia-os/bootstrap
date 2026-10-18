@@ -1,0 +1,14 @@
+diff --git libevent-clean/event-config.h.cmake libevent-workdir/event-config.h.cmake
+index fccf0cf..418112a 100644
+--- libevent-clean/event-config.h.cmake
++++ libevent-workdir/event-config.h.cmake
+@@ -476,6 +476,9 @@
+ /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+ #cmakedefine EVENT__TIME_WITH_SYS_TIME 1
+ 
++/* The size of `time_t', as computed by sizeof. */
++#define EVENT__SIZEOF_TIME_T @EVENT__SIZEOF_TIME_T@
++
+ /* The size of `socklen_t', as computed by sizeof. */
+ #define EVENT__SIZEOF_SOCKLEN_T @EVENT__SIZEOF_SOCKLEN_T@
+ 

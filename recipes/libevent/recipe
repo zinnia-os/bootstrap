@@ -1,11 +1,12 @@
 #! /bin/sh
 
 version=2.1.12
-revision=1
+revision=2
 tarball_url="https://github.com/libevent/libevent/releases/download/release-${version}-stable/libevent-${version}-stable.tar.gz"
 tarball_blake2b="bc1ace15f639ecef2e6b3f95976b8830c1d86f1d06606dd949e2978611fdf9859ed4eb9292d13e6e90e3835063edb94aae64a15c518d5dabe680f37d5a7f5290"
 hostdeps="cmake gcc pkg-config"
 deps="core-libs openssl"
+clean_workdirs=no
 
 configure() {
     cmake_configure \
@@ -13,6 +14,7 @@ configure() {
         -DEVENT__DISABLE_BENCHMARK=ON \
         -DEVENT__DISABLE_TESTS=ON \
         -DEVENT__DISABLE_REGRESS=ON \
+        -DEVENT__SIZEOF_TIME_T=8 \
         -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 }
 
