@@ -1,0 +1,25 @@
+#! /bin/sh
+
+version=2.66.7
+revision=2
+tarball_url="https://download.gnome.org/sources/glibmm/2.66/glibmm-${version}.tar.xz"
+tarball_blake2b="faef7b6a9ca91aed3ac7ddeddc0413f87daba4b8d1e887431bd7db8b7cae66ec449292bbb0fb9e4e574d1ce680853ab0ffb476abd76c19257c7434389ba3d2cc"
+hostdeps="gcc pkg-config"
+deps="core-libs glib2 libsigc++2"
+
+configure() {
+    meson_configure \
+        -Dmaintainer-mode=false \
+        -Dbuild-documentation=false \
+        -Dbuild-examples=false
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}
