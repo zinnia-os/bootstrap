@@ -1,10 +1,10 @@
 #! /bin/sh
 
 repology_id="llvm"
-version=21.1.6
+version=23.1.2
 revision=1
 tarball_url=https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-${version}.tar.gz
-tarball_blake2b="cb7a51615be3979e32c0352e3d446ccf54f7338f4a31963d2c35073a96dc2ff5e7e0ba30005cc53fe4f570277bb5be9460ad64063db533dd632f6119d1b04b32"
+tarball_blake2b="b170d1cd9c72c9e4f3909064a3b90a06398f6a5ac164b46d3c373262b4da34d09b4a9932ac320cbd28c8badab085d8303c963ed5fae3f7a5a4224e631372aca8"
 imagedeps="build-essential"
 hostdeps="gcc pkg-config cmake"
 deps="core-libs ncurses zlib zstd libffi"
@@ -14,6 +14,7 @@ configure() {
     cmake_configure \
         -UBUILD_SHARED_LIBS \
         -UENABLE_STATIC \
+        -UCLANG_EXECUTABLE_VERSION \
         -DLLVM_LINK_LLVM_DYLIB=ON \
         -DLLVM_ENABLE_FFI=ON \
         -DLLVM_ENABLE_EH=ON \
