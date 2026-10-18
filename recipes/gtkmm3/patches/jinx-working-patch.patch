@@ -1,0 +1,12 @@
+diff --git gtkmm3-clean/meson.build gtkmm3-workdir/meson.build
+index ffdebeb..aae857a 100644
+--- gtkmm3-clean/meson.build
++++ gtkmm3-workdir/meson.build
+@@ -411,7 +411,6 @@ subdir('gtk')
+ subdir('MSVC_NMake/gtkmm')
+ subdir('gtk/gtkmm')
+ subdir('tests')
+-subdir('demos/gtk-demo')
+ subdir('docs/reference')
+
+ # Add a ChangeLog file to the distribution directory.

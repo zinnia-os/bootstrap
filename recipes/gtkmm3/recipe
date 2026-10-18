@@ -1,0 +1,28 @@
+#! /bin/sh
+
+version=3.24.10
+revision=1
+tarball_url="https://download.gnome.org/sources/gtkmm/3.24/gtkmm-${version}.tar.xz"
+tarball_blake2b="fa1d02c9def2f28bd1eb2b61aee9cba477adfd6f7537010a5e23bf11f805fe86b33c5e68c4f9b069397246a320c1b67337ac3943f5e5515e1c3933aa49279648"
+hostdeps="gcc pkg-config"
+deps="core-libs gtk3 glibmm2 cairomm1_0 pangomm1_4 gdk-pixbuf libepoxy"
+
+configure() {
+    meson_configure \
+        -Dmaintainer-mode=false \
+        -Dbuild-atkmm-api=false \
+        -Dbuild-demos=false \
+        -Dbuild-documentation=false \
+        -Dbuild-tests=false \
+        -Dbuild-x11-api=false
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}
