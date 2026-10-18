@@ -1,0 +1,28 @@
+#! /bin/sh
+
+version=1.15.2
+revision=1
+git_url="https://github.com/gabime/spdlog.git"
+commit=48bcf39a661a13be22666ac64db8a7f886f2637e
+imagedeps="build-essential"
+hostdeps="gcc cmake"
+deps="core-libs fmt"
+
+configure() {
+    cmake_configure \
+        -DSPDLOG_BUILD_BENCH=OFF \
+        -DSPDLOG_BUILD_EXAMPLE=OFF \
+        -DSPDLOG_BUILD_TESTS=OFF \
+        -DSPDLOG_FMT_EXTERNAL=ON \
+        -DSPDLOG_INSTALL=ON
+}
+
+build() {
+    cmake --build . -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" cmake --install .
+
+    post_package_strip
+}
