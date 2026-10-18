@@ -2,8 +2,8 @@
 
 from_source=rust
 revision=5
-imagedeps="build-essential cmake ninja-build python3 curl git"
-hostdeps="pkg-config cargo"
+imagedeps="build-essential cmake ninja-build python3 curl git cargo"
+hostdeps="pkg-config"
 hostrundeps="gcc llvm"
 rust_crates="rust-libc rust-rustix rust-getrandom rust-getrandom-03 rust-nix rust-errno rust-socket2 rust-system-deps rust-libloading rust-libloading-09"
 deps="core-libs ${rust_crates}"
