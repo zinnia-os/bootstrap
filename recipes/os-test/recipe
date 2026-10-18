@@ -1,4 +1,6 @@
-version=ec05ef048b20caf61afe5b7c0ff5212c6dd2a505
+#!/bin/sh
+
+version=f8144f0215ea265fd46281e29271d8e857a6856e
 revision=1
 git_url="https://gitlab.com/sortix/os-test.git"
 commit=${version}
