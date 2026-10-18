@@ -1,9 +1,9 @@
 #! /bin/sh
 
-version=3.117
+version=3.125
 revision=1
 tarball_url="https://archive.mozilla.org/pub/security/nss/releases/NSS_$(echo ${version} | sed 's/\./_/g')_RTM/src/nss-${version}.tar.gz"
-tarball_blake2b="cf078cb1d48fbbf39e2661b6cdb9d610db3d0c13bcec68bacaf7cce8165cbf91229f9931008d1bfd28a561cc1fca994fbf3a174ddb7de2cf10ad4208926764a0"
+tarball_blake2b="14d4a710464f9889a29441fba61556aab1b4074c284e21312272db6c43649398269235e9a3398b17052344dc535f36477d090a41bbb803de50052817471a2444"
 imagedeps="build-essential gcc libnspr4-dev"
 hostdeps="gcc pkg-config"
 deps="core-libs nspr p11-kit sqlite zlib"
@@ -81,7 +81,9 @@ package() {
     install -v -m644 dist/private/nss/* "${dest_dir}${prefix}/include/nss"
 
     install -v -m755 -d "${dest_dir}${prefix}/lib/pkgconfig"
-    # install -v -m644 dist/Linux*/lib/pkgconfig/nss.pc "${dest_dir}${prefix}/lib/pkgconfig"
+    # The dist entry is a broken relative symlink in cross builds so install the
+    # generated metadata directly from the configuration directory.
+    install -v -m644 config/nss.pc "${dest_dir}${prefix}/lib/pkgconfig"
 
     # Install the certificate data
     install -v -m755 -d "${dest_dir}${prefix}/share/nss"
