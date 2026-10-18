@@ -1,9 +1,9 @@
 #! /bin/sh
 
-version=4.37
+version=4.38.2
 revision=1
 tarball_url="https://archive.mozilla.org/pub/nspr/releases/v${version}/src/nspr-${version}.tar.gz"
-tarball_blake2b="672c07a00db9a9f1fe113aedbee748477b7081c7c6b87efdda1eb8a69b37da661d56eb5a5b2b438cdcd193358e25a277a5ffa43ca274a1894bba718cd05bb2e4"
+tarball_blake2b="1e677504bed875651d7204d6df1a0f9671233bdab5a7b7cfdd691084c16c31a74a1126569372e4fe59edc8318b622551f979fbe55c8e64df1d977dbd63962cac"
 imagedeps="build-essential gcc"
 hostdeps="gcc pkg-config"
 deps="core-libs"
