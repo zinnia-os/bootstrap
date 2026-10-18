@@ -1,0 +1,26 @@
+#! /bin/sh
+
+version=2.12.1
+revision=2
+tarball_url="https://download.gnome.org/sources/libsigc%2B%2B/2.12/libsigc%2B%2B-${version}.tar.xz"
+tarball_blake2b="c1b8818a116254c4d0bba60658303e60cb05ff82fa09e3d745ebcd4548f1804ce09170752fcefc6b2a28c7307a09e1fd7c70f5ddc2f215d5a561684bb9b7d288"
+hostdeps="gcc pkg-config"
+deps="core-libs"
+
+configure() {
+    meson_configure \
+        -Dmaintainer-mode=false \
+        -Dbuild-documentation=false \
+        -Dbuild-examples=false \
+        -Dbuild-tests=false
+}
+
+build() {
+    meson compile -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" meson install --no-rebuild
+
+    post_package_strip
+}
