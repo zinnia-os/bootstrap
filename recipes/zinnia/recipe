@@ -1,6 +1,6 @@
 #! /bin/sh
 
-version=a61e682d7330d2ddbf49922a952e0438fbe95352
+version=905d364e8b9b7d34dcbfe8610809a3423b7cf2a4
 revision=1
 git_url=https://github.com/zinnia-os/zinnia.git
 commit=${version}
