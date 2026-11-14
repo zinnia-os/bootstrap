@@ -3,7 +3,7 @@
 version=4.0.0
 revision=1
 tarball_url="https://gitlab.kitware.com/cmake/cmake/-/archive/v${version}/cmake-v${version}.tar.gz"
-tarball_blake2b="659b8f54de89780326ff441620451c74b33712be32767800ce4f68d50fa67be2531f2073dc7123a213a9b81f1f99561a5078c5a9730a43600832c36970998212"
+tarball_blake2b="f3d9bfa5e67fe866d1762666426e0993a8152b2a6ff6dbbfa52ab16f091be7c4f5e90acdcb35b56d8426c6af8158e722d658057e13f7a0adda27adaf77d9dd69"
 imagedeps="build-essential cmake libssl-dev"
 
 configure() {
