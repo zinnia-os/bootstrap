@@ -1,14 +1,14 @@
 diff --git autoconf-clean/build-aux/config.guess autoconf-workdir/build-aux/config.guess
-index cdfc439..aa7444d 100755
+index cdfc439..4b1a224 100755
 --- autoconf-clean/build-aux/config.guess
 +++ autoconf-workdir/build-aux/config.guess
 @@ -4,7 +4,7 @@
-
+ 
  # shellcheck disable=SC2006,SC2268 # see below for rationale
-
+ 
 -timestamp='2023-08-22'
 +timestamp='9999-99-99'
-
+ 
  # This file is free software; you can redistribute it and/or modify it
  # under the terms of the GNU General Public License as published by
 @@ -976,6 +976,9 @@ EOF
@@ -22,16 +22,16 @@ index cdfc439..aa7444d 100755
  	GUESS=$UNAME_MACHINE-unknown-minix
  	;;
 diff --git autoconf-clean/build-aux/config.sub autoconf-workdir/build-aux/config.sub
-index defe52c..70495ff 100755
+index defe52c..7a12ff0 100755
 --- autoconf-clean/build-aux/config.sub
 +++ autoconf-workdir/build-aux/config.sub
 @@ -4,7 +4,7 @@
-
+ 
  # shellcheck disable=SC2006,SC2268 # see below for rationale
-
+ 
 -timestamp='2023-09-19'
 +timestamp='9999-99-99'
-
+ 
  # This file is free software; you can redistribute it and/or modify it
  # under the terms of the GNU General Public License as published by
 @@ -145,7 +145,7 @@ case $1 in
@@ -63,3 +63,16 @@ index defe52c..70495ff 100755
  	windows*-msvc*-)
  		;;
  	-dietlibc*- | -newlib*- | -musl*- | -relibc*- | -uclibc*- | -mlibc*- )
+diff --git autoconf-clean/lib/autoconf/c.m4 autoconf-workdir/lib/autoconf/c.m4
+index d4f7fbe..f227f13 100644
+--- autoconf-clean/lib/autoconf/c.m4
++++ autoconf-workdir/lib/autoconf/c.m4
+@@ -2639,7 +2639,7 @@ ac_cxx_conftest_cxx11_main='
+ }
+ {
+   // Unicode literals
+-  char const *utf8 = u8"UTF-8 string \u2500";
++  auto const *utf8 = u8"UTF-8 string \u2500";
+   char16_t const *utf16 = u"UTF-8 string \u2500";
+   char32_t const *utf32 = U"UTF-32 string \u2500";
+ }
