@@ -6,10 +6,18 @@ hostdeps="gcc pkg-config"
 builddeps="mlibc"
 
 build() {
-    ${OS_TRIPLET}-gcc -o zinnia-init -static "${base_dir}/extras/zinnia-init/main.c"
+    ${OS_TRIPLET}-gcc \
+        -o zinnia-init \
+        -static \
+        -ffunction-sections \
+        -fdata-sections \
+        -Wl,--gc-sections \
+        ${TARGET_CFLAGS} \
+        "${base_dir}/extras/zinnia-init/main.c"
 }
 
 package() {
     mkdir -p ${dest_dir}/usr/bin
     cp zinnia-init ${dest_dir}/usr/bin/zinnia-init
+    post_package_strip
 }
