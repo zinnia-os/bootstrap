@@ -1,7 +1,7 @@
 #! /bin/sh
 
 version=4.2.1
-revision=1
+revision=2
 tarball_url="https://ftp.fau.de/gnu/mpfr/mpfr-${version}.tar.xz"
 tarball_blake2b="ad69f53bc910294647523e7613b18a683f1d0f3dd994168ab2a46b66d0371ffa9b8e7cb59495f898470aea69d343e83fc722f11babe4af7b3a12665a1e65860c"
 source_hostdeps="automake autoconf libtool pkg-config"
@@ -11,7 +11,7 @@ hostdeps="gcc autoconf automake libtool pkg-config"
 deps="core-libs gmp"
 
 prepare() {
-    autotools_recursive_regen
+    autotools_regen
 }
 
 configure() {

@@ -1,13 +1,13 @@
-diff --git xf86-input-evdev-clean/configure xf86-input-evdev-workdir/configure
-index 7fedea7..5002a84 100755
---- xf86-input-evdev-clean/configure
-+++ xf86-input-evdev-workdir/configure
-@@ -19417,7 +19417,7 @@ else
-         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
- printf "%s\n" "yes" >&6; }
+diff --git xf86-input-evdev-clean/configure.ac xf86-input-evdev-workdir/configure.ac
+index 378faa2..469589a 100644
+--- xf86-input-evdev-clean/configure.ac
++++ xf86-input-evdev-workdir/configure.ac
+@@ -45,7 +45,7 @@ XORG_DEFAULT_OPTIONS
  
--printf "%s\n" "#define HAVE_LIBUDEV 1" >>confdefs.h
-+# printf "%s\n" "#define HAVE_LIBUDEV 1" >>confdefs.h
+ # Obtain compiler/linker options from server and required extensions
+ PKG_CHECK_MODULES(XORG, [xorg-server >= 1.18] xproto [inputproto >= 2.1.99.3])
+-PKG_CHECK_MODULES(UDEV, libudev, [AC_DEFINE(HAVE_LIBUDEV, 1,[libudev support])])
++PKG_CHECK_MODULES(UDEV, libudev, [])
  
- fi
- 
+ PKG_CHECK_MODULES(LIBEVDEV, [libevdev >= 0.4])
+ PKG_CHECK_MODULES(MTDEV, mtdev)

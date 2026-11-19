@@ -162,6 +162,34 @@ autotools_recursive_regen() {
     fi
 }
 
+autotools_regen() {
+    local configure_ac=
+    for f in configure.ac configure.in; do
+        if [ -f "$f" ]; then
+            configure_ac="$f"
+            break
+        fi
+    done
+
+    if [ -n "$configure_ac" ] && grep -qE 'LT_INIT|AC_PROG_LIBTOOL|AM_PROG_LIBTOOL|AC_LIBTOOL_' "$configure_ac"; then
+        if grep -qE 'IT_PROG_INTLTOOL|AC_PROG_INTLTOOL' "$configure_ac"; then
+            intltoolize --force --copy
+        fi
+        local autopoint=autopoint
+        if ! grep -q 'AM_GNU_GETTEXT_REQUIRE_VERSION' "$configure_ac" && [ -n "$(find . -name gettext.m4 -print -quit)" ]; then
+            autopoint=true
+        fi
+            AUTOPOINT="$autopoint" \
+            ACLOCAL_PATH="/usr/local/share/aclocal:/usr/share/aclocal${ACLOCAL_PATH:+:$ACLOCAL_PATH}" \
+        autoreconf -fvi "$@"
+
+        find . \( -name 'stamp-vti' -o -name 'stamp-[0-9]*' -o -name 'version*.texi' \) -exec touch {} +
+        find . \( -name '*.info' -o -name '*.info-[0-9]*' \) -exec touch {} +
+    fi
+
+    autotools_recursive_regen
+}
+
 autotools_configure() {
         CC="$TARGET_CC" \
         CXX="$TARGET_CXX" \

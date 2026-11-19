@@ -1,110 +1,35 @@
-diff --git lightdm-clean/liblightdm-gobject/session.c lightdm-workdir/liblightdm-gobject/session.c
-index 79dcf46..659dba9 100644
---- lightdm-clean/liblightdm-gobject/session.c
-+++ lightdm-workdir/liblightdm-gobject/session.c
-@@ -190,14 +190,14 @@ update_sessions (void)
-     config_load_from_standard_locations (config_get_instance (), NULL, NULL);
+diff --git lightdm-clean/configure.ac lightdm-workdir/configure.ac
+index 3864695..1afd7da 100644
+--- lightdm-clean/configure.ac
++++ lightdm-workdir/configure.ac
+@@ -48,7 +48,7 @@ AC_CHECK_HEADERS(security/pam_appl.h, [], AC_MSG_ERROR(PAM not found))
  
-     gchar *value = config_get_string (config_get_instance (), "LightDM", "sessions-directory");
--    if (value)
-+    if (value && g_path_is_absolute (value))
-     {
-         g_free (sessions_dir);
-         sessions_dir = value;
-     }
+ AC_CHECK_HEADERS(gcrypt.h, [], AC_MSG_ERROR(libgcrypt not found))
  
-     value = config_get_string (config_get_instance (), "LightDM", "remote-sessions-directory");
--    if (value)
-+    if (value && g_path_is_absolute (value))
-     {
-         g_free (remote_sessions_dir);
-         remote_sessions_dir = value;
-diff --git lightdm-clean/src/seat.c lightdm-workdir/src/seat.c
-index b185033..70812ed 100644
---- lightdm-clean/src/seat.c
-+++ lightdm-workdir/src/seat.c
-@@ -705,7 +705,7 @@ find_user_session (Seat *seat, const gchar *username, Session *ignore_session)
-         if (session == ignore_session)
-             continue;
+-AC_CHECK_FUNCS(setresgid setresuid setusercontext clearenv __getgroups_chk)
++AC_CHECK_FUNCS(setresgid setresuid setusercontext clearenv __getgroups_chk updwtmpx)
  
--        if (!session_get_is_stopping (session) && g_strcmp0 (session_get_username (session), username) == 0)
-+        if (!IS_GREETER_SESSION (session) && !session_get_is_stopping (session) && g_strcmp0 (session_get_username (session), username) == 0)
-             return session;
-     }
- 
+ PKG_CHECK_MODULES(LIGHTDM, [
+     glib-2.0 >= 2.44
 diff --git lightdm-clean/src/session-child.c lightdm-workdir/src/session-child.c
-index 112daab..95ad523 100644
+index 5bc8883..871f345 100644
 --- lightdm-clean/src/session-child.c
 +++ lightdm-workdir/src/session-child.c
-@@ -16,6 +16,7 @@
- #include <utmp.h>
- #include <utmpx.h>
- #include <sys/mman.h>
-+#include <sys/time.h>
+@@ -201,6 +201,9 @@ read_xauth (void)
+ static void
+ lightdm_updwtmpx (const gchar *wtmp_file, struct utmpx *ut)
+ {
++#if HAVE_UPDWTMPX
++    updwtmpx (wtmp_file, ut);
++#else
+     struct utmp u;
+     memset (&u, 0, sizeof (u));
+     u.ut_type = ut->ut_type;
+@@ -217,6 +220,7 @@ lightdm_updwtmpx (const gchar *wtmp_file, struct utmpx *ut)
+     u.ut_tv.tv_usec = ut->ut_tv.tv_usec;
  
- #if HAVE_LIBAUDIT
- #include <libaudit.h>
-@@ -194,26 +195,6 @@ read_xauth (void)
+     updwtmp (wtmp_file, &u);
++#endif
  }
  
- /* GNU provides this but we can't rely on that so let's make our own version */
--static void
--updwtmpx (const gchar *wtmp_file, struct utmpx *ut)
--{
--    struct utmp u;
--    memset (&u, 0, sizeof (u));
--    u.ut_type = ut->ut_type;
--    u.ut_pid = ut->ut_pid;
--    if (ut->ut_line)
--        strncpy (u.ut_line, ut->ut_line, sizeof (u.ut_line));
--    if (ut->ut_id)
--        strncpy (u.ut_id, ut->ut_id, sizeof (u.ut_id));
--    if (ut->ut_user)
--        strncpy (u.ut_user, ut->ut_user, sizeof (u.ut_user));
--    if (ut->ut_host)
--        strncpy (u.ut_host, ut->ut_host, sizeof (u.ut_host));
--    u.ut_tv.tv_sec = ut->ut_tv.tv_sec;
--    u.ut_tv.tv_usec = ut->ut_tv.tv_usec;
--
--    updwtmp (wtmp_file, &u);
--}
- 
  #if HAVE_LIBAUDIT
- static void
-diff --git lightdm-clean/src/vt.c lightdm-workdir/src/vt.c
-index 920ae68..aa53779 100644
---- lightdm-clean/src/vt.c
-+++ lightdm-workdir/src/vt.c
-@@ -16,8 +16,13 @@
- #include <sys/stat.h>
- #include <fcntl.h>
- #include <sys/ioctl.h>
--#ifdef __linux__
-+#if defined (__linux__)
- #include <linux/vt.h>
-+#elif defined (__zinnia__)
-+struct vt_stat { unsigned short v_active, v_signal, v_state; };
-+#define VT_GETSTATE 0x5603
-+#define VT_ACTIVATE 0x5606
-+#define VT_WAITACTIVE 0x5607
- #endif
- 
- #include "vt.h"
-@@ -47,7 +52,7 @@ vt_can_multi_seat (void)
- gint
- vt_get_active (void)
- {
--#ifdef __linux__
-+#if defined (__linux__) || defined (__zinnia__)
-     /* Pretend always active */
-     if (getuid () != 0)
-         return 1;
-@@ -73,7 +78,7 @@ vt_get_active (void)
- void
- vt_set_active (gint number)
- {
--#ifdef __linux__
-+#if defined (__linux__) || defined (__zinnia__)
-     g_debug ("Activating VT %d", number);
- 
-     /* Pretend always active */

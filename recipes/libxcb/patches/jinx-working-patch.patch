@@ -1,19 +1,21 @@
-diff -urN --no-dereference libxcb-clean/configure libxcb-workdir/configure
---- libxcb-clean/configure
-+++ libxcb-workdir/configure
-@@ -21028,7 +21028,7 @@
+diff --git libxcb-clean/configure.ac libxcb-workdir/configure.ac
+index 4e6f028..53915cf 100644
+--- libxcb-clean/configure.ac
++++ libxcb-workdir/configure.ac
+@@ -54,7 +54,7 @@ AC_SUBST(HTML_CHECK_RESULT)
+ PKG_CHECK_MODULES(XCBPROTO, xcb-proto >= 1.17.0)
  NEEDED="xau >= 0.99.2"
  case $host_os in
- linux*|darwin*|solaris*|dragonfly*|freebsd*|netbsd*) ;;
--     *) NEEDED="$NEEDED pthread-stubs" ;;
-+     *) NEEDED="$NEEDED" ;;
+-linux*|darwin*|solaris*|dragonfly*|freebsd*|netbsd*) ;;
++linux*|darwin*|solaris*|dragonfly*|freebsd*|netbsd*|*-mlibc) ;;
+      *) NEEDED="$NEEDED pthread-stubs" ;;
  esac
- 
- pkg_failed=no
-diff -urN --no-dereference libxcb-clean/doc/Makefile.in libxcb-workdir/doc/Makefile.in
---- libxcb-clean/doc/Makefile.in
-+++ libxcb-workdir/doc/Makefile.in
-@@ -518,8 +518,8 @@
+ PKG_CHECK_MODULES(NEEDED, $NEEDED)
+diff --git libxcb-clean/doc/Makefile.am libxcb-workdir/doc/Makefile.am
+index f3c934a..08880d7 100644
+--- libxcb-clean/doc/Makefile.am
++++ libxcb-workdir/doc/Makefile.am
+@@ -35,8 +35,8 @@ install-data-local:
  	  $(mkinstalldirs) '$(DESTDIR)$(htmldir)'; \
  	fi
  	@for d in $(docdirs); do \

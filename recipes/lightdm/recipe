@@ -1,15 +1,20 @@
 #! /bin/sh
 
-version=1.32.0
-revision=1
-tarball_url="https://github.com/canonical/lightdm/releases/download/${version}/lightdm-${version}.tar.xz"
-tarball_blake2b="90191559895a58e2c5892705ea95766aaaaa87d3470f1372ab90fcf3991d27f9280d5bbabe0cfce70e25f960d63c1e7eab7beeeb501341996afd155788cbe1c7"
+repology_id=lightdm
+version=e06f2aed1317c82312bd45ed8af027c348933f11
+revision=2
+git_url="https://github.com/canonical/lightdm.git"
+commit=${version}
+shallow=no
 imagedeps="intltool itstool"
+source_imagedeps="intltool gtk-doc-tools yelp-tools"
+source_hostdeps="autoconf automake libtool pkg-config"
 hostdeps="gcc pkg-config"
 deps="core-libs glib2 libgcrypt libx11 libxcb libxklavier openpam dbus xorg-server xorg-xauth xf86-input-evdev adwaita-icon-theme"
 
 prepare() {
-    autotools_recursive_regen
+    cd "${source_dir}"
+    autotools_regen
 }
 
 configure() {
