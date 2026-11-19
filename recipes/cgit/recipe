@@ -1,0 +1,58 @@
+#! /bin/sh
+
+version=1.3.1
+revision=1
+tarball_url="https://git.zx2c4.com/cgit/snapshot/cgit-${version}.tar.xz"
+tarball_blake2b="cfc16776b53cbcb79dfc73a0079444a6c4094b2c38090885f927283a9ff01cce7e897a348ab6b489386eded05d7956800897db05f14ef639d8e8c4d6ab9534c2"
+_git_version=2.54.0
+_git_blake2b="68ee0623ff5a695a35dae2f31e3f410ebd4b6a8296c7c9fd03f53668878e9164b78ca82869c8a0719b3fae981f514f2022c45b39df7174b5e883348bdd269a82"
+source_allow_network=yes
+hostdeps="gcc pkg-config"
+deps="core-libs zlib libiconv"
+
+prepare() {
+    curl -Lo git.tar.xz "https://mirrors.edge.kernel.org/pub/software/scm/git/git-${_git_version}.tar.xz"
+    echo "${_git_blake2b}  git.tar.xz" | b2sum -c
+    rm -rf git
+    tar -xJf git.tar.xz
+    rm git.tar.xz
+    mv "git-${_git_version}" git
+}
+
+_cgit_make() {
+    make \
+        CC="${OS_TRIPLET}-gcc" \
+        AR="${OS_TRIPLET}-ar" \
+        CFLAGS="${TARGET_CFLAGS}" \
+        LDFLAGS="${TARGET_LDFLAGS}" \
+        PKG_CONFIG="${OS_TRIPLET}-pkg-config" \
+        prefix="${prefix}" \
+        libdir="${prefix}/lib" \
+        CGIT_SCRIPT_PATH="${prefix}/share/webapps/cgit" \
+        CGIT_CONFIG=/etc/cgitrc \
+        CACHE_ROOT=/var/cache/cgit \
+        HAVE_SYNC_FILE_RANGE= \
+        CSPRNG_METHOD= \
+        HAVE_SYSINFO= \
+        HAVE_LINUX_SENDFILE= \
+        NO_GETTEXT=YesPlease \
+        NO_PERL=YesPlease \
+        NO_PYTHON=YesPlease \
+        NO_TCLTK=YesPlease \
+        NO_REGEX=YesPlease \
+        NEEDS_LIBICONV=YesPlease \
+        NO_LUA=YesPlease \
+        "$@"
+}
+
+build() {
+    cp -rp "${source_dir}"/. ./
+
+    _cgit_make -j${parallelism}
+}
+
+package() {
+    _cgit_make DESTDIR="${dest_dir}" install
+
+    post_package_strip
+}
