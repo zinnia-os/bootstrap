@@ -1,3 +1,4 @@
 root:x:0:
 zinnia:!:1000:
 messagebus:x:18:
+lightdm:x:620:

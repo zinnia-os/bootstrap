@@ -1,0 +1,8 @@
+#!/bin/sh
+
+gdk-pixbuf-query-loaders --update-cache 2>/dev/null || true
+fc-cache -f 2>/dev/null || true
+for d in /usr/share/icons/*/; do
+    [ -f "${d}index.theme" ] && gtk-update-icon-cache -qf "$d" 2>/dev/null
+done
+exit 0

@@ -1,0 +1,2 @@
+type = scripted
+command = /bin/sh /etc/lightdm/desktop-caches

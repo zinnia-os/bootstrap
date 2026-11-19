@@ -1,6 +1,7 @@
 type = process
-command = /bin/sh -c "mkdir -p /run/lightdm; XDG_RUNTIME_DIR=/tmp exec /usr/bin/lightdm --debug >/dev/com1 2>&1"
+command = /bin/sh -c "mkdir -p /run/lightdm /var/lib/lightdm /var/lib/lightdm-data; chown lightdm:lightdm /var/lib/lightdm; chmod 0750 /var/lib/lightdm; XDG_RUNTIME_DIR=/tmp exec /usr/bin/lightdm --debug >/dev/com1 2>&1"
 depends-on = dbus
+depends-on = desktop-caches
 depends-on = seatd
 depends-on = devd
 depends-on = minilogind

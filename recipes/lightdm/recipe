@@ -22,7 +22,6 @@ configure() {
         --disable-gtk-doc \
         --disable-libaudit \
         --disable-nls \
-        --with-greeter-user=root \
         --with-greeter-session=lightdm-gtk-greeter \
         --with-user-session=weston
 }
@@ -35,7 +34,7 @@ package() {
     DESTDIR="${dest_dir}" make install
 
     cp -rp "${base_dir}/extras/lightdm/." "${dest_dir}/"
-    chmod 0755 "${dest_dir}/etc/lightdm/Xsession" "${dest_dir}/etc/lightdm/setup-runtime-dir"
+    chmod 0755 "${dest_dir}/etc/lightdm/Xsession" "${dest_dir}/etc/lightdm/setup-runtime-dir" "${dest_dir}/etc/lightdm/desktop-caches"
 
     post_package_strip
 }
