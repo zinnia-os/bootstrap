@@ -11,6 +11,8 @@ source_hostdeps="autoconf automake"
 prepare() {
         LIBTOOLIZE=true \
     autotools_recursive_regen
+
+    touch -r "${source_dir}/aclocal.m4" "${source_dir}/m4/libtool.m4"
 }
 
 configure() {
