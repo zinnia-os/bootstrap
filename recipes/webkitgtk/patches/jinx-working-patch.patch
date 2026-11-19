@@ -40,7 +40,7 @@ diff --git webkitgtk-clean/Source/WTF/wtf/Platform.h webkitgtk-workdir/Source/WT
 index 51a8dce..a1c3bb2 100644
 --- webkitgtk-clean/Source/WTF/wtf/Platform.h
 +++ webkitgtk-workdir/Source/WTF/wtf/Platform.h
-@@ -162,3 +162,67 @@
+@@ -162,3 +162,44 @@
  #if PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)
  #define USE_ACCESSIBILITY_CONTEXT_MENUS 1
  #endif
@@ -83,29 +83,6 @@ index 51a8dce..a1c3bb2 100644
 +#endif
 +#ifndef MAP_EXECUTABLE
 +#define MAP_EXECUTABLE 0
-+#endif
-+/* x86_64 signal-context (mcontext_t.gregs[]) register indices. mlibc's zinnia
-+ * mcontext_t exposes gregs[16] without the glibc REG_* indices. Define them in
-+ * the glibc order: gregs[0..15] hold the GP registers and REG_RIP (16) lands on
-+ * the adjacent instruction-pointer field. */
-+#if defined(__x86_64__) && !defined(REG_RIP)
-+#define REG_R8  0
-+#define REG_R9  1
-+#define REG_R10 2
-+#define REG_R11 3
-+#define REG_R12 4
-+#define REG_R13 5
-+#define REG_R14 6
-+#define REG_R15 7
-+#define REG_RDI 8
-+#define REG_RSI 9
-+#define REG_RBP 10
-+#define REG_RBX 11
-+#define REG_RDX 12
-+#define REG_RAX 13
-+#define REG_RCX 14
-+#define REG_RSP 15
-+#define REG_RIP 16
 +#endif
 +#endif /* __zinnia__ */
 diff --git webkitgtk-clean/Source/WTF/wtf/PlatformGTK.cmake webkitgtk-workdir/Source/WTF/wtf/PlatformGTK.cmake

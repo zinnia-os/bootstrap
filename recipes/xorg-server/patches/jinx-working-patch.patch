@@ -160,10 +160,10 @@ index ad8af60..6f81278 100644
  #include <xserver_poll.h>
  #include "xf86.h"
 diff --git xorg-server-clean/hw/xfree86/os-support/xf86_OSlib.h xorg-server-workdir/hw/xfree86/os-support/xf86_OSlib.h
-index 159c806..e6be6ab 100644
+index 159c806..f5547e6 100644
 --- xorg-server-clean/hw/xfree86/os-support/xf86_OSlib.h
 +++ xorg-server-workdir/hw/xfree86/os-support/xf86_OSlib.h
-@@ -207,6 +207,56 @@ extern _X_HIDDEN char xf86SolarisFbDev[PATH_MAX];
+@@ -207,6 +207,22 @@ extern _X_HIDDEN char xf86SolarisFbDev[PATH_MAX];
  
  #endif                          /* __linux__ || __GLIBC__ */
  
@@ -177,44 +177,10 @@ index 159c806..e6be6ab 100644
 +#include <errno.h>
 +#include <sys/stat.h>
 +#include <sys/mman.h>
++#include <zinnia/console.h>
 +
 +#define POSIX_TTY
 +#define HAS_USL_VTS
-+
-+#define KDSETMODE       0x4B3A
-+#define KDGKBMODE       0x4B44
-+#define KDSKBMODE       0x4B45
-+#define KD_TEXT         0x00
-+#define KD_GRAPHICS     0x01
-+#define K_RAW           0x00
-+#define K_XLATE         0x01
-+#define K_OFF           0x04
-+
-+#define VT_OPENQRY      0x5600
-+#define VT_GETMODE      0x5601
-+#define VT_SETMODE      0x5602
-+#define VT_GETSTATE     0x5603
-+#define VT_RELDISP      0x5605
-+#define VT_ACTIVATE     0x5606
-+#define VT_WAITACTIVE   0x5607
-+
-+#define VT_AUTO         0x00
-+#define VT_PROCESS      0x01
-+#define VT_ACKACQ       0x02
-+
-+struct vt_mode {
-+    char mode;
-+    char waitv;
-+    short relsig;
-+    short acqsig;
-+    short frsig;
-+};
-+
-+struct vt_stat {
-+    unsigned short v_active;
-+    unsigned short v_signal;
-+    unsigned short v_state;
-+};
 +#endif                          /* __zinnia__ */
 +
  /**************************************************************************/

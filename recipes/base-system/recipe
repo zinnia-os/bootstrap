@@ -2,5 +2,5 @@
 
 version=0.0
 revision=1
-deps="base-files mlibc dinit bash coreutils sed dhcpcd xbps ca-certificates zinnia zinnia-init zinnia-utils zinnia-devd limine"
+deps="base-files mlibc dinit bash coreutils sed dhcpcd xbps ca-certificates zinnia zinnia-init zinnia-utils limine"
 skip_pkg_check=yes

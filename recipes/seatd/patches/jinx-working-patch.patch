@@ -25,48 +25,22 @@ index 4aff9bc..f3dd4fe 100644
  #error Unsupported platform
  #endif
 diff --git seatd-clean/common/terminal.c seatd-workdir/common/terminal.c
-index 0c3466f..678f63f 100644
+index 0c3466f..31ea18b 100644
 --- seatd-clean/common/terminal.c
 +++ seatd-workdir/common/terminal.c
-@@ -21,6 +21,37 @@
+@@ -21,6 +21,11 @@
  #define K_ENABLE  K_XLATE
  #define K_DISABLE K_RAW
  #define FRSIG     SIGIO
 +#elif defined(__zinnia__)
-+#define KDSETMODE   0x4B3A
-+#define KDSKBMODE   0x4B45
-+#define KD_TEXT     0x00
-+#define KD_GRAPHICS 0x01
-+#define K_RAW       0x00
-+#define K_XLATE     0x01
-+#define K_UNICODE   0x03
-+#define K_OFF       0x04
-+#define VT_SETMODE  0x5602
-+#define VT_GETSTATE 0x5603
-+#define VT_RELDISP  0x5605
-+#define VT_ACTIVATE 0x5606
-+#define VT_AUTO     0x00
-+#define VT_PROCESS  0x01
-+#define VT_ACKACQ   0x02
-+struct vt_mode {
-+	char mode;
-+	char waitv;
-+	short relsig;
-+	short acqsig;
-+	short frsig;
-+};
-+struct vt_stat {
-+	unsigned short v_active;
-+	unsigned short v_signal;
-+	unsigned short v_state;
-+};
-+#define K_ENABLE  K_UNICODE
++#include <zinnia/console.h>
++#define K_ENABLE  K_XLATE
 +#define K_DISABLE K_OFF
 +#define FRSIG     0
  #else
  #error Unsupported platform
  #endif
-@@ -126,7 +157,7 @@ static int get_tty_path(int tty, char path[static TTYPATHLEN]) {
+@@ -126,7 +131,7 @@ static int get_tty_path(int tty, char path[static TTYPATHLEN]) {
  	path[offset++] = '\0';
  	return 0;
  }
@@ -75,7 +49,7 @@ index 0c3466f..678f63f 100644
  static int get_tty_path(int tty, char path[static TTYPATHLEN]) {
  	assert(tty >= 0);
  	if (snprintf(path, TTYPATHLEN, "/dev/tty%d", tty) == -1) {
-@@ -153,7 +184,7 @@ int terminal_open(int vt) {
+@@ -153,7 +158,7 @@ int terminal_open(int vt) {
  }
  
  int terminal_current_vt(int fd) {
@@ -84,7 +58,7 @@ index 0c3466f..678f63f 100644
  	struct vt_stat st;
  	int res = ioctl(fd, VT_GETSTATE, &st);
  	close(fd);
-@@ -196,6 +227,7 @@ int terminal_set_process_switching(int fd, bool enable) {
+@@ -196,6 +201,7 @@ int terminal_set_process_switching(int fd, bool enable) {
  			   enable ? "enable" : "disable", strerror(errno));
  		return -1;
  	}
@@ -92,7 +66,7 @@ index 0c3466f..678f63f 100644
  	return 0;
  }
  
-@@ -205,7 +237,7 @@ int terminal_switch_vt(int fd, int vt) {
+@@ -205,7 +211,7 @@ int terminal_switch_vt(int fd, int vt) {
  		log_errorf("Could not activate VT %d: %s", vt, strerror(errno));
  		return -1;
  	}
@@ -101,7 +75,7 @@ index 0c3466f..678f63f 100644
  	return 0;
  }
  
-@@ -215,7 +247,7 @@ int terminal_ack_release(int fd) {
+@@ -215,7 +221,7 @@ int terminal_ack_release(int fd) {
  		log_errorf("Could not ack VT release: %s", strerror(errno));
  		return -1;
  	}
@@ -110,7 +84,7 @@ index 0c3466f..678f63f 100644
  	return 0;
  }
  
-@@ -225,7 +257,7 @@ int terminal_ack_acquire(int fd) {
+@@ -225,7 +231,7 @@ int terminal_ack_acquire(int fd) {
  		log_errorf("Could not ack VT acquire: %s", strerror(errno));
  		return -1;
  	}
@@ -119,7 +93,7 @@ index 0c3466f..678f63f 100644
  	return 0;
  }
  
-@@ -253,6 +285,7 @@ int terminal_set_keyboard(int fd, bool enable) {
+@@ -253,6 +259,7 @@ int terminal_set_keyboard(int fd, bool enable) {
  		return -1;
  	}
  #endif
@@ -127,7 +101,7 @@ index 0c3466f..678f63f 100644
  	return 0;
  }
  
-@@ -263,5 +296,6 @@ int terminal_set_graphics(int fd, bool enable) {
+@@ -263,5 +270,6 @@ int terminal_set_graphics(int fd, bool enable) {
  			   strerror(errno));
  		return -1;
  	}

@@ -41,8 +41,8 @@ sudo mkdir -p "$tmpdir/root/boot/EFI/BOOT"
 # Copy system root
 sudo rsync -avr --checksum "$SYSTEM_ROOT/" "$tmpdir/root"
 
-# Install kernel
-sudo cp "$SYSTEM_ROOT/usr/share/zinnia/zinnia" "$tmpdir/root/boot/zinnia"
+# Install kernel loaders
+sudo cp "$SYSTEM_ROOT"/usr/share/zinnia/boot/* "$tmpdir/root/boot/"
 
 # Install initrd
 sudo cp $INITRAMFS_PATH "$tmpdir/root/boot/initramfs.tar"

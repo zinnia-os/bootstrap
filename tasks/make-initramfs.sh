@@ -34,12 +34,15 @@ mkdir -p realfs
 FILES=(
     # Base directories
     realfs
-    # Kernel modules
-    usr/share/zinnia/modules/*
     # Init
     init
     usr/bin/zinnia-init
 )
+
+# Kernel modules (optional because there may be none compiled).
+shopt -s nullglob
+FILES+=(usr/share/zinnia/modules/*)
+shopt -u nullglob
 echo "Installing:" ${FILES[@]}
 
 tar --format=ustar --owner 0 --group 0 -cf $INITRAMFS_PATH "${FILES[@]}"

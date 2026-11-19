@@ -1,24 +1,22 @@
 #! /bin/sh
 
-version=0.1
-revision=2
+from_source=zinnia
+revision=1
 hostdeps="gcc pkg-config"
 deps="core-libs"
 
+configure() {
+    meson_configure -Dtools_only=true
+}
 
 build() {
-    _src="${base_dir}/extras/${name}"
-    ${OS_TRIPLET}-gcc ${TARGET_CFLAGS} -o insertmod "${_src}/insertmod.c"
-    ${OS_TRIPLET}-gcc ${TARGET_CFLAGS} -o mount     "${_src}/mount.c"
-    ${OS_TRIPLET}-gcc ${TARGET_CFLAGS} -o umount    "${_src}/umount.c"
-    ${OS_TRIPLET}-gcc ${TARGET_CFLAGS} -o console   "${_src}/console.c"
+    meson_build
 }
 
 package() {
-    mkdir -p     "${dest_dir}/usr/bin"
+    meson_install
 
-    cp insertmod "${dest_dir}/usr/bin/insertmod"
-    cp mount     "${dest_dir}/usr/bin/mount"
-    cp umount    "${dest_dir}/usr/bin/umount"
-    cp console   "${dest_dir}/usr/bin/console"
+    install -Dm644 "${base_dir}/extras/zinnia-utils/dinit.d/devd" "${dest_dir}/etc/dinit.d/devd"
+    install -d "${dest_dir}/etc/dinit.d/boot.d"
+    touch "${dest_dir}/etc/dinit.d/boot.d/devd"
 }

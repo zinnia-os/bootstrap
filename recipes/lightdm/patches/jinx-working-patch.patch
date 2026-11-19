@@ -33,3 +33,15 @@ index 5bc8883..871f345 100644
  }
  
  #if HAVE_LIBAUDIT
+diff --git lightdm-clean/src/vt.c lightdm-workdir/src/vt.c
+--- lightdm-clean/src/vt.c
++++ lightdm-workdir/src/vt.c
+@@ -23,7 +23,7 @@
+ #include <linux/vt.h>
+ #endif
+ #ifdef __zinnia__
+-#include <sys/console.h>
++#include <zinnia/console.h>
+ #endif
+ 
+ #include "vt.h"

@@ -1,13 +1,14 @@
 #! /bin/sh
 
 repology_id=mlibc
-version=a1858073acd9c28b0b03bf43f8b2c8f872858c45
+version=b2940912e40922d77683f644fbd24a766489c52d
 revision=1
 git_url="https://github.com/zinnia-os/mlibc.git"
 commit=${version}
 shallow=no
 imagedeps="meson ninja-build"
 hostdeps="pkg-config"
+deps="zinnia-headers"
 
 configure() {
     meson_configure \

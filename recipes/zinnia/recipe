@@ -1,47 +1,30 @@
 #! /bin/sh
 
-version=905d364e8b9b7d34dcbfe8610809a3423b7cf2a4
+version=0.2.0
 revision=1
 git_url=https://github.com/zinnia-os/zinnia.git
-commit=${version}
-shallow=no
-imagedeps="build-essential"
+commit=bf24abba8efc185d689a1b53adf08b819b7c9a9a
+source_dir="kernel"
 allow_network=yes
 source_imagedeps="git"
 source_allow_network=yes
+skip_pkg_check=yes
+imagedeps="build-essential python3-kconfiglib"
+hostdeps="llvm"
 
 prepare() {
     git submodule update --init --recursive
 }
-hostdeps="llvm cargo rust"
-builddeps="mlibc-headers"
-skip_pkg_check=yes
 
-ZINNIA_ARCH="${JINX_ARCH}"
-case "${ZINNIA_ARCH}" in
-    "riscv64") ZINNIA_ARCH="riscv64gc" ;;
-esac
+configure() {
+    srctree="${source_dir}" ARCH="${JINX_ARCH}" python3 -m alldefconfig
+    meson_configure -Dconfig_path="$(pwd)/.config" --cross-file "${source_dir}/toolchain/${JINX_ARCH}.cross-file"
+}
 
 build() {
-        TARGET_CC="clang" \
-    cargo_build_nolock \
-        -Zunstable-options \
-        -Zjson-target-spec \
-        --target="toolchain/${ZINNIA_ARCH}-kernel.json"
+    meson_build
 }
 
 package() {
-    mkdir -p "${dest_dir}${prefix}/share/zinnia/"
-    mkdir -p "${dest_dir}${prefix}/share/zinnia/modules"
-
-    cp "${ZINNIA_ARCH}-kernel/release/zinnia.kso" "${dest_dir}${prefix}/share/zinnia/zinnia"
-
-    # The .rustc section contains linker information for lld.
-    # At runtime, this is completely irrelevant.
-    ${OS_TRIPLET}-strip "${dest_dir}${prefix}/share/zinnia/zinnia" -R .rustc
-
-    install -m644 "${ZINNIA_ARCH}-kernel/release/"*.kso "${dest_dir}${prefix}/share/zinnia/modules"
-    ${OS_TRIPLET}-strip "${dest_dir}${prefix}/share/zinnia/modules/"*.kso -R .rustc
-
-    rm "${dest_dir}${prefix}/share/zinnia/modules/zinnia.kso"
+    meson_install
 }

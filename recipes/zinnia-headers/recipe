@@ -1,0 +1,19 @@
+#! /bin/sh
+
+from_source=zinnia
+revision=1
+imagedeps="meson ninja-build"
+hostdeps="pkg-config"
+
+configure() {
+    meson_configure \
+        -Dheaders_only=true
+}
+
+build() {
+    ninja -j${parallelism}
+}
+
+package() {
+    DESTDIR="${dest_dir}" ninja install
+}
