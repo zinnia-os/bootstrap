@@ -177,7 +177,7 @@ int main(int argc, char **argv, char **envp) {
 
   printf("init: Mounting tmpfs on /tmp\n");
 
-  // Mount devtmpfs
+  // Mount tmpfs
   e = mount("tmpfs", "/tmp", 0, NULL);
   if (e)
     return e;
