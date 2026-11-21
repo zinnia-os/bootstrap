@@ -1,0 +1,26 @@
+#! /bin/sh
+
+version=1.4.85
+revision=1
+tarball_url="https://download.lighttpd.net/lighttpd/releases-1.4.x/lighttpd-${version}.tar.xz"
+tarball_blake2b="031154a719ff6193666d381972ff1f09740989afaa4850686b659fa2b36b7de8943139f4f2b82c9384b2295cc3c7faa3eb303ecc551f011b06cf7a4cb642beba"
+imagedeps="build-essential meson ninja-build"
+hostdeps="gcc pkg-config"
+deps="core-libs zlib pcre2"
+
+configure() {
+    meson_configure \
+        -Dwith_pcre2=true \
+        -Dwith_zlib=enabled \
+        -Dwith_openssl=false
+}
+
+build() {
+    meson_build
+}
+
+package() {
+    meson_install
+
+    post_package_strip
+}
