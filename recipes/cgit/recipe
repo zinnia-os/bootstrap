@@ -42,6 +42,7 @@ _cgit_make() {
         NO_REGEX=YesPlease \
         NEEDS_LIBICONV=YesPlease \
         NO_LUA=YesPlease \
+        NO_OPENSSL=YesPlease \
         "$@"
 }
 
