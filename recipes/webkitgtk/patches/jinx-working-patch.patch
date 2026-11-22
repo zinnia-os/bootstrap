@@ -36,55 +36,124 @@ index 67f36d7..da2e80b 100644
      size_t pageSize = WTF::pageSize();
      ASSERT(!(MarkedBlock::blockSize % pageSize));
      auto numberOfPagesInMarkedBlock = MarkedBlock::blockSize / pageSize;
-diff --git webkitgtk-clean/Source/WTF/wtf/Platform.h webkitgtk-workdir/Source/WTF/wtf/Platform.h
-index 51a8dce..a1c3bb2 100644
---- webkitgtk-clean/Source/WTF/wtf/Platform.h
-+++ webkitgtk-workdir/Source/WTF/wtf/Platform.h
-@@ -162,3 +162,44 @@
- #if PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)
- #define USE_ACCESSIBILITY_CONTEXT_MENUS 1
- #endif
+diff --git webkitgtk-clean/Source/JavaScriptCore/runtime/MachineContext.h webkitgtk-workdir/Source/JavaScriptCore/runtime/MachineContext.h
+index ba2aae7..cd3e164 100644
+--- webkitgtk-clean/Source/JavaScriptCore/runtime/MachineContext.h
++++ webkitgtk-workdir/Source/JavaScriptCore/runtime/MachineContext.h
+@@ -158,6 +158,18 @@ static inline void*& stackPointerImpl(mcontext_t& machineContext)
+ {
+ #if OS(DARWIN)
+     return stackPointerImpl(machineContext->__ss);
++#elif defined(__zinnia__)
 +
-+/* mlibc (zinnia) only provides posix_madvise(); the madvise()/MADV_* Linux
-+ * wrappers are gated behind the mlibc "linux" option, which zinnia does not
-+ * enable. Map them onto the POSIX advise API (advisory; unsupported hints are
-+ * treated as MADV_NORMAL). */
-+#if defined(__zinnia__)
-+#include <sys/mman.h>
-+#define madvise(addr, length, advice) posix_madvise((addr), (length), (advice))
-+#ifndef MADV_NORMAL
-+#define MADV_NORMAL POSIX_MADV_NORMAL
++#if CPU(X86_64)
++    return reinterpret_cast<void*&>((uintptr_t&) machineContext.mc_rsp);
++#elif CPU(ARM64)
++    return reinterpret_cast<void*&>((uintptr_t&) machineContext.mc_sp);
++#elif CPU(RISCV64)
++    return reinterpret_cast<void*&>((uintptr_t&) machineContext.mc_x[2]);
++#else
++#error Unknown Architecture
 +#endif
-+#ifndef MADV_RANDOM
-+#define MADV_RANDOM POSIX_MADV_RANDOM
++
+ #elif OS(FREEBSD)
+ 
+ #if CPU(X86_64)
+@@ -281,6 +293,18 @@ static inline void*& framePointerImpl(mcontext_t& machineContext)
+ {
+ #if OS(DARWIN)
+     return framePointerImpl(machineContext->__ss);
++#elif defined(__zinnia__)
++
++#if CPU(X86_64)
++    return reinterpret_cast<void*&>((uintptr_t&) machineContext.mc_rbp);
++#elif CPU(ARM64)
++    return reinterpret_cast<void*&>((uintptr_t&) machineContext.mc_x[29]);
++#elif CPU(RISCV64)
++    return reinterpret_cast<void*&>((uintptr_t&) machineContext.mc_x[8]);
++#else
++#error Unknown Architecture
 +#endif
-+#ifndef MADV_SEQUENTIAL
-+#define MADV_SEQUENTIAL POSIX_MADV_SEQUENTIAL
++
+ #elif OS(FREEBSD)
+ 
+ #if CPU(X86_64)
+@@ -443,6 +467,18 @@ static inline void*& instructionPointerImpl(mcontext_t& machineContext)
+ {
+ #if OS(DARWIN)
+     return instructionPointerImpl(machineContext->__ss);
++#elif defined(__zinnia__)
++
++#if CPU(X86_64)
++    return reinterpret_cast<void*&>((uintptr_t&) machineContext.mc_rip);
++#elif CPU(ARM64)
++    return reinterpret_cast<void*&>((uintptr_t&) machineContext.mc_pc);
++#elif CPU(RISCV64)
++    return reinterpret_cast<void*&>((uintptr_t&) machineContext.mc_x[0]);
++#else
++#error Unknown Architecture
 +#endif
-+#ifndef MADV_WILLNEED
-+#define MADV_WILLNEED POSIX_MADV_WILLNEED
++
+ #elif OS(FREEBSD)
+ 
+ #if CPU(X86_64)
+@@ -631,6 +667,18 @@ inline void*& argumentPointer<1>(mcontext_t& machineContext)
+ {
+ #if OS(DARWIN)
+     return argumentPointer<1>(machineContext->__ss);
++#elif defined(__zinnia__)
++
++#if CPU(X86_64)
++    return reinterpret_cast<void*&>((uintptr_t&) machineContext.mc_rsi);
++#elif CPU(ARM64)
++    return reinterpret_cast<void*&>((uintptr_t&) machineContext.mc_x[1]);
++#elif CPU(RISCV64)
++    return reinterpret_cast<void*&>((uintptr_t&) machineContext.mc_x[11]);
++#else
++#error Unknown Architecture
 +#endif
-+#ifndef MADV_DONTNEED
-+#define MADV_DONTNEED POSIX_MADV_DONTNEED
++
+ #elif OS(FREEBSD)
+ 
+ #if CPU(X86_64)
+@@ -688,6 +736,18 @@ inline void* wasmInstancePointer(const mcontext_t& machineContext)
+ {
+ #if OS(DARWIN)
+     return wasmInstancePointer(machineContext->__ss);
++#elif defined(__zinnia__)
++
++#if CPU(X86_64)
++    return reinterpret_cast<void*>((uintptr_t) machineContext.mc_rbx);
++#elif CPU(ARM64)
++    return reinterpret_cast<void*>((uintptr_t) machineContext.mc_x[19]);
++#elif CPU(RISCV64)
++    return reinterpret_cast<void*>((uintptr_t) machineContext.mc_x[9]);
++#else
++#error Unknown Architecture
 +#endif
-+#ifndef MADV_FREE
-+#define MADV_FREE POSIX_MADV_DONTNEED
++
+ #elif OS(FREEBSD)
+ 
+ #if CPU(X86_64)
+@@ -810,6 +870,18 @@ inline void*& llintInstructionPointer(mcontext_t& machineContext)
+     // LLInt uses regT4 as PC.
+ #if OS(DARWIN)
+     return llintInstructionPointer(machineContext->__ss);
++#elif defined(__zinnia__)
++
++#if CPU(X86_64)
++    return reinterpret_cast<void*&>((uintptr_t&) machineContext.mc_r8);
++#elif CPU(ARM64)
++    return reinterpret_cast<void*&>((uintptr_t&) machineContext.mc_x[4]);
++#elif CPU(RISCV64)
++    return reinterpret_cast<void*&>((uintptr_t&) machineContext.mc_x[14]);
++#else
++#error Unknown Architecture
 +#endif
-+#ifndef MADV_DONTDUMP
-+#define MADV_DONTDUMP POSIX_MADV_NORMAL
-+#endif
-+#ifndef MADV_DODUMP
-+#define MADV_DODUMP POSIX_MADV_NORMAL
-+#endif
-+/* mmap() flags also gated behind the mlibc linux option; these are advisory
-+ * (swap-reservation / legacy executable hint), so treat them as no-ops. */
-+#ifndef MAP_NORESERVE
-+#define MAP_NORESERVE 0
-+#endif
-+#ifndef MAP_EXECUTABLE
-+#define MAP_EXECUTABLE 0
-+#endif
-+#endif /* __zinnia__ */
++
+ #elif OS(FREEBSD)
+ 
+ #if CPU(X86_64)
 diff --git webkitgtk-clean/Source/WTF/wtf/PlatformGTK.cmake webkitgtk-workdir/Source/WTF/wtf/PlatformGTK.cmake
 index 1f694a2..0845528 100644
 --- webkitgtk-clean/Source/WTF/wtf/PlatformGTK.cmake
@@ -168,6 +237,37 @@ index 2e104f9..7294826 100644
      // on glibc, pthread_attr_getstack will generally return the limit size (minus a guard page)
      // for the main thread; this is however not necessarily always true on every libc - for example
      // on musl, it will return the currently reserved size - since the stack bounds are expected to
+diff --git webkitgtk-clean/Source/WTF/wtf/posix/OSAllocatorPOSIX.cpp webkitgtk-workdir/Source/WTF/wtf/posix/OSAllocatorPOSIX.cpp
+index a84dd54..7da491f 100644
+--- webkitgtk-clean/Source/WTF/wtf/posix/OSAllocatorPOSIX.cpp
++++ webkitgtk-workdir/Source/WTF/wtf/posix/OSAllocatorPOSIX.cpp
+@@ -97,7 +97,7 @@ void* OSAllocator::tryReserveAndCommit(size_t bytes, Usage usage, bool writable,
+ 
+ void* OSAllocator::tryReserveUncommitted(size_t bytes, Usage usage, bool writable, bool executable, bool jitCageEnabled, bool includesGuardPages)
+ {
+-#if OS(LINUX) || OS(HAIKU)
++#if (OS(LINUX) && !defined(__zinnia__)) || OS(HAIKU)
+     UNUSED_PARAM(usage);
+     UNUSED_PARAM(jitCageEnabled);
+     UNUSED_PARAM(includesGuardPages);
+@@ -214,7 +214,7 @@ void* OSAllocator::reserveAndCommit(size_t bytes, Usage usage, bool writable, bo
+ 
+ void OSAllocator::commit(void* address, size_t bytes, bool writable, bool executable)
+ {
+-#if OS(LINUX) || OS(HAIKU)
++#if (OS(LINUX) && !defined(__zinnia__)) || OS(HAIKU)
+     UNUSED_PARAM(writable);
+     UNUSED_PARAM(executable);
+     while (madvise(address, bytes, MADV_WILLNEED) == -1 && errno == EAGAIN) { }
+@@ -233,7 +233,7 @@ void OSAllocator::commit(void* address, size_t bytes, bool writable, bool execut
+ 
+ void OSAllocator::decommit(void* address, size_t bytes)
+ {
+-#if OS(LINUX) || OS(HAIKU)
++#if (OS(LINUX) && !defined(__zinnia__)) || OS(HAIKU)
+     while (madvise(address, bytes, MADV_DONTNEED) == -1 && errno == EAGAIN) { }
+ #elif HAVE(MADV_FREE_REUSE)
+     while (madvise(address, bytes, MADV_FREE_REUSABLE) == -1 && errno == EAGAIN) { }
 diff --git webkitgtk-clean/Source/WTF/wtf/posix/ThreadingPOSIX.cpp webkitgtk-workdir/Source/WTF/wtf/posix/ThreadingPOSIX.cpp
 index 0ccc38c..39fd3e9 100644
 --- webkitgtk-clean/Source/WTF/wtf/posix/ThreadingPOSIX.cpp
@@ -245,10 +345,10 @@ index c89de56..77491e4 100644
      if (!sysinfo(&info))
          return info.totalram * info.mem_unit;
 diff --git webkitgtk-clean/Source/bmalloc/bmalloc/BPlatform.h webkitgtk-workdir/Source/bmalloc/bmalloc/BPlatform.h
-index 4b8e1e9..37ce6e6 100644
+index 4b8e1e9..0afda3a 100644
 --- webkitgtk-clean/Source/bmalloc/bmalloc/BPlatform.h
 +++ webkitgtk-workdir/Source/bmalloc/bmalloc/BPlatform.h
-@@ -44,10 +44,51 @@
+@@ -44,7 +44,7 @@
  #define BOS_UNIX 1
  #endif
  
@@ -257,50 +357,35 @@ index 4b8e1e9..37ce6e6 100644
  #define BOS_LINUX 1
  #endif
  
-+/* mlibc (zinnia) only provides posix_madvise(); the madvise()/MADV_* Linux
-+ * wrappers are gated behind the mlibc "linux" option, which zinnia does not
-+ * enable. Map them onto the POSIX advise API (advisory; unsupported hints are
-+ * treated as MADV_NORMAL). */
-+#if defined(__zinnia__)
-+#include <sys/mman.h>
-+#define madvise(addr, length, advice) posix_madvise((addr), (length), (advice))
-+#ifndef MADV_NORMAL
-+#define MADV_NORMAL POSIX_MADV_NORMAL
-+#endif
-+#ifndef MADV_RANDOM
-+#define MADV_RANDOM POSIX_MADV_RANDOM
-+#endif
-+#ifndef MADV_SEQUENTIAL
-+#define MADV_SEQUENTIAL POSIX_MADV_SEQUENTIAL
-+#endif
-+#ifndef MADV_WILLNEED
-+#define MADV_WILLNEED POSIX_MADV_WILLNEED
-+#endif
-+#ifndef MADV_DONTNEED
-+#define MADV_DONTNEED POSIX_MADV_DONTNEED
-+#endif
-+#ifndef MADV_FREE
-+#define MADV_FREE POSIX_MADV_DONTNEED
-+#endif
-+#ifndef MADV_DONTDUMP
-+#define MADV_DONTDUMP POSIX_MADV_NORMAL
-+#endif
-+#ifndef MADV_DODUMP
-+#define MADV_DODUMP POSIX_MADV_NORMAL
-+#endif
-+/* mmap() flags also gated behind the mlibc linux option; these are advisory
-+ * (swap-reservation / legacy executable hint), so treat them as no-ops. */
-+#ifndef MAP_NORESERVE
-+#define MAP_NORESERVE 0
-+#endif
-+#ifndef MAP_EXECUTABLE
-+#define MAP_EXECUTABLE 0
-+#endif
-+#endif /* __zinnia__ */
-+
- #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__FreeBSD_kernel__)
- #define BOS_FREEBSD 1
+diff --git webkitgtk-clean/Source/bmalloc/bmalloc/VMAllocate.h webkitgtk-workdir/Source/bmalloc/bmalloc/VMAllocate.h
+index 0f6974b..6b7ed3a 100644
+--- webkitgtk-clean/Source/bmalloc/bmalloc/VMAllocate.h
++++ webkitgtk-workdir/Source/bmalloc/bmalloc/VMAllocate.h
+@@ -49,7 +49,7 @@ namespace bmalloc {
+ #define BMALLOC_VM_TAG VM_TAG_FOR_TCMALLOC_MEMORY
  #endif
+ 
+-#if BOS(LINUX)
++#if BOS(LINUX) && !defined(__zinnia__)
+ #define BMALLOC_NORESERVE MAP_NORESERVE
+ #else
+ #define BMALLOC_NORESERVE 0
+@@ -212,6 +212,7 @@ inline void vmDeallocatePhysicalPages(void* p, size_t vmSize)
+     SYSCALL(madvise(p, vmSize, MADV_FREE_REUSABLE));
+ #elif BOS(FREEBSD)
+     SYSCALL(madvise(p, vmSize, MADV_FREE));
++#elif defined(__zinnia__)
+ #else
+     SYSCALL(madvise(p, vmSize, MADV_DONTNEED));
+ #if BOS(LINUX)
+@@ -229,6 +230,7 @@ inline void vmAllocatePhysicalPages(void* p, size_t vmSize)
+     // For the Darwin platform, we don't need to call madvise(..., MADV_FREE_REUSE)
+     // to commit physical memory to back a range of allocated virtual memory.
+     // Instead the kernel will commit pages as they are touched.
++#elif defined(__zinnia__)
+ #else
+     SYSCALL(madvise(p, vmSize, MADV_NORMAL));
+ #if BOS(LINUX)
 diff --git webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_committed_pages_vector.c webkitgtk-workdir/Source/bmalloc/libpas/src/libpas/pas_committed_pages_vector.c
 index a1d8c12..00b0833 100644
 --- webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_committed_pages_vector.c
@@ -333,57 +418,6 @@ index b8691bf..988e8af 100644
      return vector->raw_data[page_index];
  #else
      return vector->raw_data[page_index] & (MINCORE_REFERENCED |
-diff --git webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_config.h webkitgtk-workdir/Source/bmalloc/libpas/src/libpas/pas_config.h
-index c71fc06..2430a0d 100644
---- webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_config.h
-+++ webkitgtk-workdir/Source/bmalloc/libpas/src/libpas/pas_config.h
-@@ -120,5 +120,46 @@
- #define PAS_USE_SPINLOCKS                1
- #endif
- 
-+/* mlibc (zinnia) only provides posix_madvise(); the madvise()/MADV_* Linux
-+ * wrappers are gated behind the mlibc "linux" option, which zinnia does not
-+ * enable. Map them onto the POSIX advise API (advisory; unsupported hints are
-+ * treated as MADV_NORMAL). */
-+#if defined(__zinnia__)
-+#include <sys/mman.h>
-+#define madvise(addr, length, advice) posix_madvise((addr), (length), (advice))
-+#ifndef MADV_NORMAL
-+#define MADV_NORMAL POSIX_MADV_NORMAL
-+#endif
-+#ifndef MADV_RANDOM
-+#define MADV_RANDOM POSIX_MADV_RANDOM
-+#endif
-+#ifndef MADV_SEQUENTIAL
-+#define MADV_SEQUENTIAL POSIX_MADV_SEQUENTIAL
-+#endif
-+#ifndef MADV_WILLNEED
-+#define MADV_WILLNEED POSIX_MADV_WILLNEED
-+#endif
-+#ifndef MADV_DONTNEED
-+#define MADV_DONTNEED POSIX_MADV_DONTNEED
-+#endif
-+#ifndef MADV_FREE
-+#define MADV_FREE POSIX_MADV_DONTNEED
-+#endif
-+#ifndef MADV_DONTDUMP
-+#define MADV_DONTDUMP POSIX_MADV_NORMAL
-+#endif
-+#ifndef MADV_DODUMP
-+#define MADV_DODUMP POSIX_MADV_NORMAL
-+#endif
-+/* mmap() flags also gated behind the mlibc linux option; these are advisory
-+ * (swap-reservation / legacy executable hint), so treat them as no-ops. */
-+#ifndef MAP_NORESERVE
-+#define MAP_NORESERVE 0
-+#endif
-+#ifndef MAP_EXECUTABLE
-+#define MAP_EXECUTABLE 0
-+#endif
-+#endif /* __zinnia__ */
-+
- #endif /* PAS_CONFIG_H */
- 
 diff --git webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_monotonic_time.c webkitgtk-workdir/Source/bmalloc/libpas/src/libpas/pas_monotonic_time.c
 index 2adc006..b48b26f 100644
 --- webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_monotonic_time.c
@@ -404,6 +438,47 @@ index 2adc006..b48b26f 100644
  #elif PAS_OS(LINUX)
  
  uint64_t pas_get_current_monotonic_time_nanoseconds(void)
+diff --git webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_page_malloc.c webkitgtk-workdir/Source/bmalloc/libpas/src/libpas/pas_page_malloc.c
+index bf4cd1b..1d376ce 100644
+--- webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_page_malloc.c
++++ webkitgtk-workdir/Source/bmalloc/libpas/src/libpas/pas_page_malloc.c
+@@ -276,6 +276,7 @@ static void decommit_impl(void* ptr, size_t size,
+ #elif PAS_OS(LINUX)
+     PAS_SYSCALL(madvise(ptr, size, MADV_DONTNEED));
+     PAS_SYSCALL(madvise(ptr, size, MADV_DONTDUMP));
++#elif defined(__zinnia__)
+ #else
+     PAS_SYSCALL(madvise(ptr, size, MADV_DONTNEED));
+ #endif
+diff --git webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_probabilistic_guard_malloc_allocator.c webkitgtk-workdir/Source/bmalloc/libpas/src/libpas/pas_probabilistic_guard_malloc_allocator.c
+index e318122..967223b 100644
+--- webkitgtk-clean/Source/bmalloc/libpas/src/libpas/pas_probabilistic_guard_malloc_allocator.c
++++ webkitgtk-workdir/Source/bmalloc/libpas/src/libpas/pas_probabilistic_guard_malloc_allocator.c
+@@ -169,11 +169,13 @@ pas_allocation_result pas_probabilistic_guard_malloc_allocate(pas_large_heap* la
+      * ensure physical addresses are released
+      * TODO: investigate using MADV_FREE_REUSABLE instead
+      */
++#if !defined(__zinnia__)
+     int madvise_res = madvise((void*)upper_guard, upper_guard_size, MADV_FREE);
+     PAS_ASSERT(!madvise_res);
+ 
+     madvise_res = madvise((void*)lower_guard, lower_guard_size, MADV_FREE);
+     PAS_ASSERT(!madvise_res);
++#endif
+ 
+     PAS_PROFILE(PGM_ALLOCATE, heap_config, key);
+ 
+@@ -235,8 +237,10 @@ void pas_probabilistic_guard_malloc_deallocate(void* mem)
+      * ensure physical addresses are released
+      * TODO: investigate using MADV_FREE_REUSABLE instead
+      */
++#if !defined(__zinnia__)
+     int madvise_res = madvise((void*)value->start_of_data_pages, value->size_of_data_pages, MADV_FREE);
+     PAS_ASSERT(!madvise_res);
++#endif
+ 
+     free_wasted_mem  += value->mem_to_waste;
+     free_virtual_mem += value->size_of_allocated_pages;
 diff --git webkitgtk-clean/Source/cmake/WebKitCommon.cmake webkitgtk-workdir/Source/cmake/WebKitCommon.cmake
 index 38ac0c4..9751319 100644
 --- webkitgtk-clean/Source/cmake/WebKitCommon.cmake
