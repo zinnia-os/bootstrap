@@ -1,3 +1,15 @@
+diff --git weston-clean/clients/terminal.c weston-workdir/clients/terminal.c
+index 871391a..21ce8a8 100644
+--- weston-clean/clients/terminal.c
++++ weston-workdir/clients/terminal.c
+@@ -34,6 +34,7 @@
+ #include <math.h>
+ #include <time.h>
+ #include <pty.h>
++#include <sys/ioctl.h>
+ #include <ctype.h>
+ #include <cairo.h>
+ #include <sys/epoll.h>
 diff --git weston-clean/frontend/main.c weston-workdir/frontend/main.c
 index d135e77..6b5cc56 100644
 --- weston-clean/frontend/main.c
