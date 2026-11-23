@@ -18,7 +18,9 @@ prepare() {
 
 configure() {
     srctree="${source_dir}" ARCH="${JINX_ARCH}" python3 -m alldefconfig
-    meson_configure -Dconfig_path="$(pwd)/.config" --cross-file "${source_dir}/toolchain/${JINX_ARCH}.cross-file"
+    meson_configure \
+        -Dconfig_path="$(pwd)/.config" \
+        --cross-file "${source_dir}/toolchain/${JINX_ARCH}.cross-file"
 }
 
 build() {

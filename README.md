@@ -9,25 +9,49 @@ It also includes several ports of popular programs and tools.
 
 To build the distribution you will need the following tools installed on your system:
 
-- Bash
-- GNU make
-- curl
-- wget
-- zstd
-- `unshare` (util-linux)
-- `free` (procps)
+- `bash`
+- `make` (GNU)
+- `curl`
+- `wget`
+- `zstd`
+- `unshare` (from util-linux)
+- `free` (from procps)
 
 To create a bootable image you will additionally need:
 
-- dosfstools (for mkfs.vfat)
-- e2fsprogs (for mkfs.ext2)
-- sgdisk (for partitioning the image)
+- `mkfs.vfat` (from dosfstools)
+- `mkfs.ext2` (from e2fsprogs)
+- `sgdisk`
 - build dependencies for the [xbps package manager](https://docs.voidlinux.org/xbps/index.html)
 
 
 ## Build instructions
 
 You can either build everything from source, or download pre-built packages.
+
+### Using pre-built packages
+
+You can pull pre-built packages and host packages from our Buildbot workers into the build directory.
+
+This is the **recommended** way if you just want to work on the kernel and need a userspace.
+
+> [!NOTE]
+> Host packages (like cross-compilers) are only pre-built to run on a x86_64 Linux host with glibc.
+> If you're using a different build machine, you'll have to [build from source](#building-from-source).
+
+Example usage:
+
+```sh
+$ mkdir build-x86_64
+$ cd build-x86_64
+$ ../jinx/jinx init ..                # Setup build dir, pointing to the recipes in the parent dir
+$ ../jinx/jinx download bash          # A single package and its dependencies
+$ ../jinx/jinx download 'host:*'      # Every host package (toolchain etc.)
+$ ../jinx/jinx download '*'           # Every target package
+```
+
+Downloads are checksum-verified against the repository index.
+Afterwards, `make` will only build what is still missing.
 
 ### Building from source
 
@@ -60,40 +84,12 @@ The built package will be located in the `pkgs` directory.
 > [!WARNING]
 > If you want a build of the **ENTIRE** distribution, you will need a lot of free disk space (>50GB) and some patience.
 
-### Live installation medium
+## Working on the kernel
 
-```sh
-$ make live
-```
+The most common use case of bootstrap is working on the kernel itself.
+It is recommended to build it once from source.
 
-builds `zinnia-live.img`, a bootable GPT image containing the graphical text
-installer. Write it to a USB stick with `dd`:
-
-```sh
-$ sudo dd if=build-x86_64/zinnia-live.img of=/dev/sdX bs=4M status=progress conv=fsync
-```
-
-### Using pre-built packages
-
-You can pull pre-built packages and host packages from our Buildbot workers into the build directory.
-
-> [!NOTE]
-> Host packages are only built to run on a x86_64 Linux host.
-> If you're using an aarch64 machine, you'll have to build from source.
-
-Example usage:
-
-```sh
-$ mkdir build-x86_64
-$ cd build-x86_64
-$ ../jinx/jinx init ..                # Setup build dir, pointing to the recipes in the parent
-$ ../jinx/jinx download bash          # A single package and its dependencies
-$ ../jinx/jinx download '*'           # Every target package
-$ ../jinx/jinx download 'host:*'      # Every host package (toolchain etc.)
-```
-
-Downloads are checksum-verified against the repository index.
-Afterwards, `make` will only build what is still missing.
+For quick iteration speeds, you can run `make remake-kernel image` to rebuild the kernel and install it in the image.
 
 ## Running the image
 
@@ -121,15 +117,7 @@ after a `--` separator, e.g.:
 $ ./scripts/vm-util.py run -- -d int
 ```
 
-See `./scripts/vm-util.py run --help` for all options, such as `--arch`,
-`--smp`, `--mem`, `--headless`, `--nic` and `--pci`.
-
-## Working on the kernel
-
-The most common use case of bootstrap is working on the kernel itself.
-It is recommended to build it once from source.
-
-For quick iteration speeds, you can run `make remake-kernel image` to rebuild the kernel and install it in the image.
+See `./scripts/vm-util.py run --help` for all options.
 
 ## Debugging
 
@@ -142,6 +130,3 @@ $ ./scripts/vm-util.py run --kvm off -- -s -S
 and then attach your debugger.
 For convenicence, there is a debugging configuration using CodeLLDB for VS Code.
 Simply select Run > Start Debugging and use `.vscode/launch.json` as the config.
-
-Remember to build the kernel in debug mode and make sure KASLR
-has been disabled in the bootloader, or you have provided the debugger with the base address.
